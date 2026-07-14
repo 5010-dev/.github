@@ -141,6 +141,19 @@ deliberately. Do not replace `--ff-only` with a merge commit.
 Production hotfixes must not bypass the `dev` to `main` promotion flow without
 explicit maintainer direction.
 
+## Releases and versioning
+
+Release only from validated `main`. Once a release tag or artifact is published,
+treat it as immutable; publish a new version to correct it.
+
+Each repository owns its versioning scheme, tag format, changelog policy, and
+release automation. Document those details in the repository README or
+development guide. Consumer-facing packages and APIs should follow their
+ecosystem's versioning and compatibility conventions.
+
+Every production release must be traceable to its source commit, release tag,
+and published artifact.
+
 ## Repository-specific instructions
 
 Repositories should document setup, validation, architecture, release, and
