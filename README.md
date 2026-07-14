@@ -7,6 +7,7 @@ its own equivalent. A repository's own file always takes precedence.
 
 ## Contents
 
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — default contribution and Git workflow policy
 - [`pull_request_template.md`](./pull_request_template.md) — default pull request template
 
 ## Notes
