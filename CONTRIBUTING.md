@@ -24,6 +24,19 @@ for the change.
 
 Do not bypass repository-managed hooks with `git commit --no-verify`.
 
+## Organization engineering standards
+
+Changes to shared platform boundaries, deployment workflows, or infrastructure
+integration must follow the relevant organization engineering contract. ECS
+services must follow the
+[ECS deployment contract](https://github.com/5010-dev/.github/blob/main/docs/platform/ecs-deployment-contract.md).
+
+Repository documentation should link to organization contracts and describe
+only repository-specific resource names, configuration paths, deployment
+commands, and accepted exceptions. Do not copy an organization contract into
+individual repositories. A repository-specific exception must be explicit,
+justified, and linked to an architecture decision record or equivalent review.
+
 ## Choosing direct development or a pull request
 
 Direct commits to `dev` are allowed. They are commonly appropriate for small
