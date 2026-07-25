@@ -23,10 +23,13 @@ in all capitals.
 ## Contracts
 
 - [ECS deployment contract](./platform/ecs-deployment-contract.md)
+- [ECS health and readiness profiles](./platform/ecs-health-readiness-profiles.md)
+- [ECS service health matrix](./platform/ecs-service-health-matrix.md)
 
 ## Decisions
 
 - [ADR-0001: Adopt a hybrid ECS deployment model](./decisions/0001-adopt-hybrid-ecs-deployment-model.md)
+- [ADR-0002: Adopt state-aware ECS health profiles](./decisions/0002-adopt-state-aware-ecs-health-profiles.md)
 
 ## Changing a contract
 
