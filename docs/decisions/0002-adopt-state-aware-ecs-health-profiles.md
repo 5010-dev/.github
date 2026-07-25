@@ -34,14 +34,22 @@ placeholder. That behavior cannot safely distinguish a first bootstrap from
 missing released state, access denial, transport failure, or an invalid partial
 service group.
 
+Current absence is not historical evidence. If both an ECS service and its SSM
+image parameter were deleted after a release, their absence would look the same
+as a first bootstrap unless a separate authorization or lifecycle record
+distinguishes the two cases.
+
 ## Decision
 
 We extend the hybrid deployment model with a state-aware health contract:
 
 1. A deployment unit is in **Bootstrap** only when its complete real-image
-   parameter set is absent, its ECS services have never been provisioned, and
+   parameter set is explicitly `ParameterNotFound`, its ECS services are
+   currently absent, explicit initial-bootstrap authorization is present, and
    its approved placeholder image and `CMD-SHELL exit 0` health check are
-   selected together.
+   selected together. Authorization is supplied through an explicit workflow
+   input, durable lifecycle marker, or equivalent repository-approved
+   mechanism.
 2. A deployment unit is **Released** when its complete SSM image state
    identifies service-policy-compliant immutable real images. This selection
    applies even when a service workflow staged SSM before the ECS service
@@ -49,11 +57,12 @@ We extend the hybrid deployment model with a state-aware health contract:
 3. A released image uses the service-selected application container liveness
    contract. Every later CDK deployment must reproduce that contract along with
    the current image and runtime configuration.
-4. An already provisioned service with a missing image parameter, a partial
+4. Missing authorization, lost or contradictory Released state, a partial
    deployment unit, inconsistent required shared-image digests, an invalid image
-   URI, or an ambiguous state fails closed.
-5. `ParameterNotFound` may contribute to first-bootstrap classification. Access
-   denial, transport failure, and other AWS API errors are failures, not absence.
+   URI, or any ambiguous state fails closed.
+5. `ParameterNotFound` and current ECS service absence may contribute to
+   classification but never authorize Bootstrap by themselves. Access denial,
+   transport failure, and other AWS API errors are failures, not absence.
 6. Every service selects one exposure profile and any applicable runtime
    modifiers from the organization
    [health profile contract](../platform/ecs-health-readiness-profiles.md).
@@ -65,9 +74,10 @@ We extend the hybrid deployment model with a state-aware health contract:
 
 The normative state machine, fail-closed rules, and independent deployment
 invariants are maintained in the
-[ECS deployment contract](../platform/ecs-deployment-contract.md). Current
-service mappings are maintained in the
-[ECS service health matrix](../platform/ecs-service-health-matrix.md).
+[ECS deployment contract](../platform/ecs-deployment-contract.md). Canonical
+profile assignments and transition status are maintained in the
+[ECS service profile and transition matrix](../platform/ecs-service-health-matrix.md).
+Current executable As-built details remain owned by the linked repositories.
 
 ## Consequences
 
@@ -81,11 +91,15 @@ service mappings are maintained in the
 - Singleton, standby, zero-scale, operator-controlled, and multi-process
   services can keep their legitimate lifecycle semantics.
 - SSM and AWS failures cannot be mistaken for permission to bootstrap.
+- Deleted current state cannot silently authorize a second bootstrap for a
+  previously Released unit.
 
 ### Negative
 
-- Infrastructure configuration assembly must inspect both SSM state and ECS
-  provisioning state before selecting a profile.
+- Infrastructure configuration assembly must inspect SSM and current ECS state
+  and validate a separate bootstrap authorization before selecting a profile.
+- Infrastructure must choose and preserve an auditable authorization transport
+  or lifecycle marker.
 - CDK constructs need explicit released-image health inputs or a shared typed
   profile mapping.
 - Multi-role and fleet deployments need completeness and image-consistency
@@ -125,10 +139,17 @@ into an unsafe placeholder fallback.
 
 ## Implementation status
 
-The contracts and profile taxonomy are accepted. The current service-specific
-As-built, Target, and Open states are recorded in the service matrix.
-Infrastructure changes that classify state, fail closed, and render
-released-image health remain follow-up work.
+The contracts and profile taxonomy are accepted Target architecture. Current
+services are transitioning; their profile assignments, As-built evidence,
+Target gaps, Open decisions, and conformance status are tracked in the service
+matrix. No service may claim conformance before its bootstrap authorization,
+released-image liveness, service workflow, CDK construct, and independent
+deployment-sequence verification satisfy the contract as one unit.
+
+Infrastructure changes that validate explicit bootstrap authorization,
+classify state, fail closed, and render released-image health remain follow-up
+work. Services whose exact liveness remains Open, including Quant and Obs, must
+not receive an Infrastructure-invented probe merely to advance the transition.
 
 ## Relationship to ADR-0001
 

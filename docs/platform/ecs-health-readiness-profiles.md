@@ -149,10 +149,12 @@ environment maps.
 
 ## Organization mapping
 
-The current cross-repository classification and implementation gaps are
-maintained in the
-[ECS service health matrix](./ecs-service-health-matrix.md). Repository code,
-workflows, and deployment manifests remain authoritative for As-built behavior.
+Canonical profile assignments, accepted Target behavior, and transition status
+are maintained in the
+[ECS service profile and transition matrix](./ecs-service-health-matrix.md). Any fixed-revision
+As-built description in that matrix is an evidence snapshot. Current repository
+code, workflows, deployment manifests, and canonical repository documentation
+remain authoritative for executable As-built details.
 
 ## Related decisions
 
