@@ -1,6 +1,7 @@
 # ECS deployment contract
 
 - Status: Accepted
+- Conformance phase: Transitioning
 - Last updated: 2026-07-25
 - Applies to: `5010-dev` services provisioned on the shared AWS ECS platform
 
@@ -93,12 +94,23 @@ Each deployment unit MUST be classified as **Bootstrap** or
 
 - every real-image parameter in the deployment unit is absent with an explicit
   `ParameterNotFound` result;
-- every ECS service in the deployment unit has not yet been provisioned;
+- every ECS service in the deployment unit is currently absent;
+- the deployment carries explicit authorization to perform the initial
+  bootstrap for that environment and deployment unit;
 - the selected image is an organization-approved placeholder for that role; and
 - the container health check is `CMD-SHELL exit 0`.
 
-An empty string, an unapproved image, or a generic AWS CLI failure MUST NOT be
-treated as evidence of Bootstrap.
+`ParameterNotFound` plus current ECS service absence does not prove that the
+unit has no release history and MUST NOT authorize Bootstrap by itself. The
+authorization MUST be supplied by an explicit workflow input, durable lifecycle
+marker, or equivalent repository-approved mechanism. Its exact transport is an
+Infrastructure implementation decision, but explicit, auditable bootstrap
+intent is an organization invariant.
+
+An empty string, an unapproved image, a generic AWS CLI failure, or an absent
+authorization MUST NOT be treated as evidence of Bootstrap. Loss or deletion of
+state for a previously Released unit MUST NOT be interpreted as permission to
+bootstrap again.
 
 **Released** applies when the complete image parameter set contains
 service-policy-compliant immutable real-image URIs. This classification applies
@@ -107,8 +119,10 @@ Released CDK deployment MUST use the real image, current runtime
 configuration, and the repository-mapped application container liveness
 contract.
 
-Once an ECS service has been provisioned, a later missing image parameter MUST
-fail closed. The deployment MUST NOT return that service to Bootstrap.
+Once a deployment unit has been Released, a later missing image parameter or
+service MUST fail closed unless a separately accepted lifecycle operation
+defines the transition. The deployment MUST NOT infer a return to Bootstrap
+from current absence.
 
 ### Fail-closed classification
 
@@ -116,6 +130,8 @@ Configuration assembly MUST stop before synthesis or service update when any of
 the following is true:
 
 - an image parameter is missing for an already provisioned service;
+- real-image parameters and ECS services are absent but explicit initial
+  bootstrap authorization is missing, invalid, stale, or ambiguous;
 - an SSM read fails with access denial, transport failure, throttling, or any
   AWS API error other than explicit `ParameterNotFound`;
 - an image URI is empty, malformed, mutable where immutability is required, or
@@ -123,6 +139,8 @@ the following is true:
 - only part of a deployment unit's required image parameter set exists;
 - roles required to share an image resolve to different digests;
 - required released runtime configuration is absent or partial; or
+- known Released lifecycle state has been lost or contradicts current
+  resources; or
 - the deployment unit cannot be classified unambiguously.
 
 The current infrastructure `fetch_ssm_parameter` helper converts every failed
@@ -210,6 +228,36 @@ Routing health, application readiness, and semantic evidence MUST also continue
 to follow the repository mapping, but they are not interchangeable with those
 three revision inputs.
 
+## Conformance and transition
+
+ADR-0002 accepts the Target architecture in this contract. It does not assert
+that every current service or workflow already conforms.
+
+- Current implementation gaps MUST be recorded in the
+  [service matrix](./ecs-service-health-matrix.md) as As-built, Target, or Open.
+- Recording an existing workflow as As-built is distinct from claiming
+  conformance. A deployment unit whose Target is not implemented MUST NOT be
+  described as conformant to this contract.
+- A new service, or a material change to an existing health or deployment path,
+  MUST follow this contract when introduced.
+- Existing services MAY move incrementally through tracked transition items.
+  Documentation-only acceptance before executable implementation is permitted,
+  but it does not establish production conformance.
+- Infrastructure MUST NOT invent a released-image probe for a service whose
+  exact liveness contract remains Open.
+- Bootstrap/Released classification, the service workflow, and the CDK
+  construct MUST transition as one consistent deployment unit.
+
+A service transition is complete only after all of the following are true:
+
+1. its exact released-image liveness contract is accepted;
+2. the real image contains the selected command or endpoint;
+3. service and CDK deployment paths reproduce the same health contract;
+4. both independent deployment sequences pass repository-owned verification;
+   and
+5. the matrix records the result as conformant As-built against current
+   repository authority.
+
 ## Repository documentation
 
 Each participating service repository MUST link to this contract and document:
@@ -242,6 +290,8 @@ contract:
    for a deployment-time readiness probe.
 5. Exact application container liveness commands for services whose matrix
    entry remains Open.
+6. The exact Infrastructure mechanism that transports and durably preserves
+   explicit initial-bootstrap authorization.
 
 These decisions require comparison across affected services and infrastructure.
 Once accepted, they must be recorded here and, when consequential, in a new or
@@ -251,4 +301,4 @@ superseding architecture decision record.
 
 - [ADR-0001: Adopt a hybrid ECS deployment model](../decisions/0001-adopt-hybrid-ecs-deployment-model.md)
 - [ADR-0002: Adopt state-aware ECS health profiles](../decisions/0002-adopt-state-aware-ecs-health-profiles.md)
-- [ECS service health matrix](./ecs-service-health-matrix.md)
+- [ECS service profile and transition matrix](./ecs-service-health-matrix.md)

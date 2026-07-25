@@ -16,7 +16,7 @@ repositories; GitHub does not inherit them automatically.
 - [`docs/README.md`](./docs/README.md) — organization engineering documentation index
 - [`ECS deployment contract`](./docs/platform/ecs-deployment-contract.md) — shared CDK and service-repository deployment model
 - [`ECS health and readiness profiles`](./docs/platform/ecs-health-readiness-profiles.md) — state-aware health semantics by service shape
-- [`ECS service health matrix`](./docs/platform/ecs-service-health-matrix.md) — current service mappings, gaps, and target evidence
+- [`ECS service profile and transition matrix`](./docs/platform/ecs-service-health-matrix.md) — canonical profiles, transition status, and pinned evidence
 - [`ADR-0001`](./docs/decisions/0001-adopt-hybrid-ecs-deployment-model.md) — decision record for the hybrid ECS deployment model
 - [`ADR-0002`](./docs/decisions/0002-adopt-state-aware-ecs-health-profiles.md) — decision record for state-aware ECS health profiles
 
