@@ -1,7 +1,9 @@
 # ADR-0002: Adopt state-aware ECS health profiles
 
-- Status: Accepted
+- Status: Superseded
 - Date: 2026-07-25
+- Superseded by:
+  [ADR-0003](./0003-adopt-current-state-ecs-bootstrap-classification.md)
 
 ## Context
 

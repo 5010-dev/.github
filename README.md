@@ -16,9 +16,10 @@ repositories; GitHub does not inherit them automatically.
 - [`docs/README.md`](./docs/README.md) — organization engineering documentation index
 - [`ECS deployment contract`](./docs/platform/ecs-deployment-contract.md) — shared CDK and service-repository deployment model
 - [`ECS health and readiness profiles`](./docs/platform/ecs-health-readiness-profiles.md) — state-aware health semantics by service shape
-- [`ECS service profile and transition matrix`](./docs/platform/ecs-service-health-matrix.md) — canonical profiles, transition status, and pinned evidence
+- [`ECS service contract ownership directory`](./docs/platform/ecs-service-health-matrix.md) — navigation to service runtime contracts and Infrastructure mappings
 - [`ADR-0001`](./docs/decisions/0001-adopt-hybrid-ecs-deployment-model.md) — decision record for the hybrid ECS deployment model
-- [`ADR-0002`](./docs/decisions/0002-adopt-state-aware-ecs-health-profiles.md) — decision record for state-aware ECS health profiles
+- [`ADR-0002`](./docs/decisions/0002-adopt-state-aware-ecs-health-profiles.md) — superseded decision record for state-aware ECS health profiles
+- [`ADR-0003`](./docs/decisions/0003-adopt-current-state-ecs-bootstrap-classification.md) — current-state bootstrap classification and retained health-profile decision
 
 ## Notes
 
@@ -26,5 +27,5 @@ repositories; GitHub does not inherit them automatically.
 - Defaults apply to repos without their own version and don't appear in each repo's file tree.
 - GitHub reads these from this repo's **default branch**.
 - Repository documentation should link to organization engineering contracts
-  rather than copy them. Keep only repository-specific mappings and documented
-  exceptions locally.
+  rather than copy them. Exact endpoints, commands, mappings, and implementation
+  status remain in their owning service or Infrastructure repository.

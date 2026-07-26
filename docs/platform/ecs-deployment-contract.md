@@ -1,15 +1,14 @@
 # ECS deployment contract
 
 - Status: Accepted
-- Conformance phase: Transitioning
-- Last updated: 2026-07-25
+- Last updated: 2026-07-26
 - Applies to: `5010-dev` services provisioned on the shared AWS ECS platform
 
-This contract defines how the ECS CDK repository, service repositories, and AWS
-Systems Manager Parameter Store cooperate without requiring every application
-release to be preceded by an infrastructure deployment.
+This contract defines how the ECS Infrastructure repository, service
+repositories, and deployment-time configuration cooperate without requiring
+every application release to be preceded by an infrastructure deployment.
 
-Health signal semantics and service classification are defined in the
+Health signal semantics and reusable service shapes are defined in the
 [ECS health and readiness profiles](./ecs-health-readiness-profiles.md).
 
 The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** in
@@ -19,286 +18,330 @@ this document are to be interpreted as described in BCP 14.
 
 The organization uses a hybrid deployment model:
 
-- The ECS CDK repository owns initial infrastructure bootstrap and structural
-  platform changes.
+- The ECS Infrastructure repository owns initial infrastructure bootstrap and
+  structural platform changes.
 - A service repository owns its application image release and may deploy it
-  independently after the service has been bootstrapped.
-- Both deployment paths use the same environment-scoped SSM parameters for
-  image and runtime configuration state.
+  independently after the required infrastructure exists.
+- Both deployment paths use the same environment-scoped deployment-state
+  contract.
 - Either path may run after bootstrap without requiring the other path to run
   immediately beforehand.
 
 The model separates infrastructure structure from application release cadence;
-it does not assign every task definition revision exclusively to either
+it does not assign every task-definition revision exclusively to either
 repository.
 
-## Responsibilities
+## Ownership boundary
 
-| Concern | Primary responsibility | Contract |
-| --- | --- | --- |
-| Cluster, networking, security groups, IAM resources, ECS services, service discovery, volumes, and sidecars | ECS CDK repository | Structural changes MUST be expressed in CDK. |
-| Initial ECS service and task definition | ECS CDK repository | CDK MUST be able to bootstrap the service before a real application image is running. |
-| Application build and image publication | Service repository | Images MUST be immutable and traceable to their source revision. |
-| Deployed application image | Service repository through SSM and ECS | A service release MUST update the environment's image parameter and the provisioned ECS service. |
-| Runtime environment configuration | Environment-scoped SSM parameters | CDK and service deployment paths MUST consume the same parameter contract. |
-| Application rollout and verification | Service repository | The workflow MUST register an appropriate task definition revision, update the service, and verify the rollout according to repository policy. |
-| Structural rollout | ECS CDK repository | A later CDK deployment MUST consume current SSM image and runtime configuration state and reproduce the selected bootstrap or released-image health contract. |
+| Concern                                                                                                                                                | Primary owner                 | Organization invariant                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Cluster, networking, security groups, IAM resources, ECS services, service discovery, volumes, sidecars, ALB configuration, and other structural state | ECS Infrastructure repository | Structural changes MUST be reproducible from Infrastructure-owned definitions.                                                      |
+| Deployment-unit membership and structural inputs                                                                                                       | ECS Infrastructure repository | Accepted Infra desired state MUST be derived from version-controlled CDK source and documented Infra-owned structural inputs.       |
+| Placeholder identity and bootstrap-compatible configuration                                                                                            | ECS Infrastructure repository | Every placeholder and bootstrap-compatible input state MUST be explicit in the Infra mapping.                                       |
+| Application runtime and health semantics                                                                                                               | Service repository            | The service owns exact endpoints, commands, timing, readiness, and failure semantics.                                               |
+| Application image build and publication                                                                                                                | Service repository            | Images MUST be immutable and traceable to source.                                                                                   |
+| Application rollout and verification                                                                                                                   | Service repository            | A release MUST update the shared deployment state and provisioned ECS service according to repository policy.                       |
+| Structural rollout                                                                                                                                     | ECS Infrastructure repository | A later Infrastructure deployment MUST preserve the current real image, runtime configuration, and service-owned liveness contract. |
 
-## SSM configuration authority
+## Accepted Infra desired state
 
-Environment-specific application image URIs and runtime environment values MUST
-be provided through the service's documented SSM parameter tree.
+Accepted Infra desired state, derived from version-controlled CDK source and
+documented Infra-owned structural inputs, authorizes creation or recreation of
+a deployment unit.
 
-- CDK and service deployment workflows MUST read the same environment-scoped
-  parameter paths.
-- A service deployment that publishes a new image MUST write its immutable image
-  URI to SSM before or as part of updating ECS.
-- A later CDK deployment MUST read that image URI and MUST NOT roll the service
-  back to a stale image embedded in source code or workflow YAML.
-- Image selection MUST distinguish an approved placeholder from a
-  service-policy-compliant immutable real image. A mutable tag such as `latest`
-  MUST NOT establish released-image identity.
-- Runtime values MUST NOT be independently duplicated in CDK source and service
-  workflow YAML. Documented bootstrap defaults and construct-owned structural
-  values are permitted when they cannot originate from operator configuration.
-- Deployment workflows MUST NOT print decrypted or sensitive configuration
-  values to logs.
+Structural inputs may be external to TypeScript source when Infrastructure
+explicitly owns and documents them. Dynamic fleet membership is therefore
+permitted, but its source, validation, and mapping remain Infrastructure
+responsibilities.
 
-SSM is the deployment-time configuration source. This contract does not require
-application containers to query SSM directly at runtime. A deployment may read
-SSM and materialize the resulting values into an ECS task definition.
+Application image or runtime release values do not authorize their own
+deployment unit. They are deployment state consumed after Infra desired-state
+membership has been established and MUST NOT create a circular authorization
+path.
 
-### Deployment units
+## Shared deployment state
 
-A deployment unit is the smallest set of ECS services and image parameters that
-must be classified together. A repository-specific mapping MUST identify the
-unit and any roles that are required to use the same image digest.
+Environment-specific image and runtime values MUST use the parameter contract
+documented by the owning repositories.
 
-- An individual API, Academy Dashboard, or Calculator service is one unit.
-- Collector master, realtime, and worker are one shared-image unit.
-- Quant and Obs fleet mappings MUST state whether consistency is per bot or
-  across the enabled fleet for a release.
+- Infrastructure and service deployment paths MUST read the same
+  environment-scoped paths.
+- A service release MUST publish its policy-compliant immutable image identity
+  before or as part of updating ECS.
+- A later Infrastructure deployment MUST consume the current image identity
+  and MUST NOT restore a stale source-embedded image.
+- A mutable tag such as `latest` MUST NOT establish real-image identity.
+- Runtime values MUST NOT be independently duplicated across CDK source and
+  service workflow definitions.
+- Deployment workflows MUST NOT expose decrypted or sensitive values in logs,
+  summaries, or artifacts.
 
-For a multi-parameter unit, configuration assembly MUST read and validate the
-complete parameter set before selecting a state. It MUST NOT independently
-fallback individual roles to placeholders.
+This is deployment-time state. The contract does not require application
+containers to query the parameter store directly at runtime.
 
-## Bootstrap protocol
+## Repository-local deployment-unit mapping
 
-### State classification
+A deployment unit is the smallest set of ECS resources and deployment inputs
+that must be classified together. The Infrastructure repository MUST maintain a
+canonical mapping for each unit that defines:
 
-Each deployment unit MUST be classified as **Bootstrap** or
-**Released** before a task definition is rendered.
+1. membership derived from CDK source and documented Infra-owned structural
+   inputs;
+2. required released image inputs;
+3. required released runtime inputs;
+4. optional runtime inputs;
+5. bootstrap-compatible defaults or absence;
+6. approved placeholder identity and configuration;
+7. ECS service, task family, and application-container identity;
+8. structural network, ALB, and service-discovery configuration; and
+9. a link to the service-owned exact runtime health contract.
 
-**Bootstrap** is permitted only when all of the following are true:
+The service repository MUST maintain the exact liveness, readiness, semantic,
+Docker image, and deployment-verification contract and link back to the Infra
+mapping.
 
-- every real-image parameter in the deployment unit is absent with an explicit
+For a multi-input unit, configuration assembly MUST read and validate the
+complete mapped input set before selecting a state. It MUST NOT independently
+fall back individual members to placeholders.
+
+## Current-state classification
+
+Each deployment unit in accepted Infra desired state MUST be classified as
+**Bootstrap**, **Released**, or **Invalid** before a task definition is
+rendered. These are current-state classifications, not lifecycle-history
+records.
+
+### Bootstrap
+
+Bootstrap applies only when:
+
+- accepted Infra desired state includes the unit;
+- every mapped required released image input is absent with an explicit
   `ParameterNotFound` result;
-- every ECS service in the deployment unit is currently absent;
-- the deployment carries explicit authorization to perform the initial
-  bootstrap for that environment and deployment unit;
-- the selected image is an organization-approved placeholder for that role; and
-- the container health check is `CMD-SHELL exit 0`.
+- required released runtime inputs are in the mapping's documented
+  bootstrap-compatible absence or default state;
+- optional inputs satisfy their mapped bootstrap policy;
+- every current ECS service in the unit is absent or unambiguously uses its
+  approved placeholder;
+- the selected placeholder matches the Infra-owned mapping; and
+- placeholder container health uses the bootstrap-only
+  `CMD-SHELL exit 0` contract.
 
-`ParameterNotFound` plus current ECS service absence does not prove that the
-unit has no release history and MUST NOT authorize Bootstrap by itself. The
-authorization MUST be supplied by an explicit workflow input, durable lifecycle
-marker, or equivalent repository-approved mechanism. Its exact transport is an
-Infrastructure implementation decision, but explicit, auditable bootstrap
-intent is an organization invariant.
+Current accepted Infra desired state is sufficient authority to create or
+recreate the unit. No DynamoDB lifecycle ledger, historical Released record,
+Protected GitHub Environment, workflow bootstrap input, or separate
+authorization marker is an organization requirement.
 
-An empty string, an unapproved image, a generic AWS CLI failure, or an absent
-authorization MUST NOT be treated as evidence of Bootstrap. Loss or deletion of
-state for a previously Released unit MUST NOT be interpreted as permission to
-bootstrap again.
+If version-controlled CDK source and Infra-owned structural inputs continue to
+select a deployment unit while all mapped application-release SSM inputs and
+current ECS service state for that unit have been deleted, the unit may be
+created again as Bootstrap. Deleting a structural input that removes the unit
+from accepted Infra desired state does not authorize Bootstrap. Classification
+MUST NOT count or branch on prior bootstrap or release events.
 
-**Released** applies when the complete image parameter set contains
-service-policy-compliant immutable real-image URIs. This classification applies
-even if a service repository staged SSM before its ECS service exists. A
-Released CDK deployment MUST use the real image, current runtime
-configuration, and the repository-mapped application container liveness
-contract.
+### Released
 
-Once a deployment unit has been Released, a later missing image parameter or
-service MUST fail closed unless a separately accepted lifecycle operation
-defines the transition. The deployment MUST NOT infer a return to Bootstrap
-from current absence.
+Released applies only when all mapped required released image and runtime inputs
+are complete and valid. Optional inputs MUST satisfy their repository-local
+policy. The term describes current complete real-image state and does not
+preserve release history.
 
-### Fail-closed classification
+Released applies regardless of whether the ECS service currently exists. A
+complete unit with no ECS service is a staged real-image state. Infrastructure
+MUST create it directly with the real image, current runtime configuration, and
+service-owned application liveness rather than fall back to a placeholder.
 
-Configuration assembly MUST stop before synthesis or service update when any of
-the following is true:
+### Invalid
 
-- an image parameter is missing for an already provisioned service;
-- real-image parameters and ECS services are absent but explicit initial
-  bootstrap authorization is missing, invalid, stale, or ambiguous;
-- an SSM read fails with access denial, transport failure, throttling, or any
-  AWS API error other than explicit `ParameterNotFound`;
-- an image URI is empty, malformed, mutable where immutability is required, or
-  outside the repository's allowed registry/image policy;
-- only part of a deployment unit's required image parameter set exists;
-- roles required to share an image resolve to different digests;
-- required released runtime configuration is absent or partial; or
-- known Released lifecycle state has been lost or contradicts current
-  resources; or
-- the deployment unit cannot be classified unambiguously.
+Invalid applies when the mapped current state is partial, contradictory,
+inaccessible, malformed, disallowed, or ambiguous.
 
-The current infrastructure `fetch_ssm_parameter` helper converts every failed
-AWS read to an empty value. That is **As-built technical debt**, not an allowed
-Bootstrap classifier. Infrastructure MUST replace it with error-aware state
-classification before claiming conformance to this section.
+Each deployment unit MUST be classified from its own mapping. One unit's state
+MUST NOT be used to reinterpret another unit, and an Invalid unit MUST NOT be
+weakened to Bootstrap because a different unit is bootstrap-compatible.
 
-### Configuration staging
+This classification independence does not guarantee partial progress within a
+single stack deployment. Whether a run stops entirely, preserves the Invalid
+unit while applying safe changes elsewhere, or uses another reviewed strategy
+is an Infrastructure implementation and operating-policy decision.
 
-A service deployment MAY publish its image and configuration to SSM before the
-ECS service exists. The repository MUST document whether this state is reported
-as a successful SSM-only staging operation or as a deployment awaiting
-infrastructure bootstrap.
+## Fail-closed rules
 
-Staging a complete real-image unit selects Released state for the next CDK
-deployment. It does not authorize a placeholder fallback.
+Configuration assembly MUST classify the affected unit as Invalid and stop its
+mutation when:
 
-### Dummy-first CDK deployment
+- an SSM or AWS read fails with access denial, transport failure, throttling, or
+  any error other than explicit `ParameterNotFound`;
+- only part of the mapped required released input set exists;
+- a required value is empty, malformed, mutable where immutability is required,
+  or outside repository policy;
+- members required to share an image resolve to inconsistent identities;
+- a real application ECS service exists while any mapped required released
+  input is missing;
+- an existing ECS service cannot be identified unambiguously as the approved
+  placeholder or real application; or
+- the unit cannot be classified unambiguously from its mapping.
 
-CDK MAY create the initial ECS service with a dummy or placeholder image only
-for a deployment unit classified as Bootstrap.
+`ParameterNotFound`, empty output, and a generic command failure are distinct
+results. Infrastructure lookup and configuration assembly MUST preserve that
+distinction.
 
-When a construct follows this dummy-first path, its initial container health
-check MUST be bootstrap-safe. The organization uses `CMD-SHELL exit 0` so ECS
-and CloudFormation can stabilize the initial service without depending on an
-application endpoint that the dummy image does not implement.
+Bootstrap-compatible absence or defaults explicitly declared by the unit
+mapping are not missing Released configuration. Any other partial required
+state is Invalid.
 
-This health check is intentional, but it has a deliberately narrow meaning:
+## Health promotion and routing
 
-- It proves only that the placeholder task can participate in infrastructure
-  bootstrap.
-- It MUST NOT be treated as evidence that the real application is ready,
-  healthy, or serving its contract.
-- Deployment verification MUST use additional service-appropriate evidence for
-  a real application rollout.
+### Placeholder container health
 
-### Real image deployment
+CDK MAY use an approved placeholder only for a unit classified as Bootstrap.
+The organization bootstrap health command is `CMD-SHELL exit 0`.
 
-After bootstrap, the service repository MUST be able to deploy a real image
-without another CDK deployment. The deployment writes the image URI to SSM,
-registers a task definition revision compatible with the existing service, and
-updates the ECS service.
+This signal proves only that a placeholder task can participate in
+infrastructure provisioning. It does not establish real-image liveness,
+routing health, readiness, or semantic correctness.
 
-The real-image revision MUST use the application container liveness contract
-selected by the service's
-[health profile](./ecs-health-readiness-profiles.md). Application readiness and
-semantic evidence MAY be stricter, but MUST remain separately named signals.
+### Real-image container health
 
-The service deployment MAY derive a revision from the current task definition
-or render one from a controlled template. In either case it MUST preserve
-structural fields it does not own, target application and sidecar containers by
-stable name, and apply the released-image liveness contract deliberately.
+The real-image revision MUST use the exact application liveness contract owned
+by the service repository. Service and Infrastructure deployment paths MUST
+render the same command and timing policy.
+
+A later Infrastructure deployment MUST NOT replace real-image liveness with
+`exit 0` or another bootstrap-only signal. Application readiness and semantic
+evidence MAY be stricter but MUST remain separately named.
+
+### Routing-health compatibility
+
+If a placeholder is registered in a target group, placeholder and real image
+MUST both implement the Infra-owned fixed routing-health endpoint. The path
+SHOULD NOT change during image promotion.
+
+A loose matcher such as `200-404` or an unconditionally successful routing
+probe MUST NOT hide an unimplemented endpoint. A placeholder need not implement
+the business API, but it MUST implement the registered routing-health contract.
+
+Exact listener rules, target groups, ports, paths, matchers, and placeholder
+configuration belong to the Infrastructure mapping.
 
 ## Independent subsequent deployments
 
 After bootstrap, the following sequences MUST remain valid:
 
 ```text
-CDK deploy -> service deploy -> service deploy -> CDK deploy -> service deploy
-service deploy -> CDK deploy -> service deploy
+Infrastructure deploy -> service deploy -> service deploy -> Infrastructure deploy
+service deploy -> Infrastructure deploy -> service deploy
 ```
 
 The required invariants are:
 
-- A service deployment MUST NOT require an immediately preceding CDK deployment.
-- A CDK deployment MUST NOT revert the latest SSM-backed image or operator
-  runtime configuration.
-- A CDK deployment MUST NOT replace a released-image liveness contract with
-  `CMD-SHELL exit 0` or any other bootstrap-only signal.
-- A service deployment MUST preserve or deliberately reapply the structural
-  settings required by the currently accepted CDK architecture.
-- A structural change MUST remain reproducible from the ECS CDK repository.
-- Both paths MUST leave SSM and the deployed ECS service in a state that the
-  next path can consume safely.
+- A service deployment MUST NOT require an immediately preceding Infrastructure
+  deployment.
+- An Infrastructure deployment MUST NOT revert the latest valid shared image or
+  operator runtime configuration.
+- An Infrastructure deployment MUST NOT regress real-image liveness to
+  bootstrap health.
+- A service deployment MUST preserve or deliberately reapply Infrastructure
+  structural settings outside service ownership.
+- Structural changes MUST remain reproducible from Infrastructure-owned source
+  and documented structural inputs.
+- Both paths MUST leave shared state and ECS in a form the next path can consume
+  safely.
 
-For each released deployment unit, the following values MUST remain
-non-regressing across both sequences:
+For each Released unit, immutable image identity, required runtime
+configuration, and application container liveness MUST remain non-regressing
+across both sequences. Routing health, readiness, and semantic evidence remain
+separate repository-owned contracts.
 
-1. immutable image identity;
-2. operator runtime configuration plus construct-owned structural
-   configuration; and
-3. application container liveness.
+## Conformance
 
-Routing health, application readiness, and semantic evidence MUST also continue
-to follow the repository mapping, but they are not interchangeable with those
-three revision inputs.
+A deployment unit conforms only when:
 
-## Conformance and transition
-
-ADR-0002 accepts the Target architecture in this contract. It does not assert
-that every current service or workflow already conforms.
-
-- Current implementation gaps MUST be recorded in the
-  [service matrix](./ecs-service-health-matrix.md) as As-built, Target, or Open.
-- Recording an existing workflow as As-built is distinct from claiming
-  conformance. A deployment unit whose Target is not implemented MUST NOT be
-  described as conformant to this contract.
-- A new service, or a material change to an existing health or deployment path,
-  MUST follow this contract when introduced.
-- Existing services MAY move incrementally through tracked transition items.
-  Documentation-only acceptance before executable implementation is permitted,
-  but it does not establish production conformance.
-- Infrastructure MUST NOT invent a released-image probe for a service whose
-  exact liveness contract remains Open.
-- Bootstrap/Released classification, the service workflow, and the CDK
-  construct MUST transition as one consistent deployment unit.
-
-A service transition is complete only after all of the following are true:
-
-1. its exact released-image liveness contract is accepted;
-2. the real image contains the selected command or endpoint;
-3. service and CDK deployment paths reproduce the same health contract;
-4. both independent deployment sequences pass repository-owned verification;
+1. the Infrastructure mapping defines membership, input classes, placeholder
+   identity, ECS/ALB structure, and the runtime-owner link;
+2. current-state classification distinguishes Bootstrap, Released, and Invalid
+   without collapsing AWS errors into absence;
+3. the service runtime contract defines exact liveness and any separate
+   readiness or semantic evidence;
+4. the real image contains the selected liveness mechanism;
+5. service and Infrastructure deployment paths reproduce the same real-image
+   health contract;
+6. placeholder and real image satisfy the fixed routing-health contract where
+   applicable;
+7. both independent deployment sequences pass repository-owned verification;
    and
-5. the matrix records the result as conformant As-built against current
-   repository authority.
+8. the owning repositories record current implementation status against their
+   canonical documents.
 
-## Repository documentation
+Organization-document acceptance does not establish executable or production
+conformance.
 
-Each participating service repository MUST link to this contract and document:
+## Repository documentation requirements
 
-- ECS cluster, service, task family, and application container mappings;
-- image and runtime environment SSM parameter paths;
-- automatic and manual deployment triggers;
-- rollout, stability, and application health verification;
-- exposure profile, runtime modifiers, container liveness, routing health,
-  readiness, and semantic/operational evidence;
-- pre-bootstrap behavior when the ECS service does not exist; and
-- any approved exception to this contract.
+### Service repository
 
-Repository documentation MUST NOT duplicate this contract. Exceptions require
-an explicit rationale and an architecture decision record or equivalent
-cross-repository review.
+Each service repository MUST document:
 
-## Open decisions
+- exact liveness and readiness endpoints or commands, timing, and failure
+  semantics;
+- Docker image health behavior;
+- rollout, readiness, and semantic verification;
+- repository-local As-built, Target, Open, and conformance status;
+- the selected organization exposure profile and runtime modifiers; and
+- links to this contract and the canonical Infrastructure mapping.
 
-The following mechanisms remain open and MUST NOT be inferred from this
-contract:
+### Infrastructure repository
 
-1. Whether a service deployment derives a new task definition from the current
-   revision or reconstructs it from a controlled template.
-2. Whether a service deployment only validates IAM trust relationships or may
-   remediate them automatically.
-3. Whether a missing ECS service produces an SSM-only success or a failed
-   deployment for each service category.
-4. Which authorized private access mechanism, if any, each internal service uses
-   for a deployment-time readiness probe.
-5. Exact application container liveness commands for services whose matrix
-   entry remains Open.
-6. The exact Infrastructure mechanism that transports and durably preserves
-   explicit initial-bootstrap authorization.
+The Infrastructure repository MUST document:
 
-These decisions require comparison across affected services and infrastructure.
-Once accepted, they must be recorded here and, when consequential, in a new or
-superseding architecture decision record.
+- deployment-unit membership and Infra-owned structural inputs;
+- required released image and runtime inputs, optional inputs, and
+  bootstrap-compatible defaults or absence;
+- placeholder identity and configuration;
+- ECS cluster, service, task-family, and application-container mappings;
+- ALB, port, path, matcher, security-group, and network exposure;
+- task-definition health rendering and classification implementation;
+- repository-local As-built, Target, Open, and conformance status; and
+- links to this contract and each service-owned runtime health contract.
 
-## Related decisions
+The owning repositories MUST cross-link these documents. The
+[service contract ownership directory](./ecs-service-health-matrix.md) is a
+navigation aid only and does not duplicate exact values or implementation
+status.
+
+## When to change this organization contract
+
+Update this repository when:
+
+- the organization deployment model changes;
+- Bootstrap, Released, or Invalid classification principles change;
+- an exposure profile or reusable modifier is introduced or changed;
+- organization-wide health, routing, evidence, or non-regression rules change;
+- a cross-repository ownership boundary changes; or
+- an exception affecting multiple repositories is accepted.
+
+The following repository-local changes do not by themselves require an
+organization-contract update:
+
+- an endpoint path or health command changes;
+- Docker health timing changes;
+- workflow polling or task-definition rendering changes;
+- a pull request merges or implementation status changes;
+- service readiness or semantic policy changes; or
+- an individual ALB port/path or parameter mapping changes.
+
+Those changes belong in the owning service and Infrastructure documents.
+
+## Organization-wide Open decisions
+
+No organization-wide Open mechanism is currently recorded. Repository-local
+implementation choices are not organization Open decisions unless they change
+the invariants or ownership boundaries above.
+
+## Related documents
 
 - [ADR-0001: Adopt a hybrid ECS deployment model](../decisions/0001-adopt-hybrid-ecs-deployment-model.md)
-- [ADR-0002: Adopt state-aware ECS health profiles](../decisions/0002-adopt-state-aware-ecs-health-profiles.md)
-- [ECS service profile and transition matrix](./ecs-service-health-matrix.md)
+- [ADR-0002: Adopt state-aware ECS health profiles (Superseded)](../decisions/0002-adopt-state-aware-ecs-health-profiles.md)
+- [ADR-0003: Adopt current-state ECS bootstrap classification](../decisions/0003-adopt-current-state-ecs-bootstrap-classification.md)
+- [ECS health and readiness profiles](./ecs-health-readiness-profiles.md)
+- [Service contract ownership directory](./ecs-service-health-matrix.md)
