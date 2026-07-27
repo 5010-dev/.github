@@ -65,6 +65,7 @@ Keep the PR focused; a reviewer should grasp it in a few minutes. Delete any sec
 - [ ] Reproducible from a clean checkout (fresh install + the repo's check/test gate)
 - [ ] No secrets, credentials, or large runtime artifacts committed
 - [ ] Docs / README / API reference updated where behavior changed
+- [ ] Canonical architecture / ADR / runbook / validation evidence updated where boundaries or operations changed
 - [ ] Branch is current with the base; commits are independently understandable and ready for rebase + fast-forward
 
 ## Related (optional)

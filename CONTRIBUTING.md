@@ -31,11 +31,27 @@ integration must follow the relevant organization engineering contract. ECS
 services must follow the
 [ECS deployment contract](https://github.com/5010-dev/.github/blob/main/docs/platform/ecs-deployment-contract.md).
 
+Engineering systems and independently governed engineering layers must follow
+the
+[engineering documentation standard](https://github.com/5010-dev/.github/blob/main/docs/standards/engineering-documentation/README.md).
+The organization arc42 profile is the canonical engineering-documentation spine
+for architecture goals, boundaries, responsibilities, runtime and deployment
+views, cross-cutting concepts, quality requirements, risks, and accepted target
+state.
+
+Concern-specific authorities remain with their owners. Executable code, schemas,
+generated contracts, runbooks, deployment evidence, scientific designs, and
+empirical results are linked from the architecture corpus rather than absorbed
+into it. A package, process, provider, model, or directory does not require a
+separate arc42 corpus unless it has an independently reviewable responsibility,
+failure, security, change, or quality boundary.
+
 Repository documentation should link to organization contracts and describe
-only repository-specific resource names, configuration paths, deployment
-commands, and accepted exceptions. Do not copy an organization contract into
-individual repositories. A repository-specific exception must be explicit,
-justified, and linked to an architecture decision record or equivalent review.
+only repository- or layer-specific resource names, configuration paths,
+deployment commands, authority mappings, implementation status, and accepted
+exceptions. Do not copy an organization contract into individual repositories.
+A repository-specific exception must be explicit, justified, and linked to an
+architecture decision record or equivalent review.
 
 ## Choosing direct development or a pull request
 
@@ -172,4 +188,7 @@ and published artifact.
 Repositories should document setup, validation, architecture, release, and
 deployment details in their README or development guide. A repository-local
 `CONTRIBUTING.md` overrides this organization default and should be used only when
-the repository genuinely requires a different contribution model.
+the repository genuinely requires a different contribution model. An
+engineering system's canonical documentation entry point, arc42 scope, adopted
+organization profile, and concern-based authority map remain repository-local
+even when the organization templates are used to create them.
