@@ -1,12 +1,20 @@
 # Engineering documentation
 
-This directory contains canonical engineering contracts and cross-repository
-architecture decisions for the `5010-dev` organization.
+This directory contains canonical engineering standards, platform contracts,
+adoption guidance, and cross-repository architecture decisions for the
+`5010-dev` organization.
 
 ## Authority
 
-- Organization contracts own default cross-repository invariants and reusable
-  exposure-profile and runtime-modifier definitions.
+- Organization standards own default cross-repository engineering invariants,
+  required profiles, and conformance rules.
+- Platform contracts own reusable platform-specific invariants, exposure
+  profiles, runtime modifiers, and responsibility boundaries.
+- Guides explain adoption and migration. They do not override a standard,
+  platform contract, accepted ADR, or repository-local canonical owner.
+- Templates are scaffold sources. After adoption, the resulting repository-local
+  documents are maintained by that repository and are not synchronized
+  byte-for-byte with the templates.
 - Architecture decision records preserve why consequential cross-repository
   decisions were accepted.
 - Repository code, workflow definitions, infrastructure definitions, and
@@ -28,24 +36,42 @@ organization contracts are to be interpreted as described in
 [BCP 14](https://www.rfc-editor.org/info/bcp14), when and only when they appear
 in all capitals.
 
-## Contracts
+## Standards
 
+- [Organization standards index](./standards/README.md)
+- [Engineering documentation standard](./standards/engineering-documentation/README.md)
+- [Engineering documentation contract](./standards/engineering-documentation/contract.md)
+- [5010 arc42 profile](./standards/engineering-documentation/arc42-profile.md)
+- [Documentation lifecycle and validation](./standards/engineering-documentation/lifecycle-and-validation.md)
+
+## Guides
+
+- [Documentation guides index](./guides/README.md)
+- [Adopting the organization arc42 profile](./guides/adopting-arc42.md)
+- [Migrating existing documentation](./guides/migrating-existing-documentation.md)
+
+## Platform contracts
+
+- [Platform contracts index](./platform/README.md)
 - [ECS deployment contract](./platform/ecs-deployment-contract.md)
 - [ECS health and readiness profiles](./platform/ecs-health-readiness-profiles.md)
 - [ECS service contract ownership directory](./platform/ecs-service-health-matrix.md)
 
+## Templates and tooling
+
+- [Engineering documentation templates](../templates/engineering-documentation/README.md)
+- [Documentation tooling](../scripts/docs/README.md)
+
 ## Decisions
 
-- [ADR-0001: Adopt a hybrid ECS deployment model](./decisions/0001-adopt-hybrid-ecs-deployment-model.md)
-- [ADR-0002: Adopt state-aware ECS health profiles (Superseded)](./decisions/0002-adopt-state-aware-ecs-health-profiles.md)
-- [ADR-0003: Adopt current-state ECS bootstrap classification](./decisions/0003-adopt-current-state-ecs-bootstrap-classification.md)
+- [Organization architecture decision index](./decisions/README.md)
 
 ## Changing a contract
 
-Update an organization contract when a shared invariant, reusable profile, or
-cross-repository responsibility boundary changes. Service-local endpoints,
-commands, mappings, workflows, and implementation status are updated only in
-their owning repositories.
+Update an organization standard or platform contract when a shared invariant,
+reusable profile, or cross-repository responsibility boundary changes.
+Repository-local endpoints, commands, mappings, workflows, scientific facts,
+and implementation status are updated only in their owning repositories.
 
 Add or supersede an architecture decision record when an organization change is
 consequential, cross-repository, or hard to reverse. Do not use issue trackers,

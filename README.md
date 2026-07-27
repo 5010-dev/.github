@@ -14,18 +14,23 @@ repositories; GitHub does not inherit them automatically.
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — default contribution and Git workflow policy
 - [`pull_request_template.md`](./pull_request_template.md) — default pull request template
 - [`docs/README.md`](./docs/README.md) — organization engineering documentation index
+- [`Engineering documentation standard`](./docs/standards/engineering-documentation/README.md) — canonical arc42 documentation contract
+- [`Documentation adoption guides`](./docs/guides/README.md) — adoption and migration procedures
+- [`Engineering documentation templates`](./templates/engineering-documentation/README.md) — repository, subsystem, ADR, runbook, and validation starters
+- [`Documentation tooling`](./scripts/docs/README.md) — source validation, scaffold, and conformance checks
 - [`ECS deployment contract`](./docs/platform/ecs-deployment-contract.md) — shared CDK and service-repository deployment model
 - [`ECS health and readiness profiles`](./docs/platform/ecs-health-readiness-profiles.md) — state-aware health semantics by service shape
 - [`ECS service contract ownership directory`](./docs/platform/ecs-service-health-matrix.md) — navigation to service runtime contracts and Infrastructure mappings
-- [`ADR-0001`](./docs/decisions/0001-adopt-hybrid-ecs-deployment-model.md) — decision record for the hybrid ECS deployment model
-- [`ADR-0002`](./docs/decisions/0002-adopt-state-aware-ecs-health-profiles.md) — superseded decision record for state-aware ECS health profiles
-- [`ADR-0003`](./docs/decisions/0003-adopt-current-state-ecs-bootstrap-classification.md) — current-state bootstrap classification and retained health-profile decision
+- [`Organization decisions`](./docs/decisions/README.md) — cross-repository ADR index
 
 ## Notes
 
 - To customize for a specific repo, add the equivalent file to that repo — it overrides this default.
 - Defaults apply to repos without their own version and don't appear in each repo's file tree.
 - GitHub reads these from this repo's **default branch**.
+- Arbitrary standards, guides, and templates in this repository are not inherited
+  automatically. Participating repositories link to the standards and adopt the
+  templates or equivalent local structures explicitly.
 - Repository documentation should link to organization engineering contracts
   rather than copy them. Exact endpoints, commands, mappings, and implementation
   status remain in their owning service or Infrastructure repository.
