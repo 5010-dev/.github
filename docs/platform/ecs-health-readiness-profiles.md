@@ -177,7 +177,8 @@ not yet implemented is Target, not Open.
 
 ## Deployment evidence
 
-A real-image deployment MUST record, without sensitive values:
+A provisioned-service real-image deployment MUST record, without sensitive
+values:
 
 - source revision and immutable image identity;
 - SSM image parameter path and parameter version or observation time;
@@ -187,6 +188,21 @@ A real-image deployment MUST record, without sensitive values:
 - the readiness or semantic observation required by repository policy; and
 - any accepted zero-scale, standby, operator-controlled, or stop-then-start
   outcome.
+
+An allowed staged-image result for an explicitly unprovisioned service is not an
+ECS service deployment and cannot produce runtime health evidence. It MUST
+instead record:
+
+- source revision and immutable image identity;
+- the staged SSM image parameter path and resulting parameter version;
+- the explicit `unprovisioned-service` classification; and
+- that task-definition registration, ECS service update, rollout, liveness,
+  routing, readiness, and semantic verification were not performed.
+
+A staged-image result MUST NOT claim that the service is deployed, released,
+converged, healthy, ready, or routed. The
+[service delivery workflow standard](./ecs-service-delivery-workflow-standard.md#rollout-and-evidence)
+owns the complete outcome-specific evidence contract.
 
 Deployment logs MUST NOT print decrypted SSM values, bearer tokens, private
 endpoint response bodies containing sensitive state, or complete task

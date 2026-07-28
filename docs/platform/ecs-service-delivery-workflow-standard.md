@@ -186,9 +186,9 @@ The workflow MUST preserve both source provenance and deployment identity.
 - A successful release MUST leave shared deployment state and the registered
   application container selecting the same policy-compliant immutable image
   identity.
-- Verification MUST compare the deployed named container with the expected
-  digest. The presence of a source SHA in a mutable tag is provenance evidence,
-  not a substitute for digest identity.
+- For a provisioned-service deployment, verification MUST compare the deployed
+  named container with the expected digest. The presence of a source SHA in a
+  mutable tag is provenance evidence, not a substitute for digest identity.
 
 ### Shared state and mutation safety
 
@@ -210,7 +210,8 @@ updating the service cannot be one AWS transaction. A workflow therefore MUST:
 
 1. complete authentication, target validation, required reads, and image
    publication before mutating shared deployment state;
-2. fail visibly when any later phase is incomplete;
+2. fail visibly when any required later phase is incomplete, while an allowed
+   staged-image result explicitly reports the ECS phases excluded by policy;
 3. emit the non-sensitive previous and intended identities needed for operator
    recovery; and
 4. leave state in a form that the next valid Infrastructure or service deploy
@@ -264,7 +265,11 @@ revision:
 Service delivery MUST NOT create, repair, or broadly discover missing
 Infrastructure resources as a substitute for an Infrastructure deployment.
 Repository policy MAY define an explicit staged-image result for a deployment
-unit whose service is not yet provisioned.
+unit whose service is not yet provisioned. A staged-image result is not an ECS
+service deployment or successful release. It MUST stop before task-definition
+registration, ECS service update, and runtime health, routing, readiness, or
+semantic verification, and it MUST report those phases as not performed because
+the service was classified as unprovisioned.
 
 ### Bootstrap-to-Released health promotion
 
@@ -287,15 +292,28 @@ A required deployment gate MUST exit non-zero when its evidence is absent or
 contradictory. Each report MUST name the signal observed and MUST NOT collapse
 the following into an unqualified "healthy" result.
 
-| Evidence                            | Organization requirement                                                                                                                                                 |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Source and image                    | Always record the source revision and expected immutable digest.                                                                                                         |
-| Task definition                     | Always prove the service selected the intended revision, the named application container selected the expected digest, and the revision renders released-image liveness. |
-| ECS rollout                         | Always report desired, running, and pending counts plus the primary rollout state within a bounded deadline.                                                             |
-| Observed container liveness         | Required when desired capacity is non-zero and ECS exposes container health; do not reinterpret bootstrap health as real-image liveness.                                 |
-| Routing health                      | Required for a deployed ALB application, control-plane, or health-only route at non-zero desired capacity; it is not implied by rollout convergence.                     |
-| Application readiness               | Required only when the service contract defines it as a deployment gate; it remains separate from liveness and routing.                                                  |
-| Semantic or operational correctness | Required only when repository policy selects it; state the exact observation and time window.                                                                            |
+Each successful terminal result MUST select and report exactly one of these
+outcomes:
+
+- a provisioned-service deployment; or
+- an allowed staged-image result for an explicitly unprovisioned service.
+
+| Evidence                            | Provisioned-service deployment                                                                                                                                           | Allowed staged-image result                                                                                                                                 |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source and image                    | Always record the source revision and expected immutable digest.                                                                                                         | Always record the source revision and expected immutable digest.                                                                                            |
+| Shared deployment state             | Record the selected image parameter path, parameter version or observation time, and expected identity.                                                                  | Record the staged image parameter path, resulting parameter version, and expected identity.                                                                 |
+| ECS service classification          | Record the resolved service identity and provisioned result.                                                                                                             | Record an explicit `unprovisioned-service` result under the repository's accepted missing-service policy.                                                   |
+| Task definition                     | Always prove the service selected the intended revision, the named application container selected the expected digest, and the revision renders released-image liveness. | Record that task-definition registration and ECS service update were not performed because the service was unprovisioned.                                   |
+| ECS rollout                         | Always report desired, running, and pending counts plus the primary rollout state within a bounded deadline.                                                             | Record that rollout verification was not performed; do not fabricate task revision, task counts, or rollout state.                                          |
+| Observed container liveness         | Required when desired capacity is non-zero and ECS exposes container health; do not reinterpret bootstrap health as real-image liveness.                                 | Record that runtime liveness verification was not performed.                                                                                                |
+| Routing health                      | Required for a deployed ALB application, control-plane, or health-only route at non-zero desired capacity; it is not implied by rollout convergence.                     | Record that routing verification was not performed.                                                                                                         |
+| Application readiness               | Required only when the service contract defines it as a deployment gate; it remains separate from liveness and routing.                                                  | Do not claim application readiness; record it as not performed when the provisioned-service path would otherwise require it.                                |
+| Semantic or operational correctness | Required only when repository policy selects it; state the exact observation and time window.                                                                            | Do not claim runtime semantic or operational correctness; record it as not performed when the provisioned-service path would otherwise require observation. |
+
+A staged-image result MUST NOT be reported as deployed, released, converged,
+healthy, ready, or routed. Its success means only that the source and immutable
+image identity were published to the recorded shared-state version for later
+Infrastructure consumption.
 
 Profile modifiers govern legitimate outcomes. For example, `elastic-to-zero`
 verification MUST accept an intended `0/0` service without scaling it up, and a
@@ -368,16 +386,16 @@ repository-owned policies.
 The following choices remain repository-owned when the required envelope above
 is satisfied.
 
-| Concern               | Allowed variation                                                                       | Required local record                                       |
-| --------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Trigger               | automatic, manual, path-filtered, or a combination within the organization branch model | allowed deployment refs and environment mapping             |
-| Deployment unit       | one service, several roles, or a dynamic fleet                                          | membership owner and mutation order                         |
-| Fleet rollout         | serial, bounded parallel, canary, or staged                                             | failure aggregation and stop policy                         |
-| Missing service       | fail, or stage immutable image state for later Infra creation                           | classification and operator-visible result                  |
-| Readiness             | no deploy gate, endpoint gate, internal probe, or semantic gate                         | selected health profile and exact evidence                  |
-| Zero scale or standby | accept intended `0/0`, standby, or operator-controlled state                            | applicable runtime modifiers                                |
-| Rollback              | manual, automatic, or forward-fix                                                       | inputs, trigger, verification, and partial-failure behavior |
-| Notification          | provider, audience, and failure policy                                                  | non-sensitive payload and job-result behavior               |
+| Concern               | Allowed variation                                                                       | Required local record                                                                 |
+| --------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Trigger               | automatic, manual, path-filtered, or a combination within the organization branch model | allowed deployment refs and environment mapping                                       |
+| Deployment unit       | one service, several roles, or a dynamic fleet                                          | membership owner and mutation order                                                   |
+| Fleet rollout         | serial, bounded parallel, canary, or staged                                             | failure aggregation and stop policy                                                   |
+| Missing service       | fail, or stage immutable image state for later Infra creation                           | classification, shared-state version, skipped ECS phases, and operator-visible result |
+| Readiness             | no deploy gate, endpoint gate, internal probe, or semantic gate                         | selected health profile and exact evidence                                            |
+| Zero scale or standby | accept intended `0/0`, standby, or operator-controlled state                            | applicable runtime modifiers                                                          |
+| Rollback              | manual, automatic, or forward-fix                                                       | inputs, trigger, verification, and partial-failure behavior                           |
+| Notification          | provider, audience, and failure policy                                                  | non-sensitive payload and job-result behavior                                         |
 
 Variation does not permit weakening immutable digest identity, named-container
 selection, structural preservation, real-image liveness promotion,
@@ -424,26 +442,43 @@ ADR and a change to this standard rather than a repository-only record.
 Repositories MAY copy this checklist into a pull request that changes an ECS
 service delivery workflow or its local implementation.
 
+Use the common block and every outcome block supported by the changed workflow.
+When the checklist evaluates a particular run, select exactly one outcome block.
+For that run, the staged-image block replaces, rather than supplements, the
+provisioned-service ECS block.
+
 ```markdown
-### ECS service delivery conformance
+### ECS service delivery conformance — common
 
 - [ ] Event, ref, and target environment are validated before AWS mutation.
 - [ ] Permissions are explicit; OIDC and expected AWS account are verified.
 - [ ] Mutating runs are collision-safe and all jobs and polls are bounded.
-- [ ] Source provenance is recorded and deployment uses an immutable digest.
-- [ ] Previous shared-state, task-definition, and named-container identities are captured.
+- [ ] Source provenance is recorded and the published or deployed image identity uses an immutable digest.
+- [ ] Previous shared-state identity and either previous task-definition and named-container identities or an explicit `unprovisioned-service` result are captured.
+- [ ] The outcome is explicitly classified as a provisioned-service deployment or an allowed staged-image result.
+- [ ] Sensitive values cannot reach logs, outputs, summaries, artifacts, diagnostics, or notifications.
+- [ ] Failure diagnostics are bounded and rollback inputs are operator-visible without secret material.
+- [ ] Non-trivial delivery behavior is locally executable and deterministically tested.
+- [ ] Canonical repository docs state As-built, Target, Open, and any accepted exception.
+
+### Provisioned-service deployment
+
 - [ ] The task-definition strategy uses current-revision clone and named mutation, or links an accepted alternative-generation exception.
 - [ ] Infrastructure-owned structure, sidecars, and unknown fields are preserved.
 - [ ] A real image receives service-owned liveness; bootstrap `exit 0` is not retained.
 - [ ] Task revision, named-container digest, and ECS rollout convergence are verified.
 - [ ] Routing, readiness, semantic, zero-scale, and standby evidence follow the selected profile.
-- [ ] Sensitive values cannot reach logs, outputs, summaries, artifacts, diagnostics, or notifications.
-- [ ] Failure diagnostics are bounded and rollback inputs are operator-visible without secret material.
-- [ ] Non-trivial deployment behavior is locally executable and deterministically tested.
-- [ ] Canonical repository docs state As-built, Target, Open, and any accepted exception.
+
+### Staged-image result
+
+- [ ] Source revision, immutable digest, shared-state parameter path, resulting parameter version, and expected identity are recorded.
+- [ ] ECS service absence is recorded as an explicit `unprovisioned-service` result under the accepted missing-service policy.
+- [ ] Task-definition registration, ECS service update, rollout, liveness, routing, readiness, and semantic verification are recorded as not performed.
+- [ ] The outcome is not described as deployed, released, converged, healthy, ready, or routed.
 ```
 
-When the current task-definition clone strategy is not used, also include:
+For a provisioned-service deployment where the current task-definition clone
+strategy is not used, also include:
 
 ```markdown
 - [ ] Alternative generation has structural-equivalence and fail-closed evidence.
