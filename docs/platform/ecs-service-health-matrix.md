@@ -1,13 +1,14 @@
 # ECS service contract ownership directory
 
 - Status: Navigation index; non-authoritative discovery aid
-- Last updated: 2026-07-26
+- Last updated: 2026-07-29
 - Applies to: `5010-dev` services using the shared AWS ECS platform
 
 This directory connects the organization
-[ECS deployment contract](./ecs-deployment-contract.md) and
-[health profiles](./ecs-health-readiness-profiles.md) to the repositories that
-own exact runtime and Infrastructure contracts.
+[ECS deployment contract](./ecs-deployment-contract.md),
+[service delivery workflow standard](./ecs-service-delivery-workflow-standard.md),
+and [health profiles](./ecs-health-readiness-profiles.md) to the repositories
+that own exact runtime and Infrastructure contracts.
 
 This file is not a service-state SSOT. It does not record exact endpoints,
 commands, timing, ports, parameter paths, revisions, pull-request state,
@@ -23,8 +24,8 @@ implementation progress, profile assignments, or conformance status.
   exposure, task-definition health rendering, classification implementation,
   and repository-local status.
 - This organization repository maintains only cross-repository ownership
-  boundaries, reusable profiles, current-state classification principles, and
-  organization-wide invariants.
+  boundaries, workflow invariants, reusable profiles, current-state
+  classification principles, and organization-wide invariants.
 
 ## Service ownership directory
 
@@ -72,3 +73,4 @@ organization-wide invariant or ownership boundary.
 - [ADR-0001: Adopt a hybrid ECS deployment model](../decisions/0001-adopt-hybrid-ecs-deployment-model.md)
 - [ADR-0002: Adopt state-aware ECS health profiles (Superseded)](../decisions/0002-adopt-state-aware-ecs-health-profiles.md)
 - [ADR-0003: Adopt current-state ECS bootstrap classification](../decisions/0003-adopt-current-state-ecs-bootstrap-classification.md)
+- [ADR-0005: Adopt an ECS service delivery workflow envelope](../decisions/0005-adopt-ecs-service-delivery-workflow-envelope.md)

@@ -6,6 +6,7 @@ participate in a common runtime or delivery platform.
 ## ECS
 
 - [ECS deployment contract](./ecs-deployment-contract.md)
+- [ECS service delivery workflow standard](./ecs-service-delivery-workflow-standard.md)
 - [ECS health and readiness profiles](./ecs-health-readiness-profiles.md)
 - [ECS service contract ownership directory](./ecs-service-health-matrix.md)
 

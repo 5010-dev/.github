@@ -19,6 +19,7 @@ repositories; GitHub does not inherit them automatically.
 - [`Engineering documentation templates`](./templates/engineering-documentation/README.md) — repository, subsystem, ADR, runbook, and validation starters
 - [`Documentation tooling`](./scripts/docs/README.md) — source validation, scaffold, and conformance checks
 - [`ECS deployment contract`](./docs/platform/ecs-deployment-contract.md) — shared CDK and service-repository deployment model
+- [`ECS service delivery workflow standard`](./docs/platform/ecs-service-delivery-workflow-standard.md) — service release workflow invariants, variation, and conformance
 - [`ECS health and readiness profiles`](./docs/platform/ecs-health-readiness-profiles.md) — state-aware health semantics by service shape
 - [`ECS service contract ownership directory`](./docs/platform/ecs-service-health-matrix.md) — navigation to service runtime contracts and Infrastructure mappings
 - [`Organization decisions`](./docs/decisions/README.md) — cross-repository ADR index

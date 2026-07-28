@@ -54,6 +54,7 @@ in all capitals.
 
 - [Platform contracts index](./platform/README.md)
 - [ECS deployment contract](./platform/ecs-deployment-contract.md)
+- [ECS service delivery workflow standard](./platform/ecs-service-delivery-workflow-standard.md)
 - [ECS health and readiness profiles](./platform/ecs-health-readiness-profiles.md)
 - [ECS service contract ownership directory](./platform/ecs-service-health-matrix.md)
 
