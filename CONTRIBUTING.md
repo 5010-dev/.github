@@ -30,6 +30,9 @@ Changes to shared platform boundaries, deployment workflows, or infrastructure
 integration must follow the relevant organization engineering contract. ECS
 services must follow the
 [ECS deployment contract](https://github.com/5010-dev/.github/blob/main/docs/platform/ecs-deployment-contract.md).
+ECS service release workflows must also follow the
+[ECS service delivery workflow standard](https://github.com/5010-dev/.github/blob/main/docs/platform/ecs-service-delivery-workflow-standard.md),
+including its repository-local exception and pull request conformance formats.
 
 Engineering systems and independently governed engineering layers must follow
 the

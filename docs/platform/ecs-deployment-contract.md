@@ -1,7 +1,7 @@
 # ECS deployment contract
 
 - Status: Accepted
-- Last updated: 2026-07-26
+- Last updated: 2026-07-29
 - Applies to: `5010-dev` services provisioned on the shared AWS ECS platform
 
 This contract defines how the ECS Infrastructure repository, service
@@ -10,6 +10,8 @@ every application release to be preceded by an infrastructure deployment.
 
 Health signal semantics and reusable service shapes are defined in the
 [ECS health and readiness profiles](./ecs-health-readiness-profiles.md).
+Service release workflow mechanics and conformance evidence are defined in the
+[ECS service delivery workflow standard](./ecs-service-delivery-workflow-standard.md).
 
 The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** in
 this document are to be interpreted as described in BCP 14.
@@ -269,8 +271,10 @@ A deployment unit conforms only when:
 6. placeholder and real image satisfy the fixed routing-health contract where
    applicable;
 7. both independent deployment sequences pass repository-owned verification;
+8. the service release path satisfies the
+   [ECS service delivery workflow standard](./ecs-service-delivery-workflow-standard.md);
    and
-8. the owning repositories record current implementation status against their
+9. the owning repositories record current implementation status against their
    canonical documents.
 
 Organization-document acceptance does not establish executable or production
@@ -343,5 +347,7 @@ the invariants or ownership boundaries above.
 - [ADR-0001: Adopt a hybrid ECS deployment model](../decisions/0001-adopt-hybrid-ecs-deployment-model.md)
 - [ADR-0002: Adopt state-aware ECS health profiles (Superseded)](../decisions/0002-adopt-state-aware-ecs-health-profiles.md)
 - [ADR-0003: Adopt current-state ECS bootstrap classification](../decisions/0003-adopt-current-state-ecs-bootstrap-classification.md)
+- [ADR-0005: Adopt an ECS service delivery workflow envelope](../decisions/0005-adopt-ecs-service-delivery-workflow-envelope.md)
+- [ECS service delivery workflow standard](./ecs-service-delivery-workflow-standard.md)
 - [ECS health and readiness profiles](./ecs-health-readiness-profiles.md)
 - [Service contract ownership directory](./ecs-service-health-matrix.md)

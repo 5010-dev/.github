@@ -53,6 +53,7 @@ Keep the PR focused; a reviewer should grasp it in a few minutes. Delete any sec
 ## Risks & rollback
 
 <!-- Delete entirely for docs / chore / test PRs. -->
+
 - **Production failure mode:** <!-- what breaks in prod if this is wrong -->
 - **Rollback:** <!-- how it's triggered — revert + redeploy prior image, migration down, manual intervention, … -->
 - **Breaking changes:** none <!-- or describe + migration path -->
@@ -66,6 +67,7 @@ Keep the PR focused; a reviewer should grasp it in a few minutes. Delete any sec
 - [ ] No secrets, credentials, or large runtime artifacts committed
 - [ ] Docs / README / API reference updated where behavior changed
 - [ ] Canonical architecture / ADR / runbook / validation evidence updated where boundaries or operations changed
+- [ ] ECS service delivery changes, if any, complete the [organization workflow checklist](https://github.com/5010-dev/.github/blob/main/docs/platform/ecs-service-delivery-workflow-standard.md#pull-request-conformance-checklist) or link an accepted exception
 - [ ] Branch is current with the base; commits are independently understandable and ready for rebase + fast-forward
 
 ## Related (optional)
