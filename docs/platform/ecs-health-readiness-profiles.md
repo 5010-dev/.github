@@ -189,18 +189,23 @@ values:
 - any accepted zero-scale, standby, operator-controlled, or stop-then-start
   outcome.
 
-An allowed staged-image result for an explicitly unprovisioned service is not an
-ECS service deployment and cannot produce runtime health evidence. It MUST
-instead record:
+An allowed staged-image terminal result with an explicit
+`unprovisioned-service` observation is not an ECS service deployment and cannot
+produce runtime health evidence. It MUST instead record:
 
 - source revision and immutable image identity;
 - the staged SSM image parameter path and resulting parameter version;
-- the explicit `unprovisioned-service` classification; and
+- deployment-unit
+  [current state](./ecs-deployment-contract.md#current-state-classification) as
+  `Released` only when all required released image and runtime inputs are
+  complete and valid and optional inputs satisfy policy, and as `Invalid`
+  otherwise;
+- the explicit `unprovisioned-service` observation; and
 - that task-definition registration, ECS service update, rollout, liveness,
   routing, readiness, and semantic verification were not performed.
 
-A staged-image result MUST NOT claim that the service is deployed, released,
-converged, healthy, ready, or routed. The
+A staged-image result MUST NOT claim that the ECS service was deployed or rolled
+out, or that it is converged, healthy, ready, or routed. The
 [service delivery workflow standard](./ecs-service-delivery-workflow-standard.md#rollout-and-evidence)
 owns the complete outcome-specific evidence contract.
 
