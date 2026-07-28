@@ -17,6 +17,12 @@ The check scaffolds a temporary example, verifies it with the consumer
 conformance checker, and confirms that a second scaffold refuses to overwrite
 the generated files.
 
+The
+[documentation governance workflow](../../.github/workflows/docs.yml) runs this
+same gate for pull requests targeting `main` and pushes to `main`. The workflow
+is read-only, uses explicit least-privilege permissions, and does not replace
+repository-owner review of factual or architectural claims.
+
 ## Scaffold
 
 Create the base L0 documentation tree in a new repository or engineering layer:

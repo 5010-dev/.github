@@ -1,13 +1,19 @@
 # ECS health and readiness profiles
 
 - Status: Accepted
-- Last updated: 2026-07-26
+- Last updated: 2026-07-29
 - Applies to: `5010-dev` services provisioned on the shared AWS ECS platform
 
 This contract defines a common vocabulary for selecting ECS container health,
 routing health, rollout evidence, readiness, and operational evidence. It is
 used with the [ECS deployment contract](./ecs-deployment-contract.md), not as a
 replacement for service-owned health semantics.
+
+The
+[ECS service delivery workflow standard](./ecs-service-delivery-workflow-standard.md)
+owns the minimum evidence required for a conforming service release. This
+profile owns signal meaning and selection; it does not weaken a required
+delivery gate.
 
 The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** in
 this document are to be interpreted as described in BCP 14.
@@ -115,7 +121,8 @@ The role performs background work and has no public application endpoint.
 The ALB exposes an operator or query control plane rather than the background
 engine's business-work readiness.
 
-- Routing health SHOULD prove that the HTTP control plane can serve traffic.
+- At non-zero desired capacity, deployment verification MUST prove that the HTTP
+  control plane is routable.
 - Engine running state, operator activation, tokens, query availability, and
   business readiness MUST NOT be universal container-health requirements.
 - A service MAY define stricter semantic gates after rollout, but it MUST name
@@ -170,7 +177,7 @@ not yet implemented is Target, not Open.
 
 ## Deployment evidence
 
-A real-image deployment SHOULD record, without sensitive values:
+A real-image deployment MUST record, without sensitive values:
 
 - source revision and immutable image identity;
 - SSM image parameter path and parameter version or observation time;
@@ -203,3 +210,4 @@ taxonomy or another organization-wide invariant.
 - [ADR-0001: Adopt a hybrid ECS deployment model](../decisions/0001-adopt-hybrid-ecs-deployment-model.md)
 - [ADR-0002: Adopt state-aware ECS health profiles (Superseded)](../decisions/0002-adopt-state-aware-ecs-health-profiles.md)
 - [ADR-0003: Adopt current-state ECS bootstrap classification](../decisions/0003-adopt-current-state-ecs-bootstrap-classification.md)
+- [ADR-0005: Adopt an ECS service delivery workflow envelope](../decisions/0005-adopt-ecs-service-delivery-workflow-envelope.md)

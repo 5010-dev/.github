@@ -15,6 +15,17 @@ maintenance work to move quickly.
 `main` must contain only commits promoted from `dev`. Do not implement product
 changes directly on `main`.
 
+This branch model and integration flow are organization policy. Repositories own
+their CI and deployment triggers, path filters, and ref-to-environment mappings
+within this model; those choices do not redefine branch roles or pull request
+targets.
+
+A repository that cannot follow this branch model must record an explicit
+exception in its canonical repository documentation or an ADR. The exception
+must state its scope, rationale, risks, approval authority, review conditions,
+exit conditions, and relationship to this policy. An implicit or undocumented
+branch model is not an accepted repository variation.
+
 ## Repository setup and quality gates
 
 Follow the repository's README or development guide after cloning the repository

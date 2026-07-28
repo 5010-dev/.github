@@ -52,9 +52,10 @@ MUST NOT duplicate mutable repository implementation facts.
 | Cross-repository invariant, signal vocabulary, and exception rule                          | Organization platform contract       | Define normatively.                                                                    |
 | Allowed workflow variation and required review evidence                                    | Organization workflow standard       | Define as guidance or a comparison matrix.                                             |
 | Service and Infrastructure ownership                                                       | Owning repositories                  | Link through the non-authoritative ownership directory.                                |
+| Canonical repository document location                                                     | Owning repository                    | Link for navigation; a branch-qualified link is not implementation-state evidence.     |
 | Exact trigger, resource name, path, command, timeout, probe, and rollback behavior         | Owning repository                    | Do not copy; require repository-local documentation.                                   |
 | Current workflow structure, implementation gap, profile assignment, and conformance status | Owning repository                    | Do not maintain a central status table.                                                |
-| Pull request, commit, mutable branch, deployment run, and validation result                | Owning repository or evidence system | Link only when needed by a durable decision; do not use as current organization state. |
+| Pull request, commit, deployment run, and validation result                                | Owning repository or evidence system | Link only when needed by a durable decision; do not use as current organization state. |
 
 An implementation inventory MAY inform an organization decision during
 research, but the resulting normative document MUST retain only stable
@@ -116,12 +117,23 @@ provide an equivalent deterministic validation path.
 
 A deployment MUST bind the release to an identifiable source revision.
 
+- The organization
+  [`CONTRIBUTING.md`](../../CONTRIBUTING.md#branch-roles) owns branch roles and
+  the integration flow: work branches start from `origin/dev`, normal pull
+  requests target `dev`, and production promotion fast-forwards `dev` to `main`.
+- A repository owns deployment triggers, path filters, and
+  ref-to-environment mappings within that organization branch model.
 - Automatic and manual entry points MUST derive an explicit target environment.
 - A manual input MUST NOT silently deploy a different ref than the repository's
   documented environment policy permits.
 - The workflow MUST fail before AWS mutation when the event, ref, and target
   environment combination is invalid or ambiguous.
-- Exact automatic branches and path filters are repository-owned variation.
+- Whether `main` or `dev` deploys automatically, permits only manual deployment,
+  or runs CI without deployment is repository-owned policy. That policy MUST NOT
+  silently redefine the organization branch model.
+- A repository that changes branch roles or the integration flow MUST record the
+  organization-policy exception required by `CONTRIBUTING.md`, including scope,
+  rationale, risks, approval, review conditions, and exit conditions.
 - A `workflow_dispatch` run MAY select an environment only when the repository
   documents the allowed ref-to-environment relationship.
 
@@ -188,8 +200,9 @@ to identify:
 
 - the previous shared image identity and observation or parameter version, or
   an explicit not-found result;
-- the ECS service's previous task-definition revision;
-- the previous named application-container image; and
+- the ECS service's previous task-definition revision and named
+  application-container image, or an explicit unprovisioned-service result
+  permitted by the repository's missing-service policy; and
 - the intended new source revision and digest.
 
 Publishing the image, updating shared state, registering a revision, and
@@ -355,16 +368,16 @@ repository-owned policies.
 The following choices remain repository-owned when the required envelope above
 is satisfied.
 
-| Concern               | Allowed variation                                               | Required local record                                       |
-| --------------------- | --------------------------------------------------------------- | ----------------------------------------------------------- |
-| Trigger               | automatic, manual, path-filtered, or a combination              | allowed refs and environment mapping                        |
-| Deployment unit       | one service, several roles, or a dynamic fleet                  | membership owner and mutation order                         |
-| Fleet rollout         | serial, bounded parallel, canary, or staged                     | failure aggregation and stop policy                         |
-| Missing service       | fail, or stage immutable image state for later Infra creation   | classification and operator-visible result                  |
-| Readiness             | no deploy gate, endpoint gate, internal probe, or semantic gate | selected health profile and exact evidence                  |
-| Zero scale or standby | accept intended `0/0`, standby, or operator-controlled state    | applicable runtime modifiers                                |
-| Rollback              | manual, automatic, or forward-fix                               | inputs, trigger, verification, and partial-failure behavior |
-| Notification          | provider, audience, and failure policy                          | non-sensitive payload and job-result behavior               |
+| Concern               | Allowed variation                                                                       | Required local record                                       |
+| --------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Trigger               | automatic, manual, path-filtered, or a combination within the organization branch model | allowed deployment refs and environment mapping             |
+| Deployment unit       | one service, several roles, or a dynamic fleet                                          | membership owner and mutation order                         |
+| Fleet rollout         | serial, bounded parallel, canary, or staged                                             | failure aggregation and stop policy                         |
+| Missing service       | fail, or stage immutable image state for later Infra creation                           | classification and operator-visible result                  |
+| Readiness             | no deploy gate, endpoint gate, internal probe, or semantic gate                         | selected health profile and exact evidence                  |
+| Zero scale or standby | accept intended `0/0`, standby, or operator-controlled state                            | applicable runtime modifiers                                |
+| Rollback              | manual, automatic, or forward-fix                                                       | inputs, trigger, verification, and partial-failure behavior |
+| Notification          | provider, audience, and failure policy                                                  | non-sensitive payload and job-result behavior               |
 
 Variation does not permit weakening immutable digest identity, named-container
 selection, structural preservation, real-image liveness promotion,
@@ -419,7 +432,7 @@ service delivery workflow or its local implementation.
 - [ ] Mutating runs are collision-safe and all jobs and polls are bounded.
 - [ ] Source provenance is recorded and deployment uses an immutable digest.
 - [ ] Previous shared-state, task-definition, and named-container identities are captured.
-- [ ] The current service task definition is cloned and release-owned containers are selected by name.
+- [ ] The task-definition strategy uses current-revision clone and named mutation, or links an accepted alternative-generation exception.
 - [ ] Infrastructure-owned structure, sidecars, and unknown fields are preserved.
 - [ ] A real image receives service-owned liveness; bootstrap `exit 0` is not retained.
 - [ ] Task revision, named-container digest, and ECS rollout convergence are verified.
@@ -430,7 +443,7 @@ service delivery workflow or its local implementation.
 - [ ] Canonical repository docs state As-built, Target, Open, and any accepted exception.
 ```
 
-When the current task-definition clone strategy is not used, append:
+When the current task-definition clone strategy is not used, also include:
 
 ```markdown
 - [ ] Alternative generation has structural-equivalence and fail-closed evidence.
@@ -448,8 +461,10 @@ repository owns:
 - accepted repository exceptions; and
 - the decision that a specific workflow conforms.
 
-Do not add repository PRs, SHAs, mutable branch links, or a service-by-service
-conformance table to this document or the ownership directory.
+Do not add repository PRs, SHAs, mutable refs as implementation or conformance
+evidence, or a service-by-service conformance table to this document or the
+ownership directory. The ownership directory MAY use a branch-qualified URL
+only to navigate to a canonical document maintained by its owning repository.
 
 ## Related documents
 

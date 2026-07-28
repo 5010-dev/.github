@@ -1,0 +1,37 @@
+name: Documentation governance
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "**/*.md"
+      - "scripts/docs/**"
+      - ".github/workflows/docs.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.md"
+      - "scripts/docs/**"
+      - ".github/workflows/docs.yml"
+
+permissions: {}
+
+concurrency:
+  group: docs-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate organization documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run canonical documentation gate
+        run: scripts/docs/check-repository.sh

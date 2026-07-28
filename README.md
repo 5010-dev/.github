@@ -18,11 +18,46 @@ repositories; GitHub does not inherit them automatically.
 - [`Documentation adoption guides`](./docs/guides/README.md) — adoption and migration procedures
 - [`Engineering documentation templates`](./templates/engineering-documentation/README.md) — repository, subsystem, ADR, runbook, and validation starters
 - [`Documentation tooling`](./scripts/docs/README.md) — source validation, scaffold, and conformance checks
+- [`Documentation governance workflow`](./.github/workflows/docs.yml) — automated validation for pull requests and `main`
 - [`ECS deployment contract`](./docs/platform/ecs-deployment-contract.md) — shared CDK and service-repository deployment model
 - [`ECS service delivery workflow standard`](./docs/platform/ecs-service-delivery-workflow-standard.md) — service release workflow invariants, variation, and conformance
 - [`ECS health and readiness profiles`](./docs/platform/ecs-health-readiness-profiles.md) — state-aware health semantics by service shape
 - [`ECS service contract ownership directory`](./docs/platform/ecs-service-health-matrix.md) — navigation to service runtime contracts and Infrastructure mappings
 - [`Organization decisions`](./docs/decisions/README.md) — cross-repository ADR index
+
+## Repository branch-policy exception
+
+- Status: Accepted
+- Accepted on: 2026-07-29
+- Owner: `5010-dev` organization maintainers
+- Scope: this `.github` governance repository only
+- Effect on other repositories: none. They continue to follow
+  `CONTRIBUTING.md` unless they maintain their own accepted exception.
+- Organization policy:
+  [`CONTRIBUTING.md`](./CONTRIBUTING.md#branch-roles) defines `dev` as the
+  integration branch, work branches from `origin/dev`, pull requests to `dev`,
+  and fast-forward promotion from `dev` to `main`.
+- Exception: this repository currently has no `dev` branch. Normal changes use
+  work branches from the latest `origin/main` and pull requests targeting
+  `main`.
+- Rationale: the repository has historically operated as a main-only source for
+  inherited community defaults and linked organization governance. Maintainers
+  are preserving that topology until they deliberately adopt an integration
+  branch rather than creating a ceremonial branch without an operating need.
+- Risks: merged governance changes become the organization default immediately,
+  and this repository has no separate integration buffer before `main`.
+- Controls: normal changes use focused work branches and review against `main`;
+  the documentation governance workflow validates canonical sources and links.
+  Direct commits to `main` remain disallowed unless an organization maintainer
+  grants an explicit one-time exception for a bounded change.
+- Approval authority: `5010-dev` organization maintainers. Presence of this
+  accepted record on `main` establishes the repository exception.
+- Review conditions: review when the organization Git policy changes, when this
+  repository needs a sustained integration phase, or when its contributor or
+  change volume makes a main-only model materially risky.
+- Exit conditions: create and operate `dev`, move work branches and pull
+  requests to it, and resume the standard `dev` to `main` fast-forward
+  promotion flow.
 
 ## Notes
 

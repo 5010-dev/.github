@@ -12,7 +12,22 @@ report() {
 }
 
 required_sources=(
+    .github/workflows/docs.yml
+    README.md
+    CONTRIBUTING.md
+    pull_request_template.md
     docs/README.md
+    docs/decisions/0001-adopt-hybrid-ecs-deployment-model.md
+    docs/decisions/0002-adopt-state-aware-ecs-health-profiles.md
+    docs/decisions/0003-adopt-current-state-ecs-bootstrap-classification.md
+    docs/decisions/0004-adopt-arc42-engineering-documentation-system.md
+    docs/decisions/0005-adopt-ecs-service-delivery-workflow-envelope.md
+    docs/decisions/README.md
+    docs/platform/README.md
+    docs/platform/ecs-deployment-contract.md
+    docs/platform/ecs-health-readiness-profiles.md
+    docs/platform/ecs-service-delivery-workflow-standard.md
+    docs/platform/ecs-service-health-matrix.md
     docs/standards/README.md
     docs/standards/engineering-documentation/README.md
     docs/standards/engineering-documentation/contract.md
@@ -21,8 +36,6 @@ required_sources=(
     docs/guides/README.md
     docs/guides/adopting-arc42.md
     docs/guides/migrating-existing-documentation.md
-    docs/platform/README.md
-    docs/decisions/README.md
     templates/engineering-documentation/README.md
     templates/engineering-documentation/repository/docs/README.md
     templates/engineering-documentation/repository/docs/architecture/README.md
