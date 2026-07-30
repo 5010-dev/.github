@@ -74,14 +74,16 @@ conformance prerequisite.
   immutable release trust, cloud least-privilege roles, and concurrency.
 - High-risk approval uses an independent operator role, cloud control plane,
   bounded manual workflow, or durable external approval evidence.
-- When two-person approval applies, requester and approver must be distinct; a
+- When two-person approval applies, requester and approver MUST be distinct; a
   second input from the same user is insufficient.
 - Paid GitHub controls MAY strengthen the same outcome without replacing
   deployment authority.
 
 ## AWS CDK
 
-- TypeScript CDK combines this profile with `node-typescript`.
+- TypeScript is the default CDK host language and combines this profile with
+  `node-typescript`; another host language requires an actual repository or
+  library constraint.
 - CDK libraries and CLI are exact local project dependencies; a global CLI is
   not a prerequisite.
 - `cdk.json` is committed.
@@ -95,6 +97,8 @@ conformance prerequisite.
   PR/promotion/risk gate.
 - Routine deployment MUST NOT bootstrap and MUST fail closed if bootstrap is
   absent.
+- Stateful construct-ID or logical-ID refactors require replacement/retention
+  review and a migration plan when they can change resource identity.
 
 ## Terraform and OpenTofu
 
@@ -120,7 +124,8 @@ conformance prerequisite.
   language profile.
 - Stack configuration MAY be committed, but plaintext secrets, backend
   credentials, and decrypted state MUST NOT be.
-- Static `ci` uses locked host dependencies and language quality gates.
+- Static `ci` uses locked host dependencies and language quality gates; a
+  stateful `pulumi preview` remains in the delivery lane rather than `just ci`.
 - Production `up` MUST preview the current target and MUST NOT skip preview.
 - A strict/saved plan remains an evaluation option, not a universal MUST.
 - Drift operation is risk-based.

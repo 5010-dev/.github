@@ -64,6 +64,11 @@ An empty test, ignored failure, compile-only test step, or source-writing check
 is nonconformant. A `build.zig` test step uses `addRunArtifact` or equivalent to
 execute tests.
 
+Per-test or per-suite timeouts MAY be selected from actual runner and resource
+behavior, but MUST be bounded for required CI. Allocator-aware code uses
+`std.testing.allocator` leak detection; code with an OOM contract adds a failing-
+allocator test.
+
 Native `zig fmt` is the only base formatter. No universal third-party linter is
 required until an exact compatible maintained tool, deterministic output, rule
 taxonomy, and suppression contract are approved.
@@ -115,7 +120,10 @@ implicit.
 A C ABI library additionally defines headers, symbols/calling conventions,
 targets/libc, ABI tests, and consumer fixtures.
 
-Fuzzing is risk-based and scheduled. Generated documentation is conditional and
-not the only release gate.
+Fuzzing is risk-based, bounded, and scheduled. Crashes and minimized corpora are
+reviewed and promoted to deterministic regression tests. Infinite or random
+fuzzing MUST NOT run inside `just ci` or count as deterministic correctness
+evidence. Generated documentation is conditional and not the only release
+gate.
 
 Rule IDs: `DT-ZIG-*`, plus common `DT-CMD-*`, `DT-TOOL-*`, and `DT-DEP-*`.

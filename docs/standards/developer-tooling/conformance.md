@@ -50,8 +50,11 @@ The shared checker:
 - MUST evaluate from repository-local files and bundled immutable catalogs;
 - MUST NOT require network, GitHub API, a central registry, user-global config,
   or the current clock for basic structural evaluation;
+- MUST receive an explicit UTC evaluation time for expiry and lifecycle checks
+  and record that value in machine output;
 - MUST validate schema and standard compatibility before rule evaluation;
-- MUST sort findings deterministically;
+- MUST sort findings by `ruleId`, repository-relative `path`, and
+  `secondaryKey`, using an empty secondary key when none applies;
 - MUST use repository-relative paths;
 - MUST NOT emit secrets, credentials, personal absolute paths, or unnecessary
   source content;
@@ -63,12 +66,20 @@ The shared checker:
 `just conformance` MAY be provided as a diagnostic alias, but it is not an
 additional universal base command.
 
+An autofix is never implicit checker behavior. A future fixer MUST be a
+separate explicit command with a non-mutating preview and reviewable output.
+
 ## Output
 
 Text and
 [`golden-path-checker-output/v1`](./schemas/golden-path-checker-output-v1.schema.json)
 JSON are required and describe the same finding set. SARIF is an optional
 derivative when code scanning is available.
+
+Consumers MUST ignore data inside the schema-defined `extensions` objects that
+they do not understand. New v1 data fields are added only through those
+extension points; required fields or established meanings do not change within
+v1.
 
 Finding status is limited to:
 
@@ -84,8 +95,8 @@ Exit codes are:
 | Code | Meaning |
 | --- | --- |
 | `0` | Passes, warnings, skips, and valid waivers only |
-| `1` | Unwaived MUST violation or expired/invalid exception |
-| `2` | Metadata, exception, schema, or unsupported-version configuration error |
+| `1` | Unwaived MUST violation, including one whose otherwise valid exception has expired |
+| `2` | Schema-invalid metadata/exception, unknown or non-waivable rule reference, unsupported version, or other configuration error |
 | `3` | Internal checker error or incomplete evaluation |
 
 Text and JSON MUST use the same exit meaning. A report-only workflow preserves
@@ -93,6 +104,13 @@ the actual finding and exit evidence even when the workflow wrapper does not
 block progress.
 
 The stable CI display name is `Developer Tooling / Conformance`.
+The workflow SHOULD emit annotations and a bounded job summary. It MAY retain
+the JSON result as a short-lived artifact according to repository evidence
+policy.
+
+A missing, skipped, cancelled, or otherwise unexecuted checker/workflow is not a
+passing result. Any policy or platform gate MUST require positive evidence from
+the expected check identity and source revision.
 
 ## Enforcement states
 
@@ -107,10 +125,16 @@ cannot prove `platform-enforced` status through protected branches, rulesets, or
 required checks. The standard MUST NOT describe a policy-required failure as
 technical merge protection.
 
-An optional organization custom property MAY mirror `not-applicable`,
+An optional organization custom property named
+`developer_tooling_enforcement` MAY mirror `not-applicable`,
 `report-only`, `policy-required`, or `platform-enforced` on plans that support
 it. The property is never a profile/version/exception authority or a local
 checker prerequisite.
+
+When platform enforcement is available, a repository MUST NOT lower, rename, or
+replace the required organization check through repository-local configuration.
+The hosting adapter may strengthen enforcement but does not redefine rule
+meaning.
 
 ## Rollout
 

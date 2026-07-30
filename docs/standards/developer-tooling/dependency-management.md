@@ -43,7 +43,7 @@ against, its native manifest and resolution record.
 | Python | uv | `pyproject.toml` | `uv.lock` | `uv sync --locked` and applicable `uv run --locked` |
 | Go | Go modules | `go.mod`, conditional `go.work` | `go.sum` | `go mod tidy -diff`, `go mod verify`, read-only build/test |
 | Rust | Cargo | `Cargo.toml` | root `Cargo.lock` | applicable Cargo commands with `--locked` |
-| Zig | Zig build system | `build.zig`, conditional `build.zig.zon` | ZON content hashes and exact compiler lock | tagged-compiler build/test |
+| Zig | Zig build system | `build.zig` and `build.zig.zon` | ZON content hashes and exact compiler lock | tagged-compiler build/test |
 | AWS CDK | CDK and host-language manager | `cdk.json`, host manifest | host lock; conditional reviewed `cdk.context.json` | locked install and deterministic synth |
 | Terraform/OpenTofu | native CLI | `.tf` and `required_version` | `.terraform.lock.hcl` | backend-disabled, read-only-lock init and validate |
 | Pulumi | Pulumi and host-language manager | `Pulumi.yaml`, host manifest | host lock and provider pins | locked install/static checks; stateful preview belongs to delivery |
@@ -106,10 +106,10 @@ against, its native manifest and resolution record.
 
 ## Zig
 
-Zig is a conditional profile. Its native authority is `build.zig` and,
-when dependencies exist, `build.zig.zon`. URLs or immutable revisions and ZON
-content hashes provide dependency integrity. No organization pseudo-lockfile is
-introduced.
+Zig is a conditional profile. Every Zig package commits both `build.zig` and
+`build.zig.zon`; the latter owns package identity, exact minimum Zig line,
+fingerprint, distributable paths, and any dependency URL/hash. No organization
+pseudo-lockfile is introduced.
 
 ## Infrastructure
 

@@ -16,7 +16,7 @@ additional build framework.
   contradictory toolchain.
 - Applications/services/internal CLIs validate the exact production toolchain.
 - Published libraries validate their minimum supported Go and preferred Go.
-- The preferred lane SHOULD use `GOTOOLCHAIN=local` or equivalent fail-closed
+- The preferred lane MUST use `GOTOOLCHAIN=local` or equivalent fail-closed
   behavior; a library minimum-version lane explicitly selects that older exact
   toolchain.
 
@@ -108,6 +108,9 @@ commands and MUST NOT run inside `check`.
   with `go version -m` or equivalent.
 - Build timestamps, absolute paths, and moving dependencies MUST NOT undermine
   reproducibility claims.
+- `-s -w` MUST NOT be applied universally for size; stripping is an explicit
+  artifact choice that preserves the required debugging and symbolization
+  contract.
 - Services smoke-test the target container's startup/liveness contract.
 - GoReleaser is conditional on cross-platform CLI distribution needs.
 - PGO requires representative profile provenance and a refresh owner.

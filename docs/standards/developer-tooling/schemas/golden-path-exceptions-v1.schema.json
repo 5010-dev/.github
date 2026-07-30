@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/5010-dev/.github/schemas/golden-path-exceptions/v1",
+  "$id": "urn:5010-dev:golden-path:schema:exceptions:v1",
   "title": "Golden Path exceptions v1",
   "type": "object",
   "additionalProperties": false,

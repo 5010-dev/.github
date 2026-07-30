@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/5010-dev/.github/schemas/runtime-support/v1",
+  "$id": "urn:5010-dev:golden-path:schema:runtime-support:v1",
   "title": "Golden Path runtime support catalog v1",
   "type": "object",
   "additionalProperties": false,
@@ -82,13 +82,11 @@
       "required": [
         "selector",
         "upstreamLifecycle",
-        "organizationDisposition",
-        "migrationState"
+        "organizationDisposition"
       ],
       "properties": {
         "selector": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/selector"
         },
         "label": {
           "type": "string",
@@ -113,16 +111,15 @@
             "blocked"
           ]
         },
-        "migrationState": {
-          "enum": [
-            "none",
-            "warning",
-            "required",
-            "exception",
-            "evaluation-only"
-          ]
-        },
         "supportEndsAt": {
+          "type": "string",
+          "format": "date"
+        },
+        "graceStartedAt": {
+          "type": "string",
+          "format": "date"
+        },
+        "graceEndsAt": {
           "type": "string",
           "format": "date"
         },
@@ -131,6 +128,110 @@
           "maxLength": 1000
         }
       }
+    },
+    "selector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "value"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "major",
+            "minor",
+            "range",
+            "relative",
+            "channel"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9<>=][A-Za-z0-9._/<>=+-]*$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "major"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "pattern": "^[0-9]+$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "minor"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "pattern": "^[0-9]+\\.[0-9]+$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "range"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "pattern": "^(?:<=|>=|<|>)[0-9]+(?:\\.[0-9]+)?$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "relative",
+                  "channel"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "pattern": "^[a-z][a-z0-9-]*$"
+              }
+            }
+          }
+        }
+      ]
     },
     "source": {
       "type": "object",

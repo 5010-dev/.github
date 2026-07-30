@@ -44,6 +44,9 @@ not implement.
   separate explicit commands or workflows.
 - CI SHOULD be thin orchestration that prepares the exact environment and calls
   `just ci`; workflow YAML SHOULD NOT reimplement the quality graph.
+- Every required caller workflow MUST invoke root `just ci` or the exact same
+  repository-owned implementation path. Running unrelated steps is not
+  evidence that `just ci` ran.
 - External, credentialed, long-running, or destructive suites MUST use
   separately named commands such as `test-e2e` or a namespaced command.
 
@@ -71,6 +74,9 @@ capability interfaces only when the corresponding profile declares them.
 Deployment-related `preview`, `deploy`, `destroy`, `drift`, or state-repair
 commands are not universal base commands. If provided, they MUST remain
 separate from `check` and `ci` and follow the owning deployment contract.
+An IaC-native `validate` operation belongs inside the selected profile's
+`check`/`ci` implementation unless the repository exposes an additional
+diagnostic alias; `just validate` is not a universal façade command.
 
 ## Conformance
 

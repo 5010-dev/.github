@@ -31,6 +31,8 @@ CLI, or script MAY use `node:test` when Vitest capabilities are unnecessary.
 ## Formatting, lint, and type analysis
 
 - Prettier configuration and exact dependency resolution MUST be committed.
+- Editor integration MUST resolve the same repository-local exact Prettier
+  version as CI rather than a user-global formatter.
 - `format` writes and `format-check` reads.
 - New projects MUST use ESLint flat config, not `.eslintrc`.
 - Typed lint SHOULD use typescript-eslint Project Service with explicit
@@ -103,13 +105,21 @@ declaration emit, or typecheck.
 
 ## pnpm workspace
 
+- `packageManager` MUST declare the exact pnpm version and any
+  `devEngines.packageManager` constraint MUST accept that same version.
+- pnpm MUST NOT download or select the Node runtime; mise remains the runtime
+  owner.
 - A multi-package repository MUST use root `pnpm-workspace.yaml` and one root
   `pnpm-lock.yaml`.
 - Internal dependencies MUST use `workspace:`.
-- Repeated third-party versions MAY use pnpm catalogs.
+- Repeated third-party versions MAY use the default pnpm catalog. Named catalogs
+  are reserved for an intentional compatibility or migration matrix.
 - Workspace cycles MUST be rejected.
 - Every package owns its dependencies, module type, artifact type, and
   build/typecheck/test contract.
+- A deployable workspace package MAY use framework output or `pnpm deploy` to
+  create an isolated portable artifact when its delivery profile validates that
+  output.
 - Turborepo or Nx is conditional on measured graph, affected-execution, or
   remote-cache needs; pnpm workspace alone is sufficient by default.
 
@@ -118,7 +128,7 @@ declaration emit, or typecheck.
 Every library distributed outside its workspace:
 
 - MUST declare its actual `name`, `type`, `exports`, `types`, `files`,
-  `sideEffects`, and Node support range;
+  `sideEffects`, version, repository, license, and Node support range;
 - MUST generate declarations and define map policy;
 - MUST build, create a real tarball, inspect contents, and pass fresh
   install/import consumer smoke;
@@ -130,8 +140,14 @@ For registry/external packages:
 - `publint` is a SHOULD;
 - Are the Types Wrong is a conditional MUST for declarations, conditional
   exports, dual packages, or multiple module consumers;
+- ESM-only packages test an ESM consumer and type resolution;
 - dual packages test both import and require/type resolution;
-- npm OIDC trusted publishing is the default where supported; and
+- registry authentication is supplied only through a trusted repository-local
+  `.npmrc` contract or CI secret injection and MUST NOT be committed as a token;
+- npm OIDC trusted publishing is the default where supported;
+- supported public npm packages MUST generate provenance;
+- publish MUST run only from an immutable release ref through an approved
+  workflow; local-developer and pull-request-origin publish are prohibited; and
 - a long-lived token requires a scoped, rotated, expiring high-risk exception.
 
 An internal workspace-only package does not require registry metadata, OIDC,
