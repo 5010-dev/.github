@@ -57,6 +57,11 @@ Renovate MAY replace Dependabot when a monorepo, central preset, advanced
 grouping, extracted versions, or a dependency dashboard requires it. Both tools
 MUST NOT manage the same dependency surface.
 
+A self-hosted Renovate lock refresh can execute repository-defined manager or
+post-update behavior. It MUST use an explicit trusted-repository allowlist,
+reviewed execution policy, minimum credentials, and an isolated runner before
+unsafe execution is enabled.
+
 An unsupported ecosystem MUST use an owned scheduled review and explicit update
 command that achieves the same outcome.
 
@@ -155,13 +160,22 @@ GitHub-native attestation is an optional adapter. A GitHub Free private
 repository MAY use a signed manifest, immutable release metadata, or an
 independent build record.
 
-When provenance gates deployment or consumption, the verifier MUST check
+When a producer supplies a usable provenance record for required build,
+bootstrap, deployment, or release consumption, the consumer MUST verify
 signature, subject digest, builder identity, and source/workflow expectations.
-Creating an attestation without verification does not establish trust.
+A plan-compatible signed manifest or immutable build record satisfies the same
+outcome when native attestation is unavailable. Creating an attestation without
+verification does not establish trust.
 
 ## Supported execution platforms
 
 A repository declares only the platforms it actually guarantees.
+
+Repository metadata `targets` declares the supported OS, architecture, runtime
+or target triple, support tier, and whether semantic execution is claimed.
+`execution: true` means the artifact is actually run on a representative
+runner, emulator, device, or production-equivalent environment; compilation
+alone does not establish that claim.
 
 - An internal service or IaC repository MAY begin with one primary
   OS/architecture lane equivalent to production or release.

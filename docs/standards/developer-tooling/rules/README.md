@@ -44,3 +44,22 @@ requirement level.
 
 The human-readable document remains the explanatory authority. The catalog
 binds each rule to a decision, document, and stable heading.
+
+## Applicability matching
+
+Applicability is evaluated against schema-valid repository metadata:
+
+- `profiles: ["*"]` matches any applicable repository and `*` MUST be the only
+  profile entry;
+- an empty `artifactTypes` or `capabilities` array places no restriction on
+  that axis;
+- a non-empty profiles, artifact types, or capabilities array matches when the
+  repository declares at least one listed value;
+- the three structured axes are combined with logical AND; and
+- `condition` is an additional normative predicate combined with logical AND,
+  not explanatory text that can override the structured axes.
+
+If a rule needs every listed capability rather than any listed capability, it
+MUST use separate rules or state the complete conjunction in a machine-
+implementable condition with fixtures. The checker MUST NOT infer profile or
+capability activation that metadata does not declare.

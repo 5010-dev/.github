@@ -30,9 +30,18 @@ An exception MUST NOT:
 - hide its original finding from output; or
 - contain secrets, personal contact data, or sensitive operational details.
 
-A valid exception changes an applicable finding to `waived`. An invalid or
-expired exception leaves the violation failing. Approaching expiry produces a
-warning.
+A valid, unexpired exception changes an applicable finding to `waived`. A
+schema-valid but expired exception leaves the violation failing. A structurally
+or semantically invalid exception is a configuration error. Approaching expiry
+produces a warning.
+
+Time-sensitive evaluation uses the explicit UTC evaluation time supplied to the
+checker and recorded in its output. Tests and offline runs may pin that input;
+the checker MUST NOT read an implicit wall clock for a reproducible result. A
+schema-valid, otherwise eligible exception that is past `expiresAt` leaves the
+rule failing with exit code `1`. A malformed exception document, unknown rule,
+non-waivable rule, or invalid approval contract is a configuration error with
+exit code `2`.
 
 ## High-risk exceptions
 
@@ -47,6 +56,11 @@ It additionally MUST include:
 
 The requester and two-person approvers MUST be meaningfully independent where
 the underlying rule requires two-person control.
+
+The checker MUST cross-check every waived rule against the bundled catalog.
+When any referenced rule has `highRisk: true`, `riskClass` MUST be `high` and
+all high-risk fields and approvals MUST be present; repository self-
+classification cannot lower the catalog classification.
 
 A general tooling exception needs a tracking issue only when actual remediation
 work is planned. A bounded, accepted variation SHOULD NOT create a ceremonial

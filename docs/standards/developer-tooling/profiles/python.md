@@ -27,6 +27,9 @@ toolchains retain separate responsibilities.
   safe index priority. Credentials MUST NOT enter manifests or locks.
 - Exact uv and quality-tool versions are resolved through the repository lock
   and release manifest.
+- Build frontend/backend versions are bounded in `build-system` metadata and
+  resolve exactly in CI. Pre-1.0 tools and tools with material minor-version
+  behavior MUST NOT be followed through an unbounded major range.
 
 A library's consumer dependency range MUST NOT be replaced with exact
 transitive versions from its application/development lock.
@@ -119,6 +122,12 @@ dependency graph, and environment. It uses one root lock and explicit workspace
 sources. Conflicting runtime, dependency, accelerator, or deployment
 environments remain independent projects.
 
+A shared uv environment does not prove workspace-member dependency isolation.
+CI MUST verify that each member imports, checks, tests, and packages only from
+its declared dependencies. Jobs and runtime images install only the locked
+dependency groups their artifact needs; they MUST NOT install every development
+group by default.
+
 uv does not own compilers, C/C++/Rust libraries, CUDA/ROCm, OS packages,
 immutable container bases, or platform repair tools. Prebuilt wheels are
 preferred. Source builds retain PEP 517 isolation; disabling isolation requires
@@ -128,9 +137,16 @@ Native releases build and test their declared CPython/OS/architecture matrix and
 apply the platform's wheel repair/audit tool. Build jobs executing arbitrary
 package code are separated from upload credentials.
 
+CUDA, ROCm, and CPU dependency variants MUST be selected deterministically by a
+named index, marker, or profile input. CI and production locks MUST NOT change
+their dependency graph through host-driver auto-detection.
+
 ## Publishing
 
 Applications/services do not publish to a package index by default.
+`Private :: Do Not Upload` is intent metadata, not an upload control. Workflow
+permissions and a target-repository allowlist MUST prevent an application or
+service from being uploaded to a package index.
 
 A published library:
 

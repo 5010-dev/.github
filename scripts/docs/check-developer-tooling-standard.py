@@ -4,12 +4,14 @@
 
 from __future__ import annotations
 
+import copy
 import datetime as dt
 import json
 import re
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -106,13 +108,284 @@ def report(message: str) -> None:
     errors.append(message)
 
 
+def reject_duplicate_json_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError(f"duplicate object key {key!r}")
+        value[key] = item
+    return value
+
+
 def load_json(path: Path) -> Any:
     try:
         with path.open(encoding="utf-8") as handle:
-            return json.load(handle)
-    except (OSError, json.JSONDecodeError) as error:
+            return json.load(handle, object_pairs_hook=reject_duplicate_json_keys)
+    except (OSError, json.JSONDecodeError, ValueError) as error:
         report(f"{path.relative_to(REPO_ROOT)}: invalid JSON: {error}")
         return None
+
+
+def json_type_matches(value: Any, expected: str) -> bool:
+    if expected == "object":
+        return isinstance(value, dict)
+    if expected == "array":
+        return isinstance(value, list)
+    if expected == "string":
+        return isinstance(value, str)
+    if expected == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if expected == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if expected == "boolean":
+        return isinstance(value, bool)
+    if expected == "null":
+        return value is None
+    return False
+
+
+def resolve_local_ref(root_schema: dict[str, Any], ref: str) -> Any:
+    if not ref.startswith("#/"):
+        raise ValueError(f"only local JSON pointers are supported: {ref}")
+    value: Any = root_schema
+    for raw_part in ref[2:].split("/"):
+        part = raw_part.replace("~1", "/").replace("~0", "~")
+        if not isinstance(value, dict) or part not in value:
+            raise ValueError(f"unresolved JSON pointer: {ref}")
+        value = value[part]
+    return value
+
+
+def validate_format(value: str, format_name: str) -> bool:
+    if format_name == "date":
+        try:
+            dt.date.fromisoformat(value)
+            return True
+        except ValueError:
+            return False
+    if format_name == "date-time":
+        try:
+            parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return parsed.tzinfo is not None
+        except ValueError:
+            return False
+    if format_name == "uri":
+        parsed = urlparse(value)
+        return bool(parsed.scheme and (parsed.netloc or parsed.scheme == "urn"))
+    return False
+
+
+def validate_json_schema_instance(
+    value: Any,
+    schema: dict[str, Any],
+    root_schema: dict[str, Any],
+    context: str,
+    output: list[str],
+) -> None:
+    if "$ref" in schema:
+        try:
+            target = resolve_local_ref(root_schema, schema["$ref"])
+        except ValueError as error:
+            output.append(f"{context}: {error}")
+            return
+        validate_json_schema_instance(value, target, root_schema, context, output)
+        return
+
+    expected_type = schema.get("type")
+    if expected_type is not None:
+        types = expected_type if isinstance(expected_type, list) else [expected_type]
+        if not any(json_type_matches(value, item) for item in types):
+            output.append(f"{context}: expected type {expected_type!r}")
+            return
+
+    if "const" in schema and value != schema["const"]:
+        output.append(f"{context}: expected constant {schema['const']!r}")
+    if "enum" in schema and value not in schema["enum"]:
+        output.append(f"{context}: value {value!r} is outside the enum")
+
+    if isinstance(value, str):
+        if len(value) < schema.get("minLength", 0):
+            output.append(f"{context}: string is shorter than minLength")
+        if "maxLength" in schema and len(value) > schema["maxLength"]:
+            output.append(f"{context}: string is longer than maxLength")
+        if "pattern" in schema and re.search(schema["pattern"], value) is None:
+            output.append(f"{context}: string does not match {schema['pattern']!r}")
+        if "format" in schema and not validate_format(value, schema["format"]):
+            output.append(f"{context}: invalid {schema['format']} value")
+
+    if (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and "minimum" in schema
+        and value < schema["minimum"]
+    ):
+        output.append(f"{context}: number is below minimum")
+
+    if isinstance(value, list):
+        if len(value) < schema.get("minItems", 0):
+            output.append(f"{context}: array is shorter than minItems")
+        if "maxItems" in schema and len(value) > schema["maxItems"]:
+            output.append(f"{context}: array is longer than maxItems")
+        if schema.get("uniqueItems"):
+            encoded = [json.dumps(item, sort_keys=True) for item in value]
+            if len(encoded) != len(set(encoded)):
+                output.append(f"{context}: array items must be unique")
+        if isinstance(schema.get("items"), dict):
+            for index, item in enumerate(value):
+                validate_json_schema_instance(
+                    item,
+                    schema["items"],
+                    root_schema,
+                    f"{context}[{index}]",
+                    output,
+                )
+        if "contains" in schema:
+            if not any(
+                schema_is_valid(item, schema["contains"], root_schema)
+                for item in value
+            ):
+                output.append(f"{context}: array does not satisfy contains")
+
+    if isinstance(value, dict):
+        required = schema.get("required", [])
+        missing = sorted(set(required) - set(value))
+        if missing:
+            output.append(
+                f"{context}: missing required keys: {', '.join(missing)}"
+            )
+        properties = schema.get("properties", {})
+        for key, item in value.items():
+            if key in properties:
+                validate_json_schema_instance(
+                    item,
+                    properties[key],
+                    root_schema,
+                    f"{context}.{key}",
+                    output,
+                )
+            elif schema.get("additionalProperties") is False:
+                output.append(f"{context}: unexpected property {key!r}")
+            elif isinstance(schema.get("additionalProperties"), dict):
+                validate_json_schema_instance(
+                    item,
+                    schema["additionalProperties"],
+                    root_schema,
+                    f"{context}.{key}",
+                    output,
+                )
+        if len(value) < schema.get("minProperties", 0):
+            output.append(f"{context}: object has fewer than minProperties")
+        if isinstance(schema.get("propertyNames"), dict):
+            for key in value:
+                validate_json_schema_instance(
+                    key,
+                    schema["propertyNames"],
+                    root_schema,
+                    f"{context}.<property-name>",
+                    output,
+                )
+
+    for branch in schema.get("allOf", []):
+        validate_json_schema_instance(value, branch, root_schema, context, output)
+    if "anyOf" in schema and not any(
+        schema_is_valid(value, branch, root_schema)
+        for branch in schema["anyOf"]
+    ):
+        output.append(f"{context}: value does not satisfy anyOf")
+    if "if" in schema:
+        branch_name = "then" if schema_is_valid(value, schema["if"], root_schema) else "else"
+        if branch_name in schema:
+            validate_json_schema_instance(
+                value, schema[branch_name], root_schema, context, output
+            )
+
+
+def schema_is_valid(
+    value: Any, schema: dict[str, Any], root_schema: dict[str, Any]
+) -> bool:
+    scratch: list[str] = []
+    validate_json_schema_instance(value, schema, root_schema, "$", scratch)
+    return not scratch
+
+
+SUPPORTED_SCHEMA_KEYWORDS = {
+    "$defs",
+    "$id",
+    "$ref",
+    "$schema",
+    "additionalProperties",
+    "allOf",
+    "anyOf",
+    "const",
+    "contains",
+    "else",
+    "enum",
+    "format",
+    "if",
+    "items",
+    "maxItems",
+    "maxLength",
+    "minItems",
+    "minLength",
+    "minProperties",
+    "minimum",
+    "pattern",
+    "properties",
+    "propertyNames",
+    "required",
+    "then",
+    "title",
+    "type",
+    "uniqueItems",
+}
+
+
+def validate_schema_definition(
+    schema: Any,
+    root_schema: dict[str, Any],
+    context: str,
+) -> None:
+    if not isinstance(schema, dict):
+        report(f"{context}: schema node must be an object")
+        return
+    unknown = sorted(set(schema) - SUPPORTED_SCHEMA_KEYWORDS)
+    if unknown:
+        report(f"{context}: unsupported schema keywords: {', '.join(unknown)}")
+    if "$ref" in schema:
+        try:
+            resolve_local_ref(root_schema, schema["$ref"])
+        except ValueError as error:
+            report(f"{context}: {error}")
+    for key in ("properties", "$defs"):
+        for name, child in schema.get(key, {}).items():
+            validate_schema_definition(
+                child, root_schema, f"{context}.{key}.{name}"
+            )
+    for key in ("items", "additionalProperties", "propertyNames", "contains"):
+        child = schema.get(key)
+        if isinstance(child, dict):
+            validate_schema_definition(child, root_schema, f"{context}.{key}")
+    for key in ("allOf", "anyOf"):
+        for index, child in enumerate(schema.get(key, [])):
+            validate_schema_definition(
+                child, root_schema, f"{context}.{key}[{index}]"
+            )
+    for key in ("if", "then", "else"):
+        child = schema.get(key)
+        if isinstance(child, dict):
+            validate_schema_definition(child, root_schema, f"{context}.{key}")
+
+
+def validate_instance_file(instance_path: Path, schema_path: Path) -> None:
+    instance = load_json(instance_path)
+    schema = load_json(schema_path)
+    if instance is None or schema is None:
+        return
+    findings: list[str] = []
+    context = str(instance_path.relative_to(REPO_ROOT))
+    validate_json_schema_instance(instance, schema, schema, context, findings)
+    for finding in findings:
+        report(finding)
 
 
 def require_keys(value: Any, keys: set[str], context: str) -> bool:
@@ -203,6 +476,8 @@ def validate_schema_sources() -> None:
             report(f"{context}: $id must be a unique string")
         else:
             seen_ids.add(schema_id)
+            if not schema_id.startswith("urn:5010-dev:golden-path:"):
+                report(f"{context}: $id must be repository-independent")
 
         expected = expected_versions.get(path.name)
         schema_version = data.get("properties", {}).get("schemaVersion", {})
@@ -210,6 +485,140 @@ def validate_schema_sources() -> None:
             report(
                 f"{context}: schemaVersion const must be {expected!r}"
             )
+        validate_schema_definition(data, data, context)
+
+
+def validate_contract_instances() -> None:
+    mappings = [
+        (
+            STANDARD_ROOT
+            / "schemas/examples/golden-path-metadata-v1.valid.json",
+            STANDARD_ROOT / "schemas/golden-path-metadata-v1.schema.json",
+        ),
+        (
+            STANDARD_ROOT
+            / "schemas/examples/golden-path-exceptions-v1.valid.json",
+            STANDARD_ROOT / "schemas/golden-path-exceptions-v1.schema.json",
+        ),
+        (
+            STANDARD_ROOT
+            / "schemas/examples/golden-path-checker-output-v1.valid.json",
+            STANDARD_ROOT
+            / "schemas/golden-path-checker-output-v1.schema.json",
+        ),
+        (
+            STANDARD_ROOT / "rules/catalog.v1.json",
+            STANDARD_ROOT / "schemas/golden-path-rule-catalog-v1.schema.json",
+        ),
+        (
+            STANDARD_ROOT / "rules/runtime-support.v1.json",
+            STANDARD_ROOT / "schemas/runtime-support-v1.schema.json",
+        ),
+    ]
+    for instance_path, schema_path in mappings:
+        validate_instance_file(instance_path, schema_path)
+
+
+def require_schema_rejection(
+    instance: Any,
+    schema_path: Path,
+    label: str,
+) -> None:
+    schema = load_json(schema_path)
+    if schema is not None and schema_is_valid(instance, schema, schema):
+        report(f"schema validator self-test accepted invalid {label}")
+
+
+def validate_schema_validator_self_tests() -> None:
+    metadata = load_json(
+        STANDARD_ROOT
+        / "schemas/examples/golden-path-metadata-v1.valid.json"
+    )
+    invalid_metadata = copy.deepcopy(metadata)
+    invalid_metadata["profiles"] = ["unknown-profile"]
+    require_schema_rejection(
+        invalid_metadata,
+        STANDARD_ROOT / "schemas/golden-path-metadata-v1.schema.json",
+        "metadata profile",
+    )
+
+    exceptions = load_json(
+        STANDARD_ROOT
+        / "schemas/examples/golden-path-exceptions-v1.valid.json"
+    )
+    invalid_exceptions = copy.deepcopy(exceptions)
+    invalid_exceptions["exceptions"][0]["id"] = "invalid"
+    require_schema_rejection(
+        invalid_exceptions,
+        STANDARD_ROOT / "schemas/golden-path-exceptions-v1.schema.json",
+        "exception ID",
+    )
+
+    output = load_json(
+        STANDARD_ROOT
+        / "schemas/examples/golden-path-checker-output-v1.valid.json"
+    )
+    invalid_output = copy.deepcopy(output)
+    invalid_output["catalogDigest"] = "sha256:invalid"
+    require_schema_rejection(
+        invalid_output,
+        STANDARD_ROOT
+        / "schemas/golden-path-checker-output-v1.schema.json",
+        "catalog digest",
+    )
+    invalid_checker_version = copy.deepcopy(output)
+    invalid_checker_version["checkerVersion"] = "latest"
+    require_schema_rejection(
+        invalid_checker_version,
+        STANDARD_ROOT
+        / "schemas/golden-path-checker-output-v1.schema.json",
+        "checker SemVer",
+    )
+
+    catalog = load_json(STANDARD_ROOT / "rules/catalog.v1.json")
+    invalid_catalog = copy.deepcopy(catalog)
+    invalid_catalog["rules"][0]["applicability"]["profiles"] = ["*", "go"]
+    require_schema_rejection(
+        invalid_catalog,
+        STANDARD_ROOT / "schemas/golden-path-rule-catalog-v1.schema.json",
+        "mixed wildcard profile",
+    )
+
+    runtime = load_json(STANDARD_ROOT / "rules/runtime-support.v1.json")
+    invalid_runtime = copy.deepcopy(runtime)
+    invalid_runtime["profiles"]["node"]["versions"][0][
+        "upstreamLifecycle"
+    ] = "invalid"
+    require_schema_rejection(
+        invalid_runtime,
+        STANDARD_ROOT / "schemas/runtime-support-v1.schema.json",
+        "runtime lifecycle",
+    )
+
+
+def validate_metadata_enum_alignment() -> None:
+    expected = {
+        "profile": KNOWN_PROFILE_IDS,
+        "artifactType": KNOWN_ARTIFACT_TYPES,
+        "capability": KNOWN_CAPABILITIES,
+    }
+    paths = [
+        STANDARD_ROOT / "schemas/golden-path-metadata-v1.schema.json",
+        STANDARD_ROOT / "schemas/golden-path-rule-catalog-v1.schema.json",
+    ]
+    for path in paths:
+        data = load_json(path)
+        if data is None:
+            continue
+        for definition, known_values in expected.items():
+            schema_values = set(
+                data.get("$defs", {}).get(definition, {}).get("enum", [])
+            )
+            if schema_values != known_values:
+                report(
+                    f"{path.relative_to(REPO_ROOT)}: {definition} enum and "
+                    "validator constants have drifted"
+                )
 
 
 def validate_metadata_example() -> None:
@@ -286,6 +695,13 @@ def validate_exceptions_example() -> None:
         report(f"{context}.exceptions: expected at least one exception")
         return
 
+    catalog = load_json(STANDARD_ROOT / "rules/catalog.v1.json")
+    catalog_rules = {
+        rule.get("id"): rule
+        for rule in catalog.get("rules", [])
+        if isinstance(rule, dict) and isinstance(rule.get("id"), str)
+    }
+
     identifiers: set[str] = set()
     common = {
         "id",
@@ -307,6 +723,32 @@ def validate_exceptions_example() -> None:
         else:
             identifiers.add(identifier)
         require_unique_strings(exception["rules"], f"{item_context}.rules")
+        referenced_rules = [
+            catalog_rules.get(rule_id) for rule_id in exception["rules"]
+        ]
+        unknown_rules = [
+            rule_id
+            for rule_id, rule in zip(exception["rules"], referenced_rules)
+            if rule is None
+        ]
+        if unknown_rules:
+            report(
+                f"{item_context}.rules: unknown catalog rules "
+                f"{', '.join(unknown_rules)}"
+            )
+        for rule in referenced_rules:
+            if rule is not None and rule.get("waivable") is not True:
+                report(
+                    f"{item_context}.rules: {rule['id']} is not waivable"
+                )
+        catalog_high_risk = any(
+            rule is not None and rule.get("highRisk") is True
+            for rule in referenced_rules
+        )
+        if catalog_high_risk and exception["riskClass"] != "high":
+            report(
+                f"{item_context}.riskClass: catalog-high-risk rule requires high"
+            )
         expires = parse_date(exception["expiresAt"], f"{item_context}.expiresAt")
         if expires is None:
             report(f"{item_context}: expiresAt must be a valid date")
@@ -372,6 +814,7 @@ def validate_checker_example() -> None:
         "standardVersion",
         "checkerVersion",
         "catalogDigest",
+        "evaluatedAt",
         "enforcement",
         "profiles",
         "exitCode",
@@ -559,6 +1002,13 @@ def validate_rule_catalog() -> None:
             allowed=KNOWN_PROFILE_IDS,
             allow_wildcard=True,
         )
+        if "*" in applicability["profiles"] and len(
+            applicability["profiles"]
+        ) != 1:
+            report(
+                f"{item_context}.applicability.profiles: wildcard must be the "
+                "only value"
+            )
         require_unique_strings(
             applicability["artifactTypes"],
             f"{item_context}.applicability.artifactTypes",
@@ -637,7 +1087,7 @@ def validate_runtime_catalog() -> None:
         if not isinstance(versions, list) or not versions:
             report(f"{item_context}.versions: expected lifecycle entries")
             continue
-        selectors: set[str] = set()
+        selectors: set[tuple[str, str]] = set()
         for version_index, version in enumerate(versions):
             version_context = f"{item_context}.versions[{version_index}]"
             if not require_keys(
@@ -646,16 +1096,25 @@ def validate_runtime_catalog() -> None:
                     "selector",
                     "upstreamLifecycle",
                     "organizationDisposition",
-                    "migrationState",
                 },
                 version_context,
             ):
                 continue
             selector = version["selector"]
-            if not isinstance(selector, str) or selector in selectors:
-                report(f"{version_context}.selector: must be a unique string")
+            if not require_keys(
+                selector, {"kind", "value"}, f"{version_context}.selector"
+            ):
+                continue
+            selector_key = (selector["kind"], selector["value"])
+            if selector_key in selectors:
+                report(f"{version_context}.selector: must be unique")
             else:
-                selectors.add(selector)
+                selectors.add(selector_key)
+            if "migrationState" in version:
+                report(
+                    f"{version_context}: repository migrationState is not "
+                    "allowed in the central catalog"
+                )
             if version["organizationDisposition"] not in {
                 "preferred",
                 "supported",
@@ -670,11 +1129,16 @@ def validate_runtime_catalog() -> None:
                     version["supportEndsAt"],
                     f"{version_context}.supportEndsAt",
                 )
+            for key in ("graceStartedAt", "graceEndsAt"):
+                if version.get(key) is not None:
+                    parse_date(version[key], f"{version_context}.{key}")
 
     python_selectors = {
-        item["selector"]: item
+        item["selector"]["value"]: item
         for item in data["profiles"].get("python", {}).get("versions", [])
-        if isinstance(item, dict) and "selector" in item
+        if isinstance(item, dict)
+        and isinstance(item.get("selector"), dict)
+        and "value" in item["selector"]
     }
     if python_selectors.get("3.11", {}).get(
         "organizationDisposition"
@@ -688,13 +1152,39 @@ def validate_runtime_catalog() -> None:
         "graceDays"
     ) != 90:
         report(f"{context}: Rust N-1/N-2 grace must be 90 days")
+    rust_grace = next(
+        (
+            item
+            for item in data["profiles"].get("rust", {}).get("versions", [])
+            if item.get("selector")
+            == {"kind": "relative", "value": "n-1-n-2"}
+        ),
+        None,
+    )
+    if rust_grace is None:
+        report(f"{context}: Rust N-1/N-2 grace selector is missing")
+    else:
+        started = parse_date(
+            rust_grace.get("graceStartedAt"),
+            f"{context}.profiles.rust.graceStartedAt",
+        )
+        ended = parse_date(
+            rust_grace.get("graceEndsAt"),
+            f"{context}.profiles.rust.graceEndsAt",
+        )
+        if started is not None and ended is not None:
+            if (ended - started).days != 90:
+                report(f"{context}: Rust grace dates must span 90 days")
     zig_selectors = {
-        item.get("selector")
+        (
+            item.get("selector", {}).get("kind"),
+            item.get("selector", {}).get("value"),
+        )
         for item in data["profiles"].get("zig", {}).get("versions", [])
         if isinstance(item, dict)
     }
-    if "0.16.0" not in zig_selectors:
-        report(f"{context}: Zig 0.16.0 baseline is missing")
+    if ("channel", "latest-tagged-stable") not in zig_selectors:
+        report(f"{context}: Zig latest tagged stable baseline is missing")
 
 
 def validate_traceability_and_scope() -> None:
@@ -710,10 +1200,22 @@ def validate_traceability_and_scope() -> None:
     forbidden_patterns = {
         r"https://linear\.app/": "issue tracker URL",
         r"\bENG-[0-9]+\b": "issue identifier",
+        r"https://github\.com/5010-dev/(?!\.github(?:/|$))[^)\s]+": (
+            "consumer repository URL"
+        ),
         r"\b(?:fiftyten-indicators-core|indicator-data-collector|"
         r"indicator-ecs-infra|5010-indicator-server)\b": "product repository",
     }
-    for path in sorted(STANDARD_ROOT.rglob("*.md")):
+    scope_paths = list(STANDARD_ROOT.rglob("*.md"))
+    scope_paths.extend(
+        [
+            REPO_ROOT / "docs/guides/adopting-developer-tooling.md",
+            REPO_ROOT / "docs/guides/migrating-developer-tooling.md",
+            REPO_ROOT
+            / "docs/decisions/0006-adopt-developer-tooling-golden-path.md",
+        ]
+    )
+    for path in sorted(set(scope_paths)):
         source = path.read_text(encoding="utf-8")
         for pattern, label in forbidden_patterns.items():
             if re.search(pattern, source, re.IGNORECASE):
@@ -739,6 +1241,9 @@ def main() -> int:
         return 1
 
     validate_schema_sources()
+    validate_contract_instances()
+    validate_schema_validator_self_tests()
+    validate_metadata_enum_alignment()
     validate_metadata_example()
     validate_exceptions_example()
     validate_checker_example()

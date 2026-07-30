@@ -32,6 +32,8 @@ Authority order is:
    nightly lanes.
 
 rust-analyzer is an optional editor capability, not a merge gate.
+`just init` and CI MUST verify the selected pin with
+`rustup show active-toolchain` or an equivalent exact-selection check.
 
 ## Package, workspace, and lock
 
@@ -51,6 +53,11 @@ MSRV only when:
 
 A lower library MSRV does not extend organization support for development
 toolchains.
+
+Workspaces SHOULD inherit common `package`, `dependencies`, and `lints`
+metadata from the root. When packages declare different MSRVs, the workspace
+manifest and shared dependency resolution MUST load at the lowest declared
+MSRV; absent an actual consumer boundary, the workspace uses one MSRV.
 
 ## Format, analysis, and lint
 
@@ -109,12 +116,13 @@ uses an exact version and repository configuration, retains a separate doctest
 lane, defaults retries to zero, and exposes a known-flaky retry as non-clean
 evidence.
 
-Coverage MAY use exact cargo-llvm-cov and produces LCOV or JSON; no universal
-percentage applies.
+When coverage is selected, it MUST use exact cargo-llvm-cov and produce LCOV or
+JSON; no universal percentage applies.
 
 cargo-fuzz is conditional for untrusted or security-sensitive inputs and uses
 an exact tool plus dated nightly, bounded scheduled execution, committed seed
-corpus, crash retention, and deterministic regression conversion.
+corpus, crash retention, and deterministic regression conversion. Fuzz jobs
+MUST be isolated from production endpoints, network credentials, and secrets.
 
 ## Commands
 
@@ -152,8 +160,13 @@ Published crates:
 - MUST NOT use `--allow-dirty` or `--no-verify` normally;
 - test path/workspace dependency transformation for external consumers;
 - test declared MSRV and preferred stable;
-- MAY use exact cargo-semver-checks as a supplement; and
+- for a v1+ public compatibility release candidate, MUST use exact
+  cargo-semver-checks as a supplement to consumer tests and human API review;
+  and
 - use crates.io OIDC Trusted Publishing when available.
+
+A long-lived crates.io token is permitted only for an OIDC-incompatible
+registry or runner under a scoped, rotated, expiring high-risk exception.
 
 External support CLIs use exact immutable assets and digests. A source fallback
 uses exact `cargo install --locked --version ...` into a repository tool root,

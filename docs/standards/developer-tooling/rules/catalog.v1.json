@@ -154,6 +154,31 @@
       "replacement": null
     },
     {
+      "id": "DT-CMD-005",
+      "title": "Required caller workflows execute the repository CI contract",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-006",
+        "document": "command-contract.md",
+        "anchor": "check-and-ci"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": [],
+        "capabilities": [],
+        "condition": "A required CI caller workflow validates the repository."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": true,
+      "highRisk": false,
+      "assertion": "The caller invokes root just ci or the exact same repository-owned implementation path without reimplementing the quality graph.",
+      "remediation": "Make the workflow prepare the declared environment and call just ci; remove duplicated or unrelated quality orchestration.",
+      "introducedIn": "2026.07",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
       "id": "DT-TOOL-001",
       "title": "Every runtime has one operational version owner",
       "level": "MUST",
@@ -213,7 +238,7 @@
         "anchor": "common-contract"
       },
       "applicability": {
-        "profiles": ["node-typescript", "go", "zig", "zig-toolchain", "infrastructure-aws-cdk", "infrastructure-terraform", "infrastructure-opentofu", "infrastructure-pulumi"],
+        "profiles": ["*"],
         "artifactTypes": [],
         "capabilities": [],
         "condition": "mise manages one or more repository tool versions."
@@ -410,7 +435,7 @@
       "source": {
         "decision": "GP-009",
         "document": "distribution.md",
-        "anchor": "version-axes"
+        "anchor": "immutable-consumption"
       },
       "applicability": {
         "profiles": ["*"],
@@ -422,8 +447,8 @@
       "severity": "error",
       "waivable": true,
       "highRisk": false,
-      "assertion": "The repository records exact standard and asset bundle versions, and materialized changes remain visible in normal review.",
-      "remediation": "Run the approved updater, commit generated changes, and update metadata without hiding the diff behind mutable runtime retrieval.",
+      "assertion": "The repository records exact standard and asset bundle versions, materialized changes remain visible in normal review, and the resulting repository passes just ci.",
+      "remediation": "Run the approved updater in preview mode, commit the reviewable diff, update metadata, and fix just ci before merge.",
       "introducedIn": "2026.07",
       "retiredIn": null,
       "replacement": null
@@ -529,6 +554,31 @@
       "replacement": null
     },
     {
+      "id": "DT-CONF-004",
+      "title": "Absent conformance execution is not a pass",
+      "level": "MUST_NOT",
+      "source": {
+        "decision": "GP-010",
+        "document": "conformance.md",
+        "anchor": "output"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": [],
+        "capabilities": [],
+        "condition": "A policy, workflow, or platform gate interprets the conformance result."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": false,
+      "highRisk": false,
+      "assertion": "A missing, skipped, cancelled, stale, or wrong-revision checker result is not interpreted as a passing result.",
+      "remediation": "Require positive evidence from the stable check identity for the exact source revision and preserve incomplete evaluation as non-passing.",
+      "introducedIn": "2026.07",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
       "id": "DT-EXC-001",
       "title": "MUST deviations use scoped expiring exceptions",
       "level": "MUST",
@@ -599,6 +649,81 @@
       "highRisk": false,
       "assertion": "Normative meaning stays in the central standard, shared code implements that meaning, and repository-local files remain the executable As-built authority.",
       "remediation": "Move normative rules to the standard and keep implementation locators, repository status, and migration work outside the policy contract.",
+      "introducedIn": "2026.07",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-ASSET-006",
+      "title": "Public shared implementation preserves a safe release boundary",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-011",
+        "document": "distribution.md",
+        "anchor": "visibility"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": ["tooling"],
+        "capabilities": ["released-artifact"],
+        "condition": "A generic shared implementation is distributed from a public repository."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": false,
+      "highRisk": true,
+      "assertion": "Public source, fixtures, logs, workflow data, and release assets contain no restricted data; maintainers own release permission and vulnerability reporting.",
+      "remediation": "Remove restricted material, establish a security policy and maintainer-only release boundary, or use an approved restricted distribution.",
+      "introducedIn": "2026.07",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-ASSET-007",
+      "title": "Workflow templates materialize thin least-privilege callers",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-011",
+        "document": "distribution.md",
+        "anchor": "workflow-template-discovery"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": ["tooling"],
+        "capabilities": [],
+        "condition": "An organization workflow template is published."
+      },
+      "assessment": "automated",
+      "severity": "error",
+      "waivable": false,
+      "highRisk": false,
+      "assertion": "The template has matching metadata, valid workflow syntax, minimum permissions, and a repository-owned caller that delegates quality behavior to just ci.",
+      "remediation": "Correct template metadata and syntax, reduce permissions, and remove repository-specific quality logic from the starter.",
+      "introducedIn": "2026.07",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-ASSET-008",
+      "title": "Shared implementation has an immutable cross-language baseline",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-011",
+        "document": "distribution.md",
+        "anchor": "visibility"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": ["tooling"],
+        "capabilities": ["released-artifact"],
+        "condition": "A shared checker, generator, CLI, or asset bundle is released for cross-repository consumption."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": false,
+      "highRisk": true,
+      "assertion": "An immutable GitHub Release asset provides supported platform archives, per-asset checksums, manifest, changelog, provenance, and clean-build/test evidence without requiring GitHub Packages.",
+      "remediation": "Publish the complete immutable baseline release and keep ecosystem registries as optional additional channels.",
       "introducedIn": "2026.07",
       "retiredIn": null,
       "replacement": null
@@ -754,6 +879,31 @@
       "replacement": null
     },
     {
+      "id": "DT-NODE-005",
+      "title": "Node package publication uses an immutable approved release path",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-013",
+        "document": "profiles/node-typescript.md",
+        "anchor": "library-and-publishing"
+      },
+      "applicability": {
+        "profiles": ["node-typescript"],
+        "artifactTypes": [],
+        "capabilities": ["publish"],
+        "condition": "A Node package is published to an external registry."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": true,
+      "highRisk": true,
+      "assertion": "Publication runs only from an immutable release ref in an approved workflow, uses trusted publishing where supported, and emits provenance for a supported public npm package.",
+      "remediation": "Disable local and pull-request publication, use the approved release workflow, and add trusted publishing and provenance or a bounded credential exception.",
+      "introducedIn": "2026.07",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
       "id": "DT-PY-001",
       "title": "Python uses uv as runtime and dependency authority",
       "level": "MUST",
@@ -814,8 +964,8 @@
       },
       "applicability": {
         "profiles": ["python"],
-        "artifactTypes": ["library", "cli"],
-        "capabilities": ["package"],
+        "artifactTypes": [],
+        "capabilities": [],
         "condition": "The Python artifact is packaged, published, or uses a workspace."
       },
       "assessment": "hybrid",
@@ -824,6 +974,31 @@
       "highRisk": false,
       "assertion": "The build backend, package contents, workspace members, native boundary, supported Python range, and artifact validation are explicit.",
       "remediation": "Declare the backend and artifact metadata, validate built wheel and sdist contents, and align native build tooling with the package contract.",
+      "introducedIn": "2026.07",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-PY-004",
+      "title": "Python native dependency variants resolve deterministically",
+      "level": "MUST_NOT",
+      "source": {
+        "decision": "GP-014",
+        "document": "profiles/python.md",
+        "anchor": "workspace-and-native-boundary"
+      },
+      "applicability": {
+        "profiles": ["python"],
+        "artifactTypes": [],
+        "capabilities": [],
+        "condition": "The dependency graph has CPU, CUDA, ROCm, or another host-sensitive native variant."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": true,
+      "highRisk": false,
+      "assertion": "CI and production locks do not change dependency selection through host-driver auto-detection; a named index, marker, or profile input selects the variant.",
+      "remediation": "Declare the native variant explicitly and regenerate the lock without host-dependent selection.",
       "introducedIn": "2026.07",
       "retiredIn": null,
       "replacement": null
@@ -872,8 +1047,8 @@
       "severity": "error",
       "waivable": true,
       "highRisk": false,
-      "assertion": "go.mod and go.sum are committed, tidy state is checked, and non-mise Go tools use an explicit tools module or equivalent native pin.",
-      "remediation": "Commit tidy module records and pin build tools through the chosen Go-native tool manifest.",
+      "assertion": "go.mod and applicable go.sum are committed, tidy state is checked, Go 1.24+ project tools use the tool directive and go tool, and external support CLIs use exact verified assets.",
+      "remediation": "Commit tidy module records, move project tools to the native tool directive, and pin external support CLIs through the release contract.",
       "introducedIn": "2026.07",
       "retiredIn": null,
       "replacement": null
@@ -905,7 +1080,32 @@
     },
     {
       "id": "DT-GO-004",
-      "title": "Go race and package validation follow artifact risk",
+      "title": "Concurrent Go artifacts provide a supported race lane",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-015",
+        "document": "profiles/go.md",
+        "anchor": "tests-race-fuzz-and-coverage"
+      },
+      "applicability": {
+        "profiles": ["go"],
+        "artifactTypes": ["application", "service", "library"],
+        "capabilities": ["test"],
+        "condition": "The artifact is an application, service, or concurrent library and a supported Linux race lane is technically applicable."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": true,
+      "highRisk": false,
+      "assertion": "The repository runs a supported Linux race lane for the applicable packages and reports a real failure.",
+      "remediation": "Add the race lane, record why the artifact is not applicable, or use a time-bounded exception for a technical blocker.",
+      "introducedIn": "2026.07",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-GO-005",
+      "title": "Go fuzz, coverage, and package validation follow artifact risk",
       "level": "SHOULD",
       "source": {
         "decision": "GP-015",
@@ -914,15 +1114,15 @@
       },
       "applicability": {
         "profiles": ["go"],
-        "artifactTypes": ["service", "library", "cli"],
-        "capabilities": ["test"],
-        "condition": "The artifact has concurrency-sensitive code or publishes a module or binary."
+        "artifactTypes": ["application", "service", "library", "cli", "binary", "package"],
+        "capabilities": ["fuzz", "coverage", "package", "released-artifact"],
+        "condition": "The artifact exposes parser, security, public module, binary, or release risk that benefits from a bounded optional lane."
       },
       "assessment": "manual",
       "severity": "warning",
       "waivable": false,
       "highRisk": false,
-      "assertion": "Race detection, fuzzing, coverage, and packaged binary or module validation are selected according to real concurrency, parser, boundary, and release risk.",
+      "assertion": "Fuzzing, coverage, and packaged binary or module validation are selected according to real parser, boundary, and release risk.",
       "remediation": "Add the applicable risk-based lane and document why an expensive or irrelevant lane is omitted.",
       "introducedIn": "2026.07",
       "retiredIn": null,
@@ -972,8 +1172,8 @@
       "severity": "error",
       "waivable": true,
       "highRisk": false,
-      "assertion": "Cargo.toml declares edition, resolver, rust-version, workspace boundaries, and the repository applies the standard lock policy for its artifact type.",
-      "remediation": "Align Cargo metadata with the exact compiler and commit or intentionally omit Cargo.lock according to the artifact contract.",
+      "assertion": "Cargo.toml declares edition, resolver, rust-version, and workspace boundaries, and every Golden Path Rust repository commits one root Cargo.lock.",
+      "remediation": "Align Cargo metadata with the exact compiler, generate the root Cargo.lock, and commit it for applications, services, CLIs, and libraries alike.",
       "introducedIn": "2026.07",
       "retiredIn": null,
       "replacement": null
@@ -1205,7 +1405,7 @@
     },
     {
       "id": "DT-IAC-005",
-      "title": "IaC engine-specific preview and lock contracts are preserved",
+      "title": "AWS CDK preserves local dependency and CloudFormation safety",
       "level": "MUST",
       "source": {
         "decision": "GP-018",
@@ -1213,17 +1413,67 @@
         "anchor": "aws-cdk"
       },
       "applicability": {
-        "profiles": ["infrastructure-aws-cdk", "infrastructure-terraform", "infrastructure-opentofu", "infrastructure-pulumi"],
+        "profiles": ["infrastructure-aws-cdk"],
         "artifactTypes": ["infrastructure"],
         "capabilities": [],
-        "condition": "An IaC engine is selected."
+        "condition": "The AWS CDK profile applies."
       },
       "assessment": "hybrid",
       "severity": "error",
       "waivable": true,
       "highRisk": false,
-      "assertion": "The repository follows its engine-specific exact dependency, lock, static validation, preview, production safety, and sensitive-plan requirements.",
-      "remediation": "Apply the selected CDK, Terraform, OpenTofu, or Pulumi subsection without mixing incompatible engine ownership.",
+      "assertion": "CDK libraries and CLI are exact local dependencies, static ci synthesizes without deployment, routine deployment does not bootstrap, and production uses CloudFormation change sets and rollback without hotswap.",
+      "remediation": "Pin local CDK dependencies, separate bootstrap, and restore deterministic synth plus normal CloudFormation production safety.",
+      "introducedIn": "2026.07",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-IAC-006",
+      "title": "Terraform and OpenTofu preserve one exact lock owner",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-018",
+        "document": "profiles/infrastructure.md",
+        "anchor": "terraform-and-opentofu"
+      },
+      "applicability": {
+        "profiles": ["infrastructure-terraform", "infrastructure-opentofu"],
+        "artifactTypes": ["infrastructure"],
+        "capabilities": [],
+        "condition": "A Terraform or OpenTofu root is selected."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": true,
+      "highRisk": false,
+      "assertion": "Each root selects one exact engine, commits provider constraints and .terraform.lock.hcl, pins modules immutably, validates without state mutation, and protects stored plans as sensitive.",
+      "remediation": "Select one engine owner, regenerate its provider lock deliberately, pin modules, and move stateful plan/apply behavior to the delivery lane.",
+      "introducedIn": "2026.07",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-IAC-007",
+      "title": "Pulumi preserves exact pins and a fresh production preview",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-018",
+        "document": "profiles/infrastructure.md",
+        "anchor": "pulumi"
+      },
+      "applicability": {
+        "profiles": ["infrastructure-pulumi"],
+        "artifactTypes": ["infrastructure"],
+        "capabilities": [],
+        "condition": "The Pulumi profile applies."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": true,
+      "highRisk": false,
+      "assertion": "Pulumi project, CLI, SDK, provider, host dependencies, and locks are exact; plaintext secrets are absent; production up previews the current target and never skips preview.",
+      "remediation": "Commit exact Pulumi and host-language authority, remove plaintext secrets, and require a fresh target preview in the stateful delivery lane.",
       "introducedIn": "2026.07",
       "retiredIn": null,
       "replacement": null
@@ -1339,8 +1589,8 @@
       },
       "applicability": {
         "profiles": ["*"],
-        "artifactTypes": ["library", "cli", "container"],
-        "capabilities": ["publish"],
+        "artifactTypes": [],
+        "capabilities": ["publish", "released-artifact"],
         "condition": "A compiled artifact is externally published, customer-delivered, or contractually regulated."
       },
       "assessment": "hybrid",
@@ -1364,8 +1614,8 @@
       },
       "applicability": {
         "profiles": ["*"],
-        "artifactTypes": ["library", "cli", "container"],
-        "capabilities": ["publish"],
+        "artifactTypes": [],
+        "capabilities": ["publish", "released-artifact"],
         "condition": "The artifact is externally or canonically released."
       },
       "assessment": "manual",
@@ -1374,6 +1624,31 @@
       "highRisk": false,
       "assertion": "Release evidence connects artifact digest, source commit, builder identity, and workflow, and consumers verify those expectations when provenance is a gate.",
       "remediation": "Add Free-compatible signed release metadata or an attestation plus explicit consumer verification.",
+      "introducedIn": "2026.07",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-SUPPLY-003",
+      "title": "Consumers verify usable provenance before required execution",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-019",
+        "document": "build-hygiene.md",
+        "anchor": "provenance"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": [],
+        "capabilities": ["released-artifact"],
+        "condition": "A required build, bootstrap, deployment, or release artifact provides usable provenance evidence."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": true,
+      "highRisk": true,
+      "assertion": "Consumption verifies the artifact subject digest, signature, builder identity, and expected source and workflow before execution or promotion.",
+      "remediation": "Add plan-compatible attestation or signed-manifest verification and fail closed when identity or digest expectations do not match.",
       "introducedIn": "2026.07",
       "retiredIn": null,
       "replacement": null
@@ -1524,6 +1799,31 @@
       "highRisk": false,
       "assertion": "The release records compatibility, deprecation, replacement, rollout state, and retirement without reusing stable IDs or silently converting warning to failure.",
       "remediation": "Add explicit lifecycle metadata and publish the change in a new immutable standard or artifact version.",
+      "introducedIn": "2026.07",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-RELEASE-004",
+      "title": "Required enforcement waits for a stable implementation release",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-011",
+        "document": "distribution.md",
+        "anchor": "standard-lifecycle"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": ["tooling"],
+        "capabilities": ["released-artifact"],
+        "condition": "A shared implementation result is promoted from report-only to a required organization control."
+      },
+      "assessment": "manual",
+      "severity": "error",
+      "waivable": false,
+      "highRisk": false,
+      "assertion": "The implementation is at least 1.0.0 and has passed compatibility, rollback, supported-platform, and migration fixtures before required enforcement.",
+      "remediation": "Keep the 0.x release report-only until stable compatibility and operational evidence are complete.",
       "introducedIn": "2026.07",
       "retiredIn": null,
       "replacement": null

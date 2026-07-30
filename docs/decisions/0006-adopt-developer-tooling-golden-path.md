@@ -64,6 +64,10 @@ We adopt a versioned organization Developer Tooling Golden Path.
 13. The central standard does not maintain repository migration schedules,
     current conformance status, or repository-specific rules. Each repository
     owns adoption and future migration work.
+14. Shared implementation begins under one release, ownership, visibility, and
+    trust boundary. It is split only when an independently governed owner,
+    security boundary, release lifecycle, visibility, or failure domain
+    emerges.
 
 The normative requirements are maintained in the
 [Developer Tooling Standard](../standards/developer-tooling/README.md).
@@ -130,6 +134,21 @@ conformance without proportional risk reduction.
 Rejected because migration needs a stable target. Repository adoption is
 separate owned work and does not determine whether the organization has
 accepted the target contract.
+
+### Adopt a developer portal as the initial control plane
+
+Backstage Software Templates remain a possible future discovery and creation
+surface, but are deferred because the initial requirement is a small,
+repository-independent policy and release contract rather than a portal,
+service catalog, or plugin platform.
+
+### Adopt another IaC abstraction as an organization default
+
+SST, Alchemy, Nitric, and CDK for Terraform are not organization defaults.
+AWS CDK remains the AWS authoring default; Terraform/OpenTofu and Pulumi retain
+their explicit profiles. A future provider or engine change requires a separate
+architecture and state-identity decision rather than an implicit Golden Path
+tool substitution.
 
 ## Adoption status
 

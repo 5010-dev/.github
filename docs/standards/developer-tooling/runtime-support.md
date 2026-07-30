@@ -11,7 +11,7 @@ status, organization adoption, and repository migration into one tier.
 
 | Value | Meaning |
 | --- | --- |
-| `current` | Stable current release not yet on an organization production line |
+| `current` | Stable current release not yet transitioned to an LTS or other long-support line |
 | `active` | Stable with normal bugfix/security support |
 | `maintenance` | Maintenance/security support without normal feature work |
 | `security` | Security-only or otherwise restricted support |
@@ -20,7 +20,10 @@ status, organization adoption, and repository migration into one tier.
 | `unknown` | Upstream has no reliable maintenance window |
 
 `current`, `prerelease`, and `unknown` are production-blocked by default and MAY
-be used only in an explicitly declared evaluation context.
+be used only in an explicitly declared evaluation context. A previous tagged
+Zig stable with `unknown` lifecycle may be `compatibility-only` for a bounded
+consumer or migration check with an owner and review date; it is not a
+production default.
 
 ## Organization disposition
 
@@ -45,6 +48,7 @@ Organization disposition does not rewrite upstream lifecycle.
 
 Migration state belongs to repository-local tracking. The central catalog MUST
 NOT list repositories, their exact pins, or their current migration state.
+`evaluation-only` describes an allowed usage context, not a migration state.
 
 ## Range and exact pin
 
@@ -73,9 +77,17 @@ while retaining an exact development/CI toolchain.
 | Rust | Latest stable exact | N-1/N-2 for at most 90 days after a new stable | Lower consumer MSRV is a separate library contract | Older development toolchains and moving nightly |
 | Zig | Latest tagged stable, initially 0.16.0 | — | Previous tagged stable with owner/review date | master/nightly |
 
+Node's release schedule and LTS cadence may evolve; the catalog follows the
+official lifecycle rather than assuming that every future annual major becomes
+an organization LTS. A framework or AWS CDK host-runtime compatibility statement
+does not extend Node support after upstream EOL.
+
 The current exact release patch is selected at a coordinated Golden Path release
-cutoff and recorded in the release manifest. The table is not permission to use
-a moving channel.
+cutoff and recorded in the release manifest, not in the runtime policy catalog.
+The catalog uses typed line, range, relative, or channel selectors whose grammar
+is defined by its schema. A repository pin is matched through the release
+manifest before applying the catalog disposition. The table is not permission
+to use a moving channel.
 
 IaC tools combine native constraints with exact CLI, SDK, and provider pins.
 Changing cloud provider or IaC engine is an architecture/state migration, not a
@@ -91,20 +103,30 @@ runtime-tier upgrade.
 | EOL | `exception` or blocked | Approved exception required to continue | Fail without exception |
 
 If upstream gives less notice, the same stages begin as early as possible.
-Withdrawn or compromised releases MAY be blocked immediately with source,
-impact, replacement, and exception guidance.
+When a security advisory, withdrawal, compromise, or integrity failure makes a
+release unsafe, immediate prohibition takes precedence over the normal notice
+window. The emergency update MUST record source, impact, replacement, and
+exception guidance.
+
+An EOL exception additionally records affected runtime and artifacts, operational
+impact, migration issue and target, accountable owner, review date, and expiry.
 
 Rust's N-1/N-2 supported grace is a maximum 90-day cadence buffer, not an
-upstream LTS claim. It does not require a repository exception during the grace.
+upstream LTS claim. The catalog records the stable-release anchor and exact
+grace end date so an offline checker can evaluate it without a live clock or
+release query. It does not require a repository exception during the grace.
 
 ## Catalog and checker
 
-The runtime catalog records official source metadata, check date, normalized
-lifecycle, organization disposition, migration deadlines, and compatibility.
+The runtime catalog records official source metadata, check date, typed selector,
+normalized lifecycle, organization disposition, policy deadlines, and
+compatibility.
 The shared checker embeds an immutable compatible snapshot and MUST NOT query
 live release pages while evaluating a repository.
 
 Updates to runtime lines and IaC tooling arrive through reviewable compatibility
-changes. Automation MAY open changes but MUST NOT overwrite pins or deploy.
+changes. Automation SHOULD open reviewable pull requests for supported patch
+releases and new Rust stable releases, and MAY do so for other catalog changes.
+It MUST NOT overwrite repository pins or deploy.
 
 Rule IDs: `DT-RUNTIME-*`.

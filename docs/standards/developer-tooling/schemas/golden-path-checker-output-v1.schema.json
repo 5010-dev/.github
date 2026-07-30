@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/5010-dev/.github/schemas/golden-path-checker-output/v1",
+  "$id": "urn:5010-dev:golden-path:schema:checker-output:v1",
   "title": "Golden Path checker output v1",
   "type": "object",
   "additionalProperties": false,
@@ -10,6 +10,7 @@
     "standardVersion",
     "checkerVersion",
     "catalogDigest",
+    "evaluatedAt",
     "enforcement",
     "profiles",
     "exitCode",
@@ -35,6 +36,10 @@
     "catalogDigest": {
       "type": "string",
       "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "evaluatedAt": {
+      "type": "string",
+      "format": "date-time"
     },
     "enforcement": {
       "enum": [
@@ -70,6 +75,10 @@
       "items": {
         "$ref": "#/$defs/finding"
       }
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
     }
   },
   "$defs": {
@@ -177,6 +186,10 @@
             "null"
           ],
           "pattern": "^GPE-[0-9]{4}-[0-9]{3,}$"
+        },
+        "extensions": {
+          "type": "object",
+          "additionalProperties": true
         }
       },
       "allOf": [

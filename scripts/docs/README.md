@@ -34,10 +34,17 @@ Validate only the normative Developer Tooling source set:
 python3 scripts/docs/check-developer-tooling-standard.py
 ```
 
-This governance check verifies source completeness, JSON syntax, stable rule
-IDs, GP-006 through GP-020 traceability, source headings, version alignment,
-runtime baseline invariants, example consistency, and the absence of known
-repository-coupled references.
+This governance check verifies source completeness, JSON syntax, every Draft
+2020-12 keyword used by the local schemas, schema validation of catalogs and
+examples, negative contract fixtures, stable rule IDs, GP-006 through GP-020
+traceability, source headings, version alignment, runtime baseline invariants,
+example consistency, and repository-independence scans across the standard,
+guides, and owning ADR.
+
+The embedded schema evaluator intentionally supports exactly the keyword set
+used by these dependency-light source contracts. The gate fails if a schema
+introduces an unsupported keyword, so it cannot silently accept a constraint it
+does not implement.
 
 It is not the cross-repository Golden Path conformance checker. That separately
 versioned implementation will consume the catalog and schemas to evaluate

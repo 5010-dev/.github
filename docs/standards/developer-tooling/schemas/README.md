@@ -24,3 +24,7 @@ Examples:
 Schema IDs are stable compatibility identifiers. Published release manifests
 bind the exact file content by source ref and digest; consumers MUST NOT fetch a
 mutable default branch as a runtime dependency.
+
+Schema `$id` values use repository-independent `urn:5010-dev:golden-path:...`
+identifiers. Repository names and hosting paths are operational locators and do
+not change serialized contract identity.

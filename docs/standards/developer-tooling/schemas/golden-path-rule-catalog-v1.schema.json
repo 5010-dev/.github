@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/5010-dev/.github/schemas/golden-path-rule-catalog/v1",
+  "$id": "urn:5010-dev:golden-path:schema:rule-catalog:v1",
   "title": "Golden Path stable rule catalog v1",
   "type": "object",
   "additionalProperties": false,
@@ -30,6 +30,55 @@
     }
   },
   "$defs": {
+    "profile": {
+      "enum": [
+        "node-typescript",
+        "python",
+        "go",
+        "rust",
+        "zig",
+        "zig-toolchain",
+        "infrastructure-aws-cdk",
+        "infrastructure-terraform",
+        "infrastructure-opentofu",
+        "infrastructure-pulumi",
+        "documentation"
+      ]
+    },
+    "artifactType": {
+      "enum": [
+        "application",
+        "service",
+        "library",
+        "cli",
+        "package",
+        "binary",
+        "container",
+        "infrastructure",
+        "tooling",
+        "documentation"
+      ]
+    },
+    "capability": {
+      "enum": [
+        "format",
+        "lint",
+        "typecheck",
+        "test",
+        "build",
+        "package",
+        "publish",
+        "coverage",
+        "fuzz",
+        "unsafe",
+        "native-extension",
+        "cgo",
+        "released-artifact",
+        "dependency-automation",
+        "cache",
+        "devcontainer"
+      ]
+    },
     "rule": {
       "type": "object",
       "additionalProperties": false,
@@ -105,24 +154,40 @@
               "type": "array",
               "uniqueItems": true,
               "items": {
-                "type": "string",
-                "minLength": 1
-              }
+                "anyOf": [
+                  {
+                    "const": "*"
+                  },
+                  {
+                    "$ref": "#/$defs/profile"
+                  }
+                ]
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "*"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
             },
             "artifactTypes": {
               "type": "array",
               "uniqueItems": true,
               "items": {
-                "type": "string",
-                "minLength": 1
+                "$ref": "#/$defs/artifactType"
               }
             },
             "capabilities": {
               "type": "array",
               "uniqueItems": true,
               "items": {
-                "type": "string",
-                "minLength": 1
+                "$ref": "#/$defs/capability"
               }
             },
             "condition": {

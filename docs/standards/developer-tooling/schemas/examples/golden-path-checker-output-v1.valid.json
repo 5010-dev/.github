@@ -4,6 +4,7 @@
   "standardVersion": "2026.07",
   "checkerVersion": "1.0.0",
   "catalogDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "evaluatedAt": "2026-07-30T00:00:00Z",
   "enforcement": "report-only",
   "profiles": [
     "node-typescript"
