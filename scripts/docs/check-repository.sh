@@ -22,6 +22,7 @@ required_sources=(
     docs/decisions/0003-adopt-current-state-ecs-bootstrap-classification.md
     docs/decisions/0004-adopt-arc42-engineering-documentation-system.md
     docs/decisions/0005-adopt-ecs-service-delivery-workflow-envelope.md
+    docs/decisions/0006-adopt-developer-tooling-golden-path.md
     docs/decisions/README.md
     docs/platform/README.md
     docs/platform/ecs-deployment-contract.md
@@ -29,11 +30,17 @@ required_sources=(
     docs/platform/ecs-service-delivery-workflow-standard.md
     docs/platform/ecs-service-health-matrix.md
     docs/standards/README.md
+    docs/standards/developer-tooling/README.md
+    docs/standards/developer-tooling/rules/catalog.v1.json
+    docs/standards/developer-tooling/rules/runtime-support.v1.json
+    docs/standards/developer-tooling/schemas/README.md
     docs/standards/engineering-documentation/README.md
     docs/standards/engineering-documentation/contract.md
     docs/standards/engineering-documentation/arc42-profile.md
     docs/standards/engineering-documentation/lifecycle-and-validation.md
     docs/guides/README.md
+    docs/guides/adopting-developer-tooling.md
+    docs/guides/migrating-developer-tooling.md
     docs/guides/adopting-arc42.md
     docs/guides/migrating-existing-documentation.md
     templates/engineering-documentation/README.md
@@ -45,6 +52,7 @@ required_sources=(
     scripts/docs/README.md
     scripts/docs/scaffold-arc42.sh
     scripts/docs/check-contract.sh
+    scripts/docs/check-developer-tooling-standard.py
     scripts/docs/check-repository.sh
 )
 
@@ -121,6 +129,10 @@ for shell_script in \
         report "invalid Bash syntax: ${shell_script#"$repo_root"/}"
     fi
 done
+
+if ! python3 "$script_dir/check-developer-tooling-standard.py"; then
+    report "Developer Tooling Standard source contract failed"
+fi
 
 if [[ "$errors" -ne 0 ]]; then
     printf 'organization documentation check: FAILED (%d problem(s))\n' "$errors" >&2

@@ -12,6 +12,7 @@ index.
 | [ADR-0003](./0003-adopt-current-state-ecs-bootstrap-classification.md) | Accepted               | Adopt current-state ECS bootstrap classification              |
 | [ADR-0004](./0004-adopt-arc42-engineering-documentation-system.md)     | Accepted               | Adopt arc42 as the canonical engineering documentation system |
 | [ADR-0005](./0005-adopt-ecs-service-delivery-workflow-envelope.md)     | Accepted               | Adopt an ECS service delivery workflow envelope               |
+| [ADR-0006](./0006-adopt-developer-tooling-golden-path.md)              | Accepted               | Adopt the organization Developer Tooling Golden Path          |
 
 Organization standards and platform contracts hold the current normative view.
 ADRs explain why those views were accepted.

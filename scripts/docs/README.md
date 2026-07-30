@@ -1,8 +1,10 @@
-# Documentation tooling
+# Governance repository tooling
 
 This directory contains dependency-light reference tooling for the
 [`5010-arc42-v1`](../../docs/standards/engineering-documentation/README.md)
-organization profile.
+organization profile and validation of the canonical
+[Developer Tooling Standard](../../docs/standards/developer-tooling/README.md)
+source.
 
 ## Organization source check
 
@@ -14,14 +16,32 @@ scripts/docs/check-repository.sh
 ```
 
 The check scaffolds a temporary example, verifies it with the consumer
-conformance checker, and confirms that a second scaffold refuses to overwrite
-the generated files.
+conformance checker, confirms that a second scaffold refuses to overwrite the
+generated files, and validates the Developer Tooling documents, stable rule
+catalog, runtime catalog, schemas, and examples.
 
 The
 [documentation governance workflow](../../.github/workflows/docs.yml) runs this
 same gate for pull requests targeting `main` and pushes to `main`. The workflow
 is read-only, uses explicit least-privilege permissions, and does not replace
 repository-owner review of factual or architectural claims.
+
+## Developer Tooling source check
+
+Validate only the normative Developer Tooling source set:
+
+```bash
+python3 scripts/docs/check-developer-tooling-standard.py
+```
+
+This governance check verifies source completeness, JSON syntax, stable rule
+IDs, GP-006 through GP-020 traceability, source headings, version alignment,
+runtime baseline invariants, example consistency, and the absence of known
+repository-coupled references.
+
+It is not the cross-repository Golden Path conformance checker. That separately
+versioned implementation will consume the catalog and schemas to evaluate
+repository-local metadata, native files, commands, and evidence.
 
 ## Scaffold
 

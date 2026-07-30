@@ -39,6 +39,9 @@ in all capitals.
 ## Standards
 
 - [Organization standards index](./standards/README.md)
+- [Developer Tooling Standard](./standards/developer-tooling/README.md)
+- [Developer Tooling stable rule catalog](./standards/developer-tooling/rules/README.md)
+- [Developer Tooling schemas](./standards/developer-tooling/schemas/README.md)
 - [Engineering documentation standard](./standards/engineering-documentation/README.md)
 - [Engineering documentation contract](./standards/engineering-documentation/contract.md)
 - [5010 arc42 profile](./standards/engineering-documentation/arc42-profile.md)
@@ -46,7 +49,9 @@ in all capitals.
 
 ## Guides
 
-- [Documentation guides index](./guides/README.md)
+- [Organization guides index](./guides/README.md)
+- [Adopting the Developer Tooling Standard](./guides/adopting-developer-tooling.md)
+- [Migrating existing developer tooling](./guides/migrating-developer-tooling.md)
 - [Adopting the organization arc42 profile](./guides/adopting-arc42.md)
 - [Migrating existing documentation](./guides/migrating-existing-documentation.md)
 
@@ -61,7 +66,7 @@ in all capitals.
 ## Templates and tooling
 
 - [Engineering documentation templates](../templates/engineering-documentation/README.md)
-- [Documentation tooling](../scripts/docs/README.md)
+- [Governance repository tooling](../scripts/docs/README.md)
 
 ## Decisions
 

@@ -14,10 +14,11 @@ repositories; GitHub does not inherit them automatically.
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — default contribution and Git workflow policy
 - [`pull_request_template.md`](./pull_request_template.md) — default pull request template
 - [`docs/README.md`](./docs/README.md) — organization engineering documentation index
+- [`Developer Tooling Standard`](./docs/standards/developer-tooling/README.md) — canonical Golden Path for commands, toolchains, dependencies, language and IaC profiles, conformance, and exceptions
 - [`Engineering documentation standard`](./docs/standards/engineering-documentation/README.md) — canonical arc42 documentation contract
-- [`Documentation adoption guides`](./docs/guides/README.md) — adoption and migration procedures
+- [`Organization adoption guides`](./docs/guides/README.md) — Developer Tooling and engineering-documentation adoption and migration procedures
 - [`Engineering documentation templates`](./templates/engineering-documentation/README.md) — repository, subsystem, ADR, runbook, and validation starters
-- [`Documentation tooling`](./scripts/docs/README.md) — source validation, scaffold, and conformance checks
+- [`Governance repository tooling`](./scripts/docs/README.md) — standard source validation, documentation scaffold, and conformance checks
 - [`Documentation governance workflow`](./.github/workflows/docs.yml) — automated validation for pull requests and `main`
 - [`ECS deployment contract`](./docs/platform/ecs-deployment-contract.md) — shared CDK and service-repository deployment model
 - [`ECS service delivery workflow standard`](./docs/platform/ecs-service-delivery-workflow-standard.md) — service release workflow invariants, variation, and conformance
