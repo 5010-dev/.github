@@ -122,8 +122,8 @@
       "severity": "error",
       "waivable": true,
       "highRisk": false,
-      "assertion": "The ci command composes required repository checks, fails closed, avoids shared-state mutation, and does not depend on undeclared interactive or developer-local state.",
-      "remediation": "Move deployment and repair operations out of ci, declare prerequisites, and make the command fail when a required check fails.",
+      "assertion": "The ci command composes required repository checks, fails closed, avoids shared-state mutation, and does not depend on undeclared interactive or developer-local state; quality CI and deployment orchestration keep independently reviewable permission, credential, and mutation boundaries.",
+      "remediation": "Move deployment and repair operations out of ci, establish explicit quality-versus-deployment boundaries, declare prerequisites, and make the command fail when a required check fails.",
       "introducedIn": "2026.07",
       "retiredIn": null,
       "replacement": null
@@ -505,7 +505,7 @@
     },
     {
       "id": "DT-CONF-002",
-      "title": "Checker output and exit codes follow the versioned contract",
+      "title": "Checker output, CI summary, and exit codes follow the versioned contract",
       "level": "MUST",
       "source": {
         "decision": "GP-010",
@@ -516,14 +516,14 @@
         "profiles": ["*"],
         "artifactTypes": [],
         "capabilities": [],
-        "condition": "A checker emits a conformance result."
+        "condition": "A checker or CI adapter emits a conformance result."
       },
-      "assessment": "automated",
+      "assessment": "hybrid",
       "severity": "error",
       "waivable": false,
       "highRisk": false,
-      "assertion": "Machine output validates against golden-path-checker-output/v1 and the process exit code reflects fail, error, warning-policy, and incomplete-evaluation semantics.",
-      "remediation": "Emit schema-valid findings with the stable rule ID and return the contract-defined exit status.",
+      "assertion": "Machine output validates against golden-path-checker-output/v1, CI emits the bounded actionable summary required by the standard, and the process exit code reflects fail, error, warning-policy, and incomplete-evaluation semantics.",
+      "remediation": "Emit schema-valid findings with stable rule IDs, include the required versions, profiles, counts, applicable expiry, and remediation in the CI summary, and return the contract-defined exit status.",
       "introducedIn": "2026.07",
       "retiredIn": null,
       "replacement": null

@@ -574,6 +574,14 @@ def validate_schema_validator_self_tests() -> None:
         / "schemas/golden-path-checker-output-v1.schema.json",
         "checker SemVer",
     )
+    invalid_evaluation_time = copy.deepcopy(output)
+    invalid_evaluation_time["evaluatedAt"] = "2026-07-30T09:00:00+09:00"
+    require_schema_rejection(
+        invalid_evaluation_time,
+        STANDARD_ROOT
+        / "schemas/golden-path-checker-output-v1.schema.json",
+        "non-canonical evaluation timezone",
+    )
 
     catalog = load_json(STANDARD_ROOT / "rules/catalog.v1.json")
     invalid_catalog = copy.deepcopy(catalog)

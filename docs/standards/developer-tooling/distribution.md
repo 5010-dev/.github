@@ -197,7 +197,7 @@ An immutable coordinated release manifest connects:
 - checker, generator, and asset-bundle SemVer and digests;
 - supported standard/contract/schema ranges;
 - supported OS/architecture archive set and per-asset checksums;
-- changelog and migration guidance; and
+- changelog and migration guidance;
 - source/build identity and provenance evidence; and
 - reproducible clean-build and clean-test evidence for the released source.
 

@@ -52,6 +52,8 @@ The shared checker:
   or the current clock for basic structural evaluation;
 - MUST receive an explicit UTC evaluation time for expiry and lifecycle checks
   and record that value in machine output;
+- MUST serialize the machine-output `evaluatedAt` value in canonical UTC `Z`
+  form rather than an equivalent numeric-offset representation;
 - MUST validate schema and standard compatibility before rule evaluation;
 - MUST sort findings by `ruleId`, repository-relative `path`, and
   `secondaryKey`, using an empty secondary key when none applies;
@@ -104,9 +106,11 @@ the actual finding and exit evidence even when the workflow wrapper does not
 block progress.
 
 The stable CI display name is `Developer Tooling / Conformance`.
-The workflow SHOULD emit annotations and a bounded job summary. It MAY retain
-the JSON result as a short-lived artifact according to repository evidence
-policy.
+The workflow SHOULD emit annotations. Every conformance CI run MUST emit a
+bounded job summary containing the standard and checker versions, selected
+profiles, counts by finding status, applicable exception expiry dates, and
+remediation for non-passing findings. It MAY retain the JSON result as a
+short-lived artifact according to repository evidence policy.
 
 A missing, skipped, cancelled, or otherwise unexecuted checker/workflow is not a
 passing result. Any policy or platform gate MUST require positive evidence from
