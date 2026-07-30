@@ -37,6 +37,14 @@ Do not bypass repository-managed hooks with `git commit --no-verify`.
 
 ## Organization engineering standards
 
+Active buildable repositories must follow the
+[Developer Tooling Standard](https://github.com/5010-dev/.github/blob/main/docs/standards/developer-tooling/README.md).
+It defines the root Just command contract, toolchain and native dependency
+authority, language and IaC profiles, immutable shared implementation,
+conformance, runtime support, and time-bounded exceptions. Repositories link to
+the central standard and keep their exact metadata, commands, manifests, locks,
+workflow implementation, migration status, and approved exceptions local.
+
 Changes to shared platform boundaries, deployment workflows, or infrastructure
 integration must follow the relevant organization engineering contract. ECS
 services must follow the

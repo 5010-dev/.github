@@ -5,6 +5,10 @@ Organization standards define reusable requirements that apply across
 
 ## Standards
 
+- [Developer Tooling](./developer-tooling/README.md) — define the versioned
+  Golden Path for root commands, toolchain and dependency authority, immutable
+  distribution, language and IaC profiles, conformance, runtime support, build
+  hygiene, and exceptions.
 - [Engineering documentation](./engineering-documentation/README.md) — apply the
   organization arc42 profile as the canonical documentation system for
   engineering repositories and independently governed engineering layers.
