@@ -42,6 +42,10 @@ not implement.
 - Formatting, lint fixes, code generation, migrations, deployment, publication,
   destructive integration tests, production smoke tests, and notification are
   separate explicit commands or workflows.
+- Quality CI and deployment orchestration MUST remain logically separate so
+  their permission, credential, and mutation boundaries are independently
+  reviewable. Separate workflow files are the default, but equivalent explicit
+  job or reusable-workflow boundaries MAY satisfy this requirement.
 - CI SHOULD be thin orchestration that prepares the exact environment and calls
   `just ci`; workflow YAML SHOULD NOT reimplement the quality graph.
 - Every required caller workflow MUST invoke root `just ci` or the exact same
