@@ -15,11 +15,15 @@ repositories; GitHub does not inherit them automatically.
 - [`pull_request_template.md`](./pull_request_template.md) — default pull request template
 - [`docs/README.md`](./docs/README.md) — organization engineering documentation index
 - [`Developer Tooling Standard`](./docs/standards/developer-tooling/README.md) — canonical Golden Path for commands, toolchains, dependencies, language and IaC profiles, conformance, and exceptions
+- [`Golden Path bootstrap`](./docs/guides/bootstrap-new-repository.md) — immutable implementation locator, new-repository materialization, and validation procedure
+- [`GitHub hosting capability profile`](./docs/guides/github-hosting-capabilities.md) — Free private baseline and optional paid-adapter boundaries
+- [`Golden Path workflow template`](./workflow-templates/golden-path-quality.yml) — organization discovery starter for a repository-owned thin caller
 - [`Engineering documentation standard`](./docs/standards/engineering-documentation/README.md) — canonical arc42 documentation contract
 - [`Organization adoption guides`](./docs/guides/README.md) — Developer Tooling and engineering-documentation adoption and migration procedures
 - [`Engineering documentation templates`](./templates/engineering-documentation/README.md) — repository, subsystem, ADR, runbook, and validation starters
 - [`Governance repository tooling`](./scripts/docs/README.md) — standard source validation, documentation scaffold, and conformance checks
 - [`Documentation governance workflow`](./.github/workflows/docs.yml) — automated validation for pull requests and `main`
+- [`Golden Path bootstrap workflow`](./.github/workflows/golden-path-bootstrap.yml) — released implementation and dry-run fixture integration gate
 - [`ECS deployment contract`](./docs/platform/ecs-deployment-contract.md) — shared CDK and service-repository deployment model
 - [`ECS service delivery workflow standard`](./docs/platform/ecs-service-delivery-workflow-standard.md) — service release workflow invariants, variation, and conformance
 - [`ECS health and readiness profiles`](./docs/platform/ecs-health-readiness-profiles.md) — state-aware health semantics by service shape

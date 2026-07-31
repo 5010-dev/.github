@@ -1,0 +1,9 @@
+schemaVersion: golden-path-generator-request/v1
+layout: documentation
+projectName: Golden Path Bootstrap Fixture
+projectSlug: golden-path-bootstrap-fixture
+components:
+  - name: documentation
+    path: .
+    profiles: [documentation]
+    artifactTypes: [documentation]

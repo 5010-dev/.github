@@ -167,5 +167,7 @@ standard does not maintain repository migration schedules or conformance
 status.
 
 - [Adopting the Developer Tooling Standard](../../guides/adopting-developer-tooling.md)
+- [Bootstrapping a new repository](../../guides/bootstrap-new-repository.md)
+- [GitHub hosting capability profile](../../guides/github-hosting-capabilities.md)
 - [Migrating existing developer tooling](../../guides/migrating-developer-tooling.md)
 - [ADR-0006: Adopt the organization Developer Tooling Golden Path](../../decisions/0006-adopt-developer-tooling-golden-path.md)

@@ -44,6 +44,11 @@ authority, language and IaC profiles, immutable shared implementation,
 conformance, runtime support, and time-bounded exceptions. Repositories link to
 the central standard and keep their exact metadata, commands, manifests, locks,
 workflow implementation, migration status, and approved exceptions local.
+New repositories follow the
+[Golden Path bootstrap guide](https://github.com/5010-dev/.github/blob/main/docs/guides/bootstrap-new-repository.md)
+and the
+[GitHub hosting capability profile](https://github.com/5010-dev/.github/blob/main/docs/guides/github-hosting-capabilities.md)
+before materializing repository-local tooling.
 
 Changes to shared platform boundaries, deployment workflows, or infrastructure
 integration must follow the relevant organization engineering contract. ECS

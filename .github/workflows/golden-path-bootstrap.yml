@@ -1,0 +1,93 @@
+name: Golden Path bootstrap integration
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/golden-path-bootstrap.yml"
+      - "docs/decisions/0006-adopt-developer-tooling-golden-path.md"
+      - "docs/guides/adopting-developer-tooling.md"
+      - "docs/guides/bootstrap-new-repository.md"
+      - "docs/guides/github-hosting-capabilities.md"
+      - "docs/guides/golden-path-bootstrap.v1.json"
+      - "docs/standards/developer-tooling/**"
+      - "scripts/docs/check-golden-path-bootstrap.sh"
+      - "scripts/docs/check-golden-path-integration.py"
+      - "scripts/docs/fixtures/golden-path-bootstrap/**"
+      - "workflow-templates/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/golden-path-bootstrap.yml"
+      - "docs/decisions/0006-adopt-developer-tooling-golden-path.md"
+      - "docs/guides/adopting-developer-tooling.md"
+      - "docs/guides/bootstrap-new-repository.md"
+      - "docs/guides/github-hosting-capabilities.md"
+      - "docs/guides/golden-path-bootstrap.v1.json"
+      - "docs/standards/developer-tooling/**"
+      - "scripts/docs/check-golden-path-bootstrap.sh"
+      - "scripts/docs/check-golden-path-integration.py"
+      - "scripts/docs/fixtures/golden-path-bootstrap/**"
+      - "workflow-templates/**"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: golden-path-bootstrap-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bootstrap:
+    name: Validate released Golden Path bootstrap
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Validate policy-owned integration contract
+        run: python3 scripts/docs/check-golden-path-integration.py
+
+      - name: Prepare isolated verifier toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/golden-path-verifier"
+          printf '%s\n' \
+            '[tools]' \
+            'github-cli = "2.96.0"' \
+            >"$RUNNER_TEMP/golden-path-verifier/mise.toml"
+
+      - name: Install exact GitHub CLI verifier
+        uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
+        with:
+          version: 2026.7.17
+          sha256: 8aba14e84ffeb312ca600f1a16b23c217c0d7f55c64d93f867f754efed3d8a43
+          working_directory: ${{ runner.temp }}/golden-path-verifier
+          install: true
+          cache: false
+
+      - name: Set up verified Golden Path executable
+        id: golden-path
+        uses: 5010-dev/engineering-tooling/actions/setup-golden-path@1c590b377dfc38047a1c9766ab0ea3ac9b954d3b
+        with:
+          checker-version: '0.2.0'
+          source-commit: '1c590b377dfc38047a1c9766ab0ea3ac9b954d3b'
+          github-cli-version: '2.96.0'
+          darwin-amd64-sha256: 'a0fc3b227c9bc492f72f04dd2b5f13368708f9a40abf79740bf8e42e1ff83c69'
+          darwin-arm64-sha256: '381272c9e817fb1619316e52360911f4f4a5fd441982517476bff3fe994adcd8'
+          linux-amd64-sha256: '780ae580fe76011e8d8933efa3a34aee26931158c4f298eee0ea16306e73b9cf'
+          linux-arm64-sha256: '320a19bbb8a3b77df04aeb5cc0103f839e34b1705cffa7c2824138aec23e69ca'
+
+      - name: Exercise immutable bootstrap fixture
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GOLDEN_PATH_BIN: ${{ steps.golden-path.outputs.binary-path }}
+        run: scripts/docs/check-golden-path-bootstrap.sh

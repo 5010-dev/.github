@@ -153,7 +153,8 @@ tool substitution.
 ## Adoption status
 
 This decision and the organization standard are As-built in the `.github`
-governance repository. Shared implementation and workflow-template discovery
-are follow-up implementation concerns. Each participating repository owns its
-metadata, commands, manifests, locks, exceptions, migration, evidence, and
-conformance status.
+governance repository. Shared implementation release `0.2.0` is consumed by an
+immutable operational locator, and workflow-template discovery plus the
+released bootstrap fixture are As-built in the policy repository. Each
+participating repository still owns its metadata, commands, manifests, locks,
+exceptions, migration, evidence, hosting adapters, and conformance status.

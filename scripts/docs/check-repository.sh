@@ -13,6 +13,7 @@ report() {
 
 required_sources=(
     .github/workflows/docs.yml
+    .github/workflows/golden-path-bootstrap.yml
     README.md
     CONTRIBUTING.md
     pull_request_template.md
@@ -40,6 +41,9 @@ required_sources=(
     docs/standards/engineering-documentation/lifecycle-and-validation.md
     docs/guides/README.md
     docs/guides/adopting-developer-tooling.md
+    docs/guides/bootstrap-new-repository.md
+    docs/guides/github-hosting-capabilities.md
+    docs/guides/golden-path-bootstrap.v1.json
     docs/guides/migrating-developer-tooling.md
     docs/guides/adopting-arc42.md
     docs/guides/migrating-existing-documentation.md
@@ -52,8 +56,13 @@ required_sources=(
     scripts/docs/README.md
     scripts/docs/scaffold-arc42.sh
     scripts/docs/check-contract.sh
+    scripts/docs/check-golden-path-bootstrap.sh
+    scripts/docs/check-golden-path-integration.py
     scripts/docs/check-developer-tooling-standard.py
     scripts/docs/check-repository.sh
+    scripts/docs/fixtures/golden-path-bootstrap/documentation.yaml
+    workflow-templates/golden-path-quality.yml
+    workflow-templates/golden-path-quality.properties.json
 )
 
 for required_source in "${required_sources[@]}"; do
@@ -123,6 +132,7 @@ done < <(
 
 for shell_script in \
     "$script_dir/check-contract.sh" \
+    "$script_dir/check-golden-path-bootstrap.sh" \
     "$script_dir/scaffold-arc42.sh" \
     "$script_dir/check-repository.sh"; do
     if ! bash -n "$shell_script"; then
@@ -132,6 +142,10 @@ done
 
 if ! python3 "$script_dir/check-developer-tooling-standard.py"; then
     report "Developer Tooling Standard source contract failed"
+fi
+
+if ! python3 "$script_dir/check-golden-path-integration.py"; then
+    report "Golden Path bootstrap integration contract failed"
 fi
 
 if [[ "$errors" -ne 0 ]]; then
