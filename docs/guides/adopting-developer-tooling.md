@@ -9,6 +9,12 @@ Adoption creates a repository-local executable contract. It does not make the
 repository a reference implementation and does not add its status to a central
 registry.
 
+For a new repository, use the
+[Golden Path bootstrap guide](./bootstrap-new-repository.md) to select and
+verify the exact implementation release, preview materialization, and connect
+repository-local validation. Existing repositories continue with the migration
+guide after this policy classification.
+
 ## 1. Classify the repository
 
 Choose the independently composable axes that actually apply:

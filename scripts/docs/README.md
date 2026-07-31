@@ -18,7 +18,8 @@ scripts/docs/check-repository.sh
 The check scaffolds a temporary example, verifies it with the consumer
 conformance checker, confirms that a second scaffold refuses to overwrite the
 generated files, and validates the Developer Tooling documents, stable rule
-catalog, runtime catalog, schemas, and examples.
+catalog, runtime catalog, schemas, examples, bootstrap locator, and workflow
+template.
 
 The
 [documentation governance workflow](../../.github/workflows/docs.yml) runs this
@@ -49,6 +50,33 @@ does not implement.
 It is not the cross-repository Golden Path conformance checker. That separately
 versioned implementation will consume the catalog and schemas to evaluate
 repository-local metadata, native files, commands, and evidence.
+
+## Golden Path integration checks
+
+Validate the policy-owned bootstrap locator, workflow-template metadata, exact
+release and automation pins, Free private baseline, dry-run fixture, guide
+coverage, and governance-workflow wiring without network access:
+
+```bash
+python3 scripts/docs/check-golden-path-integration.py
+```
+
+The path-scoped
+[Golden Path bootstrap workflow](../../.github/workflows/golden-path-bootstrap.yml)
+additionally installs the exact, checksum- and provenance-verified Golden Path
+`0.2.0` release and runs:
+
+```bash
+GOLDEN_PATH_BIN=/path/to/verified/golden-path \
+  scripts/docs/check-golden-path-bootstrap.sh
+```
+
+That release check verifies the pinned `release-manifest.json` digest and
+attestation, previews and materializes the documentation fixture in a temporary
+directory, compares the deterministic plans, executes the generated bootstrap
+wrapper, and checks the candidate with the released checker. It never writes to
+a consumer repository and does not duplicate checker or generator source in
+this policy repository.
 
 ## Scaffold
 

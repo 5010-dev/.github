@@ -6,7 +6,14 @@ informative; the linked standards remain normative.
 ## Developer Tooling
 
 - [Adopting the Developer Tooling Standard](./adopting-developer-tooling.md)
+- [Bootstrapping a new repository](./bootstrap-new-repository.md)
+- [GitHub hosting capability profile](./github-hosting-capabilities.md)
 - [Migrating existing developer tooling](./migrating-developer-tooling.md)
+
+The
+[machine-readable bootstrap locator](./golden-path-bootstrap.v1.json) binds the
+current starter and validation path to an immutable implementation release. It
+is operational discovery data, not normative policy.
 
 Start with the
 [Developer Tooling Standard](../standards/developer-tooling/README.md) to

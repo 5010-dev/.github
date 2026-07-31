@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "golden-path-bootstrap/v1",
+  "baseline": "github-free-private",
+  "standard": {
+    "version": "2026.07",
+    "contractVersion": "golden-path/v1",
+    "entrypoint": "docs/standards/developer-tooling/README.md",
+    "ruleCatalog": "docs/standards/developer-tooling/rules/catalog.v1.json",
+    "catalogDigest": "sha256:c2ec366495c5f2aa124a886152aadd1f4f0d1b7dcb34beb674c9dfa0db4b86ac",
+    "metadataSchema": "docs/standards/developer-tooling/schemas/golden-path-metadata-v1.schema.json",
+    "exceptionSchema": "docs/standards/developer-tooling/schemas/golden-path-exceptions-v1.schema.json"
+  },
+  "implementation": {
+    "repository": "https://github.com/5010-dev/engineering-tooling",
+    "repositorySlug": "5010-dev/engineering-tooling",
+    "release": {
+      "version": "0.2.0",
+      "tag": "v0.2.0",
+      "sourceCommit": "1c590b377dfc38047a1c9766ab0ea3ac9b954d3b",
+      "snapshotAggregateDigest": "sha256:e62a016975a65b0e085c999891032400ea6e8b0dd8ef25f64cef978191319e52",
+      "url": "https://github.com/5010-dev/engineering-tooling/releases/tag/v0.2.0",
+      "manifest": {
+        "name": "release-manifest.json",
+        "url": "https://github.com/5010-dev/engineering-tooling/releases/download/v0.2.0/release-manifest.json",
+        "sha256": "56023b02c1fbeb71b8de64f61787788c3e1955f47191be9916557fa4b306aca2"
+      },
+      "archives": [
+        {
+          "os": "darwin",
+          "architecture": "amd64",
+          "name": "golden-path_0.2.0_darwin_amd64.tar.gz",
+          "sha256": "a0fc3b227c9bc492f72f04dd2b5f13368708f9a40abf79740bf8e42e1ff83c69"
+        },
+        {
+          "os": "darwin",
+          "architecture": "arm64",
+          "name": "golden-path_0.2.0_darwin_arm64.tar.gz",
+          "sha256": "381272c9e817fb1619316e52360911f4f4a5fd441982517476bff3fe994adcd8"
+        },
+        {
+          "os": "linux",
+          "architecture": "amd64",
+          "name": "golden-path_0.2.0_linux_amd64.tar.gz",
+          "sha256": "780ae580fe76011e8d8933efa3a34aee26931158c4f298eee0ea16306e73b9cf"
+        },
+        {
+          "os": "linux",
+          "architecture": "arm64",
+          "name": "golden-path_0.2.0_linux_arm64.tar.gz",
+          "sha256": "320a19bbb8a3b77df04aeb5cc0103f839e34b1705cffa7c2824138aec23e69ca"
+        }
+      ]
+    },
+    "automation": {
+      "reusableWorkflow": "5010-dev/engineering-tooling/.github/workflows/golden-path-quality.yml@1c590b377dfc38047a1c9766ab0ea3ac9b954d3b",
+      "setupAction": "5010-dev/engineering-tooling/actions/setup-golden-path@1c590b377dfc38047a1c9766ab0ea3ac9b954d3b"
+    },
+    "verifier": {
+      "githubCliVersion": "2.96.0",
+      "signerWorkflow": "5010-dev/engineering-tooling/.github/workflows/release.yml"
+    }
+  },
+  "discovery": {
+    "bootstrapGuide": "docs/guides/bootstrap-new-repository.md",
+    "capabilityMatrix": "docs/guides/github-hosting-capabilities.md",
+    "workflowTemplate": "workflow-templates/golden-path-quality.yml",
+    "workflowTemplateProperties": "workflow-templates/golden-path-quality.properties.json",
+    "dryRunFixture": "scripts/docs/fixtures/golden-path-bootstrap/documentation.yaml"
+  }
+}

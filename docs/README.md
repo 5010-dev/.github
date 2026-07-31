@@ -51,6 +51,8 @@ in all capitals.
 
 - [Organization guides index](./guides/README.md)
 - [Adopting the Developer Tooling Standard](./guides/adopting-developer-tooling.md)
+- [Bootstrapping a new repository](./guides/bootstrap-new-repository.md)
+- [GitHub hosting capability profile](./guides/github-hosting-capabilities.md)
 - [Migrating existing developer tooling](./guides/migrating-developer-tooling.md)
 - [Adopting the organization arc42 profile](./guides/adopting-arc42.md)
 - [Migrating existing documentation](./guides/migrating-existing-documentation.md)
@@ -66,6 +68,7 @@ in all capitals.
 ## Templates and tooling
 
 - [Engineering documentation templates](../templates/engineering-documentation/README.md)
+- [Golden Path workflow template](../workflow-templates/golden-path-quality.yml)
 - [Governance repository tooling](../scripts/docs/README.md)
 
 ## Decisions

@@ -1,0 +1,32 @@
+name: Developer Tooling / Conformance
+
+on:
+  pull_request:
+    branches: [$default-branch]
+  push:
+    branches: [$default-branch]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: golden-path-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conformance:
+    uses: 5010-dev/engineering-tooling/.github/workflows/golden-path-quality.yml@1c590b377dfc38047a1c9766ab0ea3ac9b954d3b
+    with:
+      runner: ubuntu-24.04
+      working-directory: .
+      # Replace [] with the exact profiles in .github/golden-path.yaml.
+      # The empty selection deliberately fails closed until classified.
+      profiles: '[]'
+      checker-version: '0.2.0'
+      source-commit: '1c590b377dfc38047a1c9766ab0ea3ac9b954d3b'
+      github-cli-version: '2.96.0'
+      darwin-amd64-sha256: 'a0fc3b227c9bc492f72f04dd2b5f13368708f9a40abf79740bf8e42e1ff83c69'
+      darwin-arm64-sha256: '381272c9e817fb1619316e52360911f4f4a5fd441982517476bff3fe994adcd8'
+      linux-amd64-sha256: '780ae580fe76011e8d8933efa3a34aee26931158c4f298eee0ea16306e73b9cf'
+      linux-arm64-sha256: '320a19bbb8a3b77df04aeb5cc0103f839e34b1705cffa7c2824138aec23e69ca'
