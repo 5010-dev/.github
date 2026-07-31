@@ -11,6 +11,7 @@ on:
       - "docs/guides/bootstrap-new-repository.md"
       - "docs/guides/github-hosting-capabilities.md"
       - "docs/guides/golden-path-bootstrap.v1.json"
+      - "docs/guides/schemas/**"
       - "docs/standards/developer-tooling/**"
       - "scripts/docs/check-golden-path-bootstrap.sh"
       - "scripts/docs/check-golden-path-integration.py"
@@ -26,6 +27,7 @@ on:
       - "docs/guides/bootstrap-new-repository.md"
       - "docs/guides/github-hosting-capabilities.md"
       - "docs/guides/golden-path-bootstrap.v1.json"
+      - "docs/guides/schemas/**"
       - "docs/standards/developer-tooling/**"
       - "scripts/docs/check-golden-path-bootstrap.sh"
       - "scripts/docs/check-golden-path-integration.py"
@@ -62,6 +64,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/golden-path-verifier"
           printf '%s\n' \
             '[tools]' \
+            'actionlint = "1.7.12"' \
             'github-cli = "2.96.0"' \
             >"$RUNNER_TEMP/golden-path-verifier/mise.toml"
 
@@ -73,6 +76,12 @@ jobs:
           working_directory: ${{ runner.temp }}/golden-path-verifier
           install: true
           cache: false
+
+      - name: Validate workflow syntax
+        run: |
+          actionlint .github/workflows/docs.yml \
+            .github/workflows/golden-path-bootstrap.yml \
+            workflow-templates/golden-path-quality.yml
 
       - name: Set up verified Golden Path executable
         id: golden-path

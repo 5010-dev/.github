@@ -4,6 +4,8 @@
   "standard": {
     "version": "2026.07",
     "contractVersion": "golden-path/v1",
+    "repository": "https://github.com/5010-dev/.github",
+    "snapshotPath": "docs/standards/developer-tooling",
     "entrypoint": "docs/standards/developer-tooling/README.md",
     "ruleCatalog": "docs/standards/developer-tooling/rules/catalog.v1.json",
     "catalogDigest": "sha256:c2ec366495c5f2aa124a886152aadd1f4f0d1b7dcb34beb674c9dfa0db4b86ac",
@@ -23,6 +25,11 @@
         "name": "release-manifest.json",
         "url": "https://github.com/5010-dev/engineering-tooling/releases/download/v0.2.0/release-manifest.json",
         "sha256": "56023b02c1fbeb71b8de64f61787788c3e1955f47191be9916557fa4b306aca2"
+      },
+      "snapshotManifest": {
+        "name": "standard-snapshot-manifest.json",
+        "url": "https://github.com/5010-dev/engineering-tooling/releases/download/v0.2.0/standard-snapshot-manifest.json",
+        "sha256": "8b5c0f638d19eb047c73ba913a6b892bdc0fb4de4090b96ba80ba55c2210fd0c"
       },
       "archives": [
         {
@@ -65,6 +72,8 @@
     "capabilityMatrix": "docs/guides/github-hosting-capabilities.md",
     "workflowTemplate": "workflow-templates/golden-path-quality.yml",
     "workflowTemplateProperties": "workflow-templates/golden-path-quality.properties.json",
-    "dryRunFixture": "scripts/docs/fixtures/golden-path-bootstrap/documentation.yaml"
+    "dryRunFixture": "scripts/docs/fixtures/golden-path-bootstrap/documentation.yaml",
+    "hostingAdapterSchema": "docs/guides/schemas/golden-path-hosting-adapter-selection-v1.schema.json",
+    "hostingAdapterExample": "docs/guides/schemas/examples/golden-path-hosting-adapter-selection-v1.valid.json"
   }
 }

@@ -31,6 +31,8 @@ values = [
     release["sourceCommit"],
     release["manifest"]["url"],
     release["manifest"]["sha256"],
+    release["snapshotManifest"]["url"],
+    release["snapshotManifest"]["sha256"],
     implementation["repositorySlug"],
     implementation["verifier"]["githubCliVersion"],
     implementation["verifier"]["signerWorkflow"],
@@ -42,7 +44,7 @@ for value in values:
 PY
 )
 
-if [[ "${#locator_values[@]}" -ne 8 ]]; then
+if [[ "${#locator_values[@]}" -ne 10 ]]; then
     echo "error: bootstrap locator did not produce the expected release identity" >&2
     exit 2
 fi
@@ -52,9 +54,11 @@ release_tag="${locator_values[1]}"
 source_commit="${locator_values[2]}"
 manifest_url="${locator_values[3]}"
 manifest_sha256="${locator_values[4]}"
-repository_slug="${locator_values[5]}"
-github_cli_version="${locator_values[6]}"
-signer_workflow="${locator_values[7]}"
+snapshot_manifest_url="${locator_values[5]}"
+snapshot_manifest_sha256="${locator_values[6]}"
+repository_slug="${locator_values[7]}"
+github_cli_version="${locator_values[8]}"
+signer_workflow="${locator_values[9]}"
 
 temp_parent="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
 test_root="$(mktemp -d "$temp_parent/5010-golden-path-bootstrap.XXXXXX")"
@@ -72,19 +76,30 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 
 release_manifest="$test_root/release-manifest.json"
+snapshot_manifest="$test_root/standard-snapshot-manifest.json"
 curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --max-time 120 \
     --output "$release_manifest" \
     "$manifest_url"
+curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --max-time 120 \
+    --output "$snapshot_manifest" \
+    "$snapshot_manifest_url"
 
-if command -v shasum >/dev/null 2>&1; then
-    actual_manifest_sha256="$(shasum -a 256 "$release_manifest" | awk '{print $1}')"
-elif command -v sha256sum >/dev/null 2>&1; then
-    actual_manifest_sha256="$(sha256sum "$release_manifest" | awk '{print $1}')"
-else
-    echo "error: no SHA-256 utility is available" >&2
-    exit 2
-fi
+sha256_file() {
+    local path="$1"
+    if command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$path" | awk '{print $1}'
+    elif command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$path" | awk '{print $1}'
+    else
+        echo "error: no SHA-256 utility is available" >&2
+        return 2
+    fi
+}
+
+actual_manifest_sha256="$(sha256_file "$release_manifest")"
+actual_snapshot_manifest_sha256="$(sha256_file "$snapshot_manifest")"
 test "$actual_manifest_sha256" = "$manifest_sha256"
+test "$actual_snapshot_manifest_sha256" = "$snapshot_manifest_sha256"
 test "$(gh version | awk 'NR == 1 { print $3 }')" = "$github_cli_version"
 test "$("$binary" --version)" = "golden-path $release_version"
 
@@ -95,6 +110,15 @@ gh attestation verify "$release_manifest" \
     --signer-digest "$source_commit" \
     --source-ref "refs/tags/$release_tag" \
     --deny-self-hosted-runners >/dev/null
+gh attestation verify "$snapshot_manifest" \
+    --repo "$repository_slug" \
+    --signer-workflow "$signer_workflow" \
+    --source-digest "$source_commit" \
+    --signer-digest "$source_commit" \
+    --source-ref "refs/tags/$release_tag" \
+    --deny-self-hosted-runners >/dev/null
+python3 "$repo_root/scripts/docs/check-golden-path-integration.py" \
+    --snapshot-manifest "$snapshot_manifest"
 
 fixture="$repo_root/scripts/docs/fixtures/golden-path-bootstrap/documentation.yaml"
 preview_plan="$test_root/preview-plan.json"
@@ -135,7 +159,14 @@ import json
 import pathlib
 import sys
 
-locator_path, release_path, preview_path, write_path, candidate_path, result_path = map(pathlib.Path, sys.argv[1:])
+(
+    locator_path,
+    release_path,
+    preview_path,
+    write_path,
+    candidate_path,
+    result_path,
+) = map(pathlib.Path, sys.argv[1:])
 
 def read_json(path):
     with path.open(encoding="utf-8") as source:
@@ -166,6 +197,10 @@ require(release["standardVersion"] == locator["standard"]["version"], "standard 
 require(release["contractVersion"] == locator["standard"]["contractVersion"], "contract version")
 require(release["source"] == expected_source, "release source identity")
 require(release["catalogDigest"] == locator["standard"]["catalogDigest"], "release catalog digest")
+require(
+    release["standardSnapshotManifest"] == expected_release["snapshotManifest"]["name"],
+    "release standard snapshot manifest name",
+)
 require(
     release["snapshotAggregateDigest"] == expected_release["snapshotAggregateDigest"],
     "release snapshot aggregate digest",

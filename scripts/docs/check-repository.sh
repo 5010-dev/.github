@@ -44,6 +44,8 @@ required_sources=(
     docs/guides/bootstrap-new-repository.md
     docs/guides/github-hosting-capabilities.md
     docs/guides/golden-path-bootstrap.v1.json
+    docs/guides/schemas/golden-path-hosting-adapter-selection-v1.schema.json
+    docs/guides/schemas/examples/golden-path-hosting-adapter-selection-v1.valid.json
     docs/guides/migrating-developer-tooling.md
     docs/guides/adopting-arc42.md
     docs/guides/migrating-existing-documentation.md

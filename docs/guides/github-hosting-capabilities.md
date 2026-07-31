@@ -16,7 +16,7 @@ before changing the baseline or enabling a paid adapter.
 | --- | --- | --- |
 | GitHub Actions | Run the repository-owned thin caller, `just ci`, and report-only checker | A failing job does not by itself prove that merge is blocked. Private-repository minutes and storage are plan quotas. |
 | Repository Actions secrets | Forward only explicitly named secrets when a job needs them | Golden Path conformance itself needs no consumer secret. Never use `secrets: inherit` as the default. |
-| OpenID Connect | Prefer short-lived cloud credentials with exact repository, ref, workflow, and environment claims | Cloud IAM and the caller own authorization. OIDC availability does not create an approval boundary. |
+| OpenID Connect | Prefer short-lived cloud credentials with exact repository, ref, and workflow claims | Cloud IAM and the caller own authorization. Require an environment claim only when a paid Environment adapter is selected; OIDC availability does not create an approval boundary. |
 | Dependency graph | Keep the repository dependency inventory enabled where supported | It is an input to dependency features, not complete vulnerability or license evidence. |
 | Dependabot alerts and security updates | Use repository alerts and bounded automated security updates | Repository owners still triage findings and validate update pull requests. |
 | Repository-local Golden Path metadata and evidence | Record profiles, artifacts, capabilities, exceptions, exact pins, and checker output in repository-owned surfaces | This is the portable baseline when no hosting enforcement feature is available. |
@@ -61,8 +61,10 @@ and [artifact attestations](https://docs.github.com/en/actions/how-tos/secure-yo
 
 A repository that enables a paid hosting feature keeps a repository-local
 selection record in canonical documentation or a hosting-policy file. The
-record uses this minimum shape; it is an operational record, not Golden Path
-metadata and not an organization-wide inventory:
+record MUST validate against the
+[`golden-path-hosting-adapter-selection/v1` schema](./schemas/golden-path-hosting-adapter-selection-v1.schema.json).
+It is an operational record, not Golden Path metadata and not an
+organization-wide inventory:
 
 ```yaml
 schemaVersion: golden-path-hosting-adapter-selection/v1
@@ -83,8 +85,11 @@ adapters:
 
 The record must not contain secret values. `id`, `state`, `owner`, `scope`,
 `expectedOutcome`, `evidence`, `reviewBy`, and the rollback trigger and action
-are required for an enabled or pilot adapter. `enabledAt` is required after
-activation. The adapter ID is a stable repository-local identifier such as
+are required for every recorded adapter. `enabledAt` is required for `pilot`,
+`enabled`, and `rollback`. A
+[valid JSON example](./schemas/examples/golden-path-hosting-adapter-selection-v1.valid.json)
+is provided; JSON is also valid YAML. The adapter ID is a stable
+repository-local identifier such as
 `protected-ref`, `environment-review`, `organization-secret`,
 `dependency-review`, or `private-attestation`.
 

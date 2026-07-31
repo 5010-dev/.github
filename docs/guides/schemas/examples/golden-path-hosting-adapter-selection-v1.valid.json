@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "golden-path-hosting-adapter-selection/v1",
+  "baseline": "github-free-private",
+  "adapters": [
+    {
+      "id": "protected-ref",
+      "state": "pilot",
+      "owner": "repository-maintainer",
+      "scope": "default branch",
+      "expectedOutcome": "platform-enforced conformance check",
+      "evidence": "https://github.com/example/example/settings/rules",
+      "enabledAt": "2026-08-01",
+      "reviewBy": "2026-09-01",
+      "rollback": {
+        "trigger": "required check is unavailable or blocks emergency recovery",
+        "action": "disable this ruleset adapter and return to policy-required review"
+      }
+    }
+  ]
+}
