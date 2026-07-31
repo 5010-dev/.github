@@ -71,8 +71,9 @@ GOLDEN_PATH_BIN=/path/to/verified/golden-path \
   scripts/docs/check-golden-path-bootstrap.sh
 ```
 
-That release check verifies the pinned `release-manifest.json` digest and
-attestation, previews and materializes the documentation fixture in a temporary
+That release check verifies the pinned release and standard-snapshot manifests,
+their digests and attestations, and every policy-owned machine snapshot file.
+It then previews and materializes the documentation fixture in a temporary
 directory, compares the deterministic plans, executes the generated bootstrap
 wrapper, and checks the candidate with the released checker. It never writes to
 a consumer repository and does not duplicate checker or generator source in

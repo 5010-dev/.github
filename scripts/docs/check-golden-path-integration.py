@@ -3,7 +3,10 @@
 
 from __future__ import annotations
 
+import argparse
+import copy
 import hashlib
+import importlib.util
 import json
 import re
 import sys
@@ -36,7 +39,11 @@ def load_json(path: Path) -> Any:
     try:
         return json.loads(path.read_text(), object_pairs_hook=reject_duplicate_keys)
     except (OSError, UnicodeError, json.JSONDecodeError) as error:
-        raise ValidationError(f"cannot read valid JSON from {path.relative_to(ROOT)}: {error}") from error
+        try:
+            display_path = path.relative_to(ROOT)
+        except ValueError:
+            display_path = path
+        raise ValidationError(f"cannot read valid JSON from {display_path}: {error}") from error
 
 
 def require_object(value: Any, name: str, keys: set[str]) -> dict[str, Any]:
@@ -87,6 +94,8 @@ def validate_locator() -> dict[str, Any]:
         {
             "version",
             "contractVersion",
+            "repository",
+            "snapshotPath",
             "entrypoint",
             "ruleCatalog",
             "catalogDigest",
@@ -95,6 +104,13 @@ def validate_locator() -> dict[str, Any]:
         },
     )
     entrypoint = local_file(standard["entrypoint"], "standard.entrypoint")
+    if standard["repository"] != "https://github.com/5010-dev/.github":
+        raise ValidationError("bootstrap standard repository is not the policy authority")
+    snapshot_path = Path(require_text(standard["snapshotPath"], "standard.snapshotPath"))
+    if snapshot_path.is_absolute() or ".." in snapshot_path.parts:
+        raise ValidationError("standard.snapshotPath must be a repository-relative path")
+    if (ROOT / snapshot_path).resolve() != entrypoint.parent.resolve():
+        raise ValidationError("bootstrap snapshot path differs from the canonical standard directory")
     rule_catalog = local_file(standard["ruleCatalog"], "standard.ruleCatalog")
     local_file(standard["metadataSchema"], "standard.metadataSchema")
     local_file(standard["exceptionSchema"], "standard.exceptionSchema")
@@ -119,7 +135,16 @@ def validate_locator() -> dict[str, Any]:
     release = require_object(
         implementation["release"],
         "release locator",
-        {"version", "tag", "sourceCommit", "snapshotAggregateDigest", "url", "manifest", "archives"},
+        {
+            "version",
+            "tag",
+            "sourceCommit",
+            "snapshotAggregateDigest",
+            "url",
+            "manifest",
+            "snapshotManifest",
+            "archives",
+        },
     )
     version = require_text(release["version"], "release.version")
     commit = require_text(release["sourceCommit"], "release.sourceCommit")
@@ -142,6 +167,23 @@ def validate_locator() -> dict[str, Any]:
     )
     if manifest["url"] != expected_manifest_url or not SHA256.fullmatch(manifest["sha256"]):
         raise ValidationError("release manifest URL or SHA-256 is invalid")
+
+    snapshot_manifest = require_object(
+        release["snapshotManifest"],
+        "standard snapshot manifest locator",
+        {"name", "url", "sha256"},
+    )
+    if snapshot_manifest["name"] != "standard-snapshot-manifest.json":
+        raise ValidationError("standard snapshot manifest name is not stable")
+    expected_snapshot_url = (
+        f"{implementation['repository']}/releases/download/{release['tag']}/"
+        f"{snapshot_manifest['name']}"
+    )
+    if (
+        snapshot_manifest["url"] != expected_snapshot_url
+        or not SHA256.fullmatch(snapshot_manifest["sha256"])
+    ):
+        raise ValidationError("standard snapshot manifest URL or SHA-256 is invalid")
 
     archives = release["archives"]
     if not isinstance(archives, list) or len(archives) != 4:
@@ -191,6 +233,8 @@ def validate_locator() -> dict[str, Any]:
             "workflowTemplate",
             "workflowTemplateProperties",
             "dryRunFixture",
+            "hostingAdapterSchema",
+            "hostingAdapterExample",
         },
     )
     for key, value in discovery.items():
@@ -238,6 +282,8 @@ def validate_workflow_template(locator: dict[str, Any]) -> None:
     for pattern in forbidden:
         if re.search(pattern, workflow, re.IGNORECASE | re.MULTILINE):
             raise ValidationError(f"workflow template contains a mutable or paid-baseline construct: {pattern}")
+    if permission_mapping(workflow, 0, "workflow template") != {"contents": "read"}:
+        raise ValidationError("workflow template permissions must be exactly contents: read")
 
     properties_path = local_file(
         locator["discovery"]["workflowTemplateProperties"], "workflow template properties"
@@ -255,6 +301,83 @@ def validate_workflow_template(locator: dict[str, Any]) -> None:
         raise ValidationError("workflow template icon is not an explicit Octicon")
     if properties["categories"] != ["Continuous integration"]:
         raise ValidationError("workflow template category is not the stable CI discovery category")
+
+
+def validate_standard_snapshot(locator: dict[str, Any], manifest_path: Path) -> None:
+    snapshot = require_object(
+        load_json(manifest_path),
+        "standard snapshot manifest",
+        {"schemaVersion", "standardVersion", "contractVersion", "source", "aggregate", "files"},
+    )
+    standard = locator["standard"]
+    release = locator["implementation"]["release"]
+    if snapshot["schemaVersion"] != "golden-path-standard-snapshot/v1":
+        raise ValidationError("standard snapshot manifest schemaVersion differs")
+    if snapshot["standardVersion"] != standard["version"]:
+        raise ValidationError("standard snapshot manifest version differs")
+    if snapshot["contractVersion"] != standard["contractVersion"]:
+        raise ValidationError("standard snapshot manifest contract differs")
+    source = require_object(
+        snapshot["source"],
+        "standard snapshot source",
+        {"repository", "commit", "path", "gitTree"},
+    )
+    if source["repository"] != standard["repository"] or source["path"] != standard["snapshotPath"]:
+        raise ValidationError("standard snapshot source authority differs")
+    if not COMMIT.fullmatch(require_text(source["commit"], "standard snapshot source commit")):
+        raise ValidationError("standard snapshot source commit is invalid")
+    if not COMMIT.fullmatch(require_text(source["gitTree"], "standard snapshot source tree")):
+        raise ValidationError("standard snapshot source tree is invalid")
+    aggregate = require_object(
+        snapshot["aggregate"],
+        "standard snapshot aggregate",
+        {"algorithm", "definition", "digest"},
+    )
+    if aggregate["algorithm"] != "sha256":
+        raise ValidationError("standard snapshot aggregate algorithm differs")
+    if aggregate["definition"] != "SHA-256 of sorted shasum lines for every snapshot file except manifest.json":
+        raise ValidationError("standard snapshot aggregate definition differs")
+    aggregate_digest = require_text(aggregate["digest"], "standard snapshot aggregate digest")
+    if not SHA256.fullmatch(aggregate_digest):
+        raise ValidationError("standard snapshot aggregate digest is invalid")
+    if f"sha256:{aggregate_digest}" != release["snapshotAggregateDigest"]:
+        raise ValidationError("standard snapshot aggregate differs from the release locator")
+
+    declared_files = snapshot["files"]
+    if not isinstance(declared_files, dict) or not declared_files:
+        raise ValidationError("standard snapshot file inventory is empty")
+    snapshot_root = (ROOT / standard["snapshotPath"]).resolve()
+    actual_machine_files = {
+        path.relative_to(snapshot_root).as_posix()
+        for parent in (snapshot_root / "rules", snapshot_root / "schemas")
+        for path in parent.rglob("*.json")
+        if path.is_file()
+    }
+    if set(declared_files) != actual_machine_files:
+        raise ValidationError("standard snapshot machine file inventory differs from policy source")
+    aggregate_lines: list[str] = []
+    for relative, expected_digest in sorted(declared_files.items()):
+        relative_path = Path(relative)
+        if relative_path.is_absolute() or ".." in relative_path.parts:
+            raise ValidationError(f"standard snapshot path is unsafe: {relative}")
+        if not isinstance(expected_digest, str) or not SHA256.fullmatch(expected_digest):
+            raise ValidationError(f"standard snapshot file digest is invalid: {relative}")
+        policy_file = (snapshot_root / relative_path).resolve()
+        try:
+            policy_file.relative_to(snapshot_root)
+        except ValueError as error:
+            raise ValidationError(f"standard snapshot path escapes policy source: {relative}") from error
+        if not policy_file.is_file():
+            raise ValidationError(f"standard snapshot file is missing: {relative}")
+        actual_digest = hashlib.sha256(policy_file.read_bytes()).hexdigest()
+        if actual_digest != expected_digest:
+            raise ValidationError(f"standard snapshot file digest differs: {relative}")
+        aggregate_lines.append(
+            f"{actual_digest}  standards/snapshots/{standard['version']}/{relative}\n"
+        )
+    actual_aggregate = hashlib.sha256("".join(aggregate_lines).encode()).hexdigest()
+    if actual_aggregate != aggregate_digest:
+        raise ValidationError("standard snapshot aggregate cannot be reproduced from policy source")
 
 
 def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
@@ -293,10 +416,136 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
         "Dependency Review",
         "private artifact attestations",
         "golden-path-hosting-adapter-selection/v1",
+        "schemas/golden-path-hosting-adapter-selection-v1.schema.json",
+        "Require an environment claim only when a paid Environment adapter is selected",
         "Rollout and rollback",
     ):
         if text not in capability:
             raise ValidationError(f"capability matrix omits required boundary: {text}")
+
+
+def validate_hosting_adapter_schema(locator: dict[str, Any]) -> None:
+    schema_path = local_file(
+        locator["discovery"]["hostingAdapterSchema"], "hosting adapter schema"
+    )
+    example_path = local_file(
+        locator["discovery"]["hostingAdapterExample"], "hosting adapter example"
+    )
+    schema = load_json(schema_path)
+    example = load_json(example_path)
+    if not isinstance(schema, dict) or not isinstance(example, dict):
+        raise ValidationError("hosting adapter schema and example must be JSON objects")
+    if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
+        raise ValidationError("hosting adapter schema must use JSON Schema Draft 2020-12")
+    if schema.get("$id") != "urn:5010-dev:golden-path:hosting-adapter-selection:v1":
+        raise ValidationError("hosting adapter schema has an unexpected stable ID")
+    schema_version = schema.get("properties", {}).get("schemaVersion", {})
+    if schema_version.get("const") != "golden-path-hosting-adapter-selection/v1":
+        raise ValidationError("hosting adapter schemaVersion const is missing")
+
+    validator_path = ROOT / "scripts/docs/check-developer-tooling-standard.py"
+    spec = importlib.util.spec_from_file_location(
+        "developer_tooling_standard_validator", validator_path
+    )
+    if spec is None or spec.loader is None:
+        raise ValidationError("cannot load the dependency-light schema validator")
+    validator = importlib.util.module_from_spec(spec)
+    previous_bytecode_setting = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        spec.loader.exec_module(validator)
+    finally:
+        sys.dont_write_bytecode = previous_bytecode_setting
+    validator.errors.clear()
+    validator.validate_schema_definition(schema, schema, "hosting adapter schema")
+    if validator.errors:
+        raise ValidationError(
+            "hosting adapter schema definition is invalid: " + "; ".join(validator.errors)
+        )
+
+    findings: list[str] = []
+    validator.validate_json_schema_instance(example, schema, schema, "$", findings)
+    if findings:
+        raise ValidationError("hosting adapter example is invalid: " + "; ".join(findings))
+
+    invalid_examples: list[tuple[str, dict[str, Any]]] = []
+    missing_owner = copy.deepcopy(example)
+    del missing_owner["adapters"][0]["owner"]
+    invalid_examples.append(("missing owner", missing_owner))
+    missing_enabled_at = copy.deepcopy(example)
+    del missing_enabled_at["adapters"][0]["enabledAt"]
+    invalid_examples.append(("missing activation time", missing_enabled_at))
+    secret_property = copy.deepcopy(example)
+    secret_property["adapters"][0]["secretValue"] = "must-not-be-recorded"
+    invalid_examples.append(("secret-like extra property", secret_property))
+    invalid_state = copy.deepcopy(example)
+    invalid_state["adapters"][0]["state"] = "unknown"
+    invalid_examples.append(("unknown state", invalid_state))
+    for label, invalid in invalid_examples:
+        negative_findings: list[str] = []
+        validator.validate_json_schema_instance(
+            invalid, schema, schema, "$", negative_findings
+        )
+        if not negative_findings:
+            raise ValidationError(f"hosting adapter schema accepted {label}")
+
+
+def workflow_event_paths(workflow: str, event: str) -> list[str]:
+    lines = workflow.splitlines()
+    event_start = next(
+        (index for index, line in enumerate(lines) if line == f"  {event}:"), None
+    )
+    if event_start is None:
+        raise ValidationError(f"governance workflow omits the {event} event")
+    event_end = next(
+        (
+            index
+            for index in range(event_start + 1, len(lines))
+            if lines[index]
+            and not lines[index].startswith("    ")
+            and lines[index].startswith("  ")
+        ),
+        len(lines),
+    )
+    paths_start = next(
+        (
+            index
+            for index in range(event_start + 1, event_end)
+            if lines[index] == "    paths:"
+        ),
+        None,
+    )
+    if paths_start is None:
+        raise ValidationError(f"governance workflow {event} event omits paths")
+    values: list[str] = []
+    for line in lines[paths_start + 1 : event_end]:
+        match = re.fullmatch(r'      - "([^"]+)"', line)
+        if match:
+            values.append(match.group(1))
+            continue
+        if line and not line.startswith("      "):
+            break
+    if not values or len(values) != len(set(values)):
+        raise ValidationError(f"governance workflow {event} paths are empty or duplicated")
+    return values
+
+
+def permission_mapping(workflow: str, indent: int, context: str) -> dict[str, str]:
+    prefix = " " * indent
+    lines = workflow.splitlines()
+    starts = [index for index, line in enumerate(lines) if line == f"{prefix}permissions:"]
+    if len(starts) != 1:
+        raise ValidationError(f"{context} must contain exactly one permissions mapping")
+    values: dict[str, str] = {}
+    item_prefix = " " * (indent + 2)
+    for line in lines[starts[0] + 1 :]:
+        if not line.startswith(item_prefix):
+            break
+        match = re.fullmatch(rf"{re.escape(item_prefix)}([a-z-]+): ([a-z-]+)", line)
+        if not match or match.group(1) in values:
+            raise ValidationError(f"{context} permissions mapping is malformed")
+        values[match.group(1)] = match.group(2)
+    return values
 
 
 def validate_governance_workflow(locator: dict[str, Any]) -> None:
@@ -311,7 +560,8 @@ def validate_governance_workflow(locator: dict[str, Any]) -> None:
         f"checker-version: '{release['version']}'",
         f"source-commit: '{release['sourceCommit']}'",
         f"github-cli-version: '{implementation['verifier']['githubCliVersion']}'",
-        '"workflow-templates/**"',
+        'actionlint = "1.7.12"',
+        "actionlint .github/workflows/docs.yml \\",
     ]
     archive_inputs = {
         ("darwin", "amd64"): "darwin-amd64-sha256",
@@ -332,14 +582,50 @@ def validate_governance_workflow(locator: dict[str, Any]) -> None:
             continue
         if not re.search(r"@[a-f0-9]{40}$", reference):
             raise ValidationError(f"governance workflow action is not full-SHA pinned: {reference}")
+    required_paths = {
+        ".github/workflows/golden-path-bootstrap.yml",
+        "docs/decisions/0006-adopt-developer-tooling-golden-path.md",
+        "docs/guides/adopting-developer-tooling.md",
+        "docs/guides/bootstrap-new-repository.md",
+        "docs/guides/github-hosting-capabilities.md",
+        "docs/guides/golden-path-bootstrap.v1.json",
+        "docs/guides/schemas/**",
+        "docs/standards/developer-tooling/**",
+        "scripts/docs/check-golden-path-bootstrap.sh",
+        "scripts/docs/check-golden-path-integration.py",
+        "scripts/docs/fixtures/golden-path-bootstrap/**",
+        "workflow-templates/**",
+    }
+    pull_request_paths = workflow_event_paths(workflow, "pull_request")
+    push_paths = workflow_event_paths(workflow, "push")
+    if set(pull_request_paths) != required_paths or set(push_paths) != required_paths:
+        raise ValidationError("governance workflow trigger paths differ from the complete integration source set")
+    if pull_request_paths != push_paths:
+        raise ValidationError("governance workflow pull_request and push path ordering differs")
+    if workflow.count("permissions: {}") != 1:
+        raise ValidationError("governance workflow top-level permissions must be exactly empty")
+    if permission_mapping(workflow, 4, "governance bootstrap job") != {"contents": "read"}:
+        raise ValidationError("governance bootstrap job permissions must be exactly contents: read")
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Validate the policy-owned Golden Path bootstrap integration"
+    )
+    parser.add_argument(
+        "--snapshot-manifest",
+        type=Path,
+        help="verified released standard-snapshot-manifest.json to compare with policy source",
+    )
+    arguments = parser.parse_args()
     try:
         locator = validate_locator()
         validate_workflow_template(locator)
         validate_fixture_and_docs(locator)
+        validate_hosting_adapter_schema(locator)
         validate_governance_workflow(locator)
+        if arguments.snapshot_manifest is not None:
+            validate_standard_snapshot(locator, arguments.snapshot_manifest)
     except ValidationError as error:
         print(f"Golden Path integration check: FAILED: {error}", file=sys.stderr)
         return 1

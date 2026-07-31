@@ -32,7 +32,9 @@ automation commit. It is an operational locator, not a second policy source.
 
 Use the release identity in the bootstrap locator. Download the archive for the
 operator's OS and architecture and `release-manifest.json` from the exact tag.
-Before execution:
+The policy repository separately verifies the release's
+`standard-snapshot-manifest.json` against its machine-readable rule, runtime,
+schema, and example sources. Before execution:
 
 - compare each downloaded file with the locator's SHA-256;
 - run `gh attestation verify` with GitHub CLI `2.96.0`, the repository
@@ -49,9 +51,11 @@ updated central locator and generated diff, not by changing a local download to
 
 ## Preview and materialize
 
-Start from the
+Download the
 [documentation fixture](../../scripts/docs/fixtures/golden-path-bootstrap/documentation.yaml)
-or create an equivalent request that reflects the real classification. The
+to an operator-owned path such as `/path/to/golden-path-request.yaml`, or create
+an equivalent request there that reflects the real classification. Do not rely
+on a repository-relative path into a checkout of this policy repository. The
 fixture is intentionally small and exists to exercise the bootstrap path; it is
 not the organization default profile.
 
@@ -61,7 +65,7 @@ writing:
 
 ```bash
 "$GOLDEN_PATH_BIN" generate \
-  --request scripts/docs/fixtures/golden-path-bootstrap/documentation.yaml \
+  --request /path/to/golden-path-request.yaml \
   --release-manifest "$RELEASE_MANIFEST"
 ```
 
