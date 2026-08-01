@@ -202,15 +202,30 @@ expected_source = {
     "tag": expected_release["tag"],
 }
 
-require(release["schemaVersion"] == "golden-path-release-manifest/v1", "release manifest schema")
+require(release["schemaVersion"] == "golden-path-release-manifest/v2", "release manifest schema")
 require(release["releaseVersion"] == expected_release["version"], "release version")
+require(release["lifecycle"] == "stable", "release lifecycle")
+require(release["enforcement"] == ["report-only"], "release enforcement")
 require(release["standardVersion"] == locator["standard"]["version"], "standard version")
 require(release["contractVersion"] == locator["standard"]["contractVersion"], "contract version")
 require(release["source"] == expected_source, "release source identity")
 require(release["catalogDigest"] == locator["standard"]["catalogDigest"], "release catalog digest")
+standard_snapshot = release["standardSnapshot"]
+require(standard_snapshot["file"] == {
+    "name": expected_release["snapshotManifest"]["name"],
+    "sha256": expected_release["snapshotManifest"]["sha256"],
+}, "release standard snapshot manifest identity")
 require(
-    release["standardSnapshotManifest"] == expected_release["snapshotManifest"]["name"],
-    "release standard snapshot manifest name",
+    standard_snapshot["source"]["repository"] == locator["standard"]["repository"],
+    "snapshot source repository",
+)
+require(
+    standard_snapshot["source"]["path"] == locator["standard"]["snapshotPath"],
+    "snapshot source path",
+)
+require(
+    standard_snapshot["aggregateDigest"] == expected_release["snapshotAggregateDigest"],
+    "snapshot aggregate digest",
 )
 require(
     release["snapshotAggregateDigest"] == expected_release["snapshotAggregateDigest"],
@@ -227,7 +242,12 @@ expected_archives = {
 }
 require(actual_archives == expected_archives, "release archive set")
 require(release["components"]["checker"]["version"] == expected_release["version"], "checker component")
-require(release["components"]["templateBundle"]["version"] == expected_release["version"], "template component")
+require(release["components"]["checker"]["lifecycle"] == "stable", "checker lifecycle")
+require(release["components"]["checker"]["enforcement"] == ["report-only"], "checker enforcement")
+require(release["components"]["generator"]["version"] == expected_release["version"], "generator component")
+require(release["components"]["generator"]["lifecycle"] == "stable", "generator lifecycle")
+require(release["components"]["generator"]["enforcement"] == ["report-only"], "generator enforcement")
+require(release["components"]["assetBundle"]["version"] == expected_release["version"], "asset bundle component")
 require(release["components"]["automation"]["version"] == expected_release["version"], "automation component")
 
 require(preview == written == read_json(candidate / "golden-path-plan.json"), "deterministic plans")
