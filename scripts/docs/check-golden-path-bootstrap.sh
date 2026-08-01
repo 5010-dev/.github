@@ -118,7 +118,8 @@ gh attestation verify "$snapshot_manifest" \
     --source-ref "refs/tags/$release_tag" \
     --deny-self-hosted-runners >/dev/null
 python3 "$repo_root/scripts/docs/check-golden-path-integration.py" \
-    --snapshot-manifest "$snapshot_manifest"
+    --snapshot-manifest "$snapshot_manifest" \
+    --release-manifest "$release_manifest"
 
 fixture="$repo_root/scripts/docs/fixtures/golden-path-bootstrap/documentation.yaml"
 preview_plan="$test_root/preview-plan.json"
