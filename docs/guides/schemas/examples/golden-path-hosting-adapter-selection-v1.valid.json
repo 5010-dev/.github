@@ -1,9 +1,8 @@
 {
   "schemaVersion": "golden-path-hosting-adapter-selection/v1",
   "baseline": "github-free-private",
-  "adapters": [
-    {
-      "id": "protected-ref",
+  "adapters": {
+    "protected-ref": {
       "state": "pilot",
       "owner": "repository-maintainer",
       "scope": "default branch",
@@ -16,5 +15,5 @@
         "action": "disable this ruleset adapter and return to policy-required review"
       }
     }
-  ]
+  }
 }

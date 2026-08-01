@@ -148,6 +148,17 @@ checker_text="$test_root/checker-text.txt"
     --json-output "$checker_result" \
     >"$checker_text"
 
+placeholder_status=0
+"$binary" check \
+    --root "$candidate" \
+    --evaluated-at 2026-08-01T00:00:00Z \
+    --expected-profiles REPLACE_WITH_EXACT_PROFILES \
+    >/dev/null 2>&1 || placeholder_status=$?
+if [[ "$placeholder_status" -ne 2 ]]; then
+    echo "error: workflow-template profile sentinel did not fail with a usage error" >&2
+    exit 1
+fi
+
 python3 - \
     "$locator" \
     "$release_manifest" \

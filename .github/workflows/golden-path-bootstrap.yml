@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - ".github/workflows/golden-path-bootstrap.yml"
+      - ".github/workflows/docs.yml"
       - "docs/decisions/0006-adopt-developer-tooling-golden-path.md"
       - "docs/guides/adopting-developer-tooling.md"
       - "docs/guides/bootstrap-new-repository.md"
@@ -22,6 +23,7 @@ on:
       - main
     paths:
       - ".github/workflows/golden-path-bootstrap.yml"
+      - ".github/workflows/docs.yml"
       - "docs/decisions/0006-adopt-developer-tooling-golden-path.md"
       - "docs/guides/adopting-developer-tooling.md"
       - "docs/guides/bootstrap-new-repository.md"

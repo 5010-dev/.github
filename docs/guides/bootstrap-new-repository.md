@@ -91,9 +91,10 @@ through that repository's normal contribution flow.
 The preferred path is the caller generated with the release. The organization
 [workflow template](../../workflow-templates/golden-path-quality.yml) is a
 discovery starter for a repository that already has materialized Golden Path
-files. It intentionally contains `profiles: '[]'` and fails closed until the
-repository replaces that value with the exact profiles from
-`.github/golden-path.yaml`.
+files. It intentionally contains the invalid JSON sentinel
+`profiles: 'REPLACE_WITH_EXACT_PROFILES'`. The reusable workflow propagates the
+resulting checker usage error, so the job fails closed until the repository
+replaces that value with the exact profile array from `.github/golden-path.yaml`.
 
 Keep the caller's triggers, default-branch choice, path filters, concurrency,
 permissions, runner, working directory, profile input, environment adapter, and
