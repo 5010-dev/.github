@@ -310,7 +310,59 @@ def validate_workflow_template(locator: dict[str, Any]) -> None:
         raise ValidationError("workflow template category is not the stable CI discovery category")
 
 
-def validate_standard_snapshot(locator: dict[str, Any], manifest_path: Path) -> None:
+def validate_snapshot_source_binding(
+    snapshot_source: dict[str, Any], release_source: dict[str, Any]
+) -> None:
+    if snapshot_source != release_source:
+        differing_fields = sorted(
+            key
+            for key in snapshot_source.keys() | release_source.keys()
+            if snapshot_source.get(key) != release_source.get(key)
+        )
+        raise ValidationError(
+            "standard snapshot source differs from the release manifest: "
+            + ", ".join(differing_fields)
+        )
+
+
+def validate_snapshot_source_binding_self_test() -> None:
+    baseline = {
+        "repository": "https://github.com/5010-dev/.github",
+        "commit": "1" * 40,
+        "path": "docs/standards/developer-tooling",
+        "gitTree": "2" * 40,
+    }
+    validate_snapshot_source_binding(baseline, baseline.copy())
+    for field in ("commit", "gitTree"):
+        mutation = baseline.copy()
+        mutation[field] = "0" * 40
+        try:
+            validate_snapshot_source_binding(baseline, mutation)
+        except ValidationError:
+            continue
+        raise ValidationError(
+            f"standard snapshot source binding self-test accepted a changed {field}"
+        )
+
+
+def validate_standard_snapshot(
+    locator: dict[str, Any], manifest_path: Path, release_manifest_path: Path
+) -> None:
+    release_manifest = load_json(release_manifest_path)
+    if not isinstance(release_manifest, dict):
+        raise ValidationError("release manifest must be an object")
+    if release_manifest.get("schemaVersion") != "golden-path-release-manifest/v2":
+        raise ValidationError("release manifest schemaVersion differs")
+    release_snapshot = require_object(
+        release_manifest.get("standardSnapshot"),
+        "release standard snapshot",
+        {"file", "source", "aggregateDigest"},
+    )
+    release_source = require_object(
+        release_snapshot["source"],
+        "release standard snapshot source",
+        {"repository", "commit", "path", "gitTree"},
+    )
     snapshot = require_object(
         load_json(manifest_path),
         "standard snapshot manifest",
@@ -335,6 +387,7 @@ def validate_standard_snapshot(locator: dict[str, Any], manifest_path: Path) -> 
         raise ValidationError("standard snapshot source commit is invalid")
     if not COMMIT.fullmatch(require_text(source["gitTree"], "standard snapshot source tree")):
         raise ValidationError("standard snapshot source tree is invalid")
+    validate_snapshot_source_binding(source, release_source)
     aggregate = require_object(
         snapshot["aggregate"],
         "standard snapshot aggregate",
@@ -742,16 +795,30 @@ def main() -> int:
         type=Path,
         help="verified released standard-snapshot-manifest.json to compare with policy source",
     )
+    parser.add_argument(
+        "--release-manifest",
+        type=Path,
+        help="verified release-manifest.json that binds the standard snapshot source",
+    )
     arguments = parser.parse_args()
     try:
+        validate_snapshot_source_binding_self_test()
+        if (arguments.snapshot_manifest is None) != (arguments.release_manifest is None):
+            raise ValidationError(
+                "snapshot and release manifests must be provided together"
+            )
         locator = validate_locator()
         validate_workflow_template(locator)
         validate_fixture_and_docs(locator)
         validate_hosting_adapter_schema(locator)
         validate_governance_workflow(locator)
         validate_documentation_workflow()
-        if arguments.snapshot_manifest is not None:
-            validate_standard_snapshot(locator, arguments.snapshot_manifest)
+        if arguments.snapshot_manifest is not None and arguments.release_manifest is not None:
+            validate_standard_snapshot(
+                locator,
+                arguments.snapshot_manifest,
+                arguments.release_manifest,
+            )
     except ValidationError as error:
         print(f"Golden Path integration check: FAILED: {error}", file=sys.stderr)
         return 1
