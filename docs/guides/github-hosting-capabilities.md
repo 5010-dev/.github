@@ -30,9 +30,18 @@ they are not part of this baseline:
 - [GitHub Actions billing and plan availability](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
 - [Using secrets in GitHub Actions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets)
 - [OpenID Connect in cloud providers](https://docs.github.com/en/actions/concepts/security/openid-connect)
+- [OpenID Connect reference and immutable subject claims](https://docs.github.com/en/actions/reference/security/oidc)
 - [About the dependency graph](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-the-dependency-graph)
 - [Dependabot alerts](https://docs.github.com/en/code-security/concepts/supply-chain-security/dependabot-alerts)
 - [Dependabot security updates](https://docs.github.com/en/code-security/concepts/supply-chain-security/dependabot-security-updates)
+
+GitHub repositories created after July 15, 2026, repositories that opt in, and
+repositories renamed or transferred after that date use an immutable OIDC
+`sub` format containing owner and repository IDs. Before enabling OIDC or
+changing repository identity, inspect the issued subject and update the cloud
+trust policy to match the repository's active format. Coordinate that migration
+with the repository and cloud-IAM owners so the old trust is removed only after
+the new subject succeeds.
 
 ## Features that are not baseline prerequisites
 
@@ -70,7 +79,7 @@ organization-wide inventory:
 schemaVersion: golden-path-hosting-adapter-selection/v1
 baseline: github-free-private
 adapters:
-  - id: protected-ref
+  protected-ref:
     state: pilot # pilot | enabled | rollback | disabled
     owner: repository-maintainer
     scope: default branch
@@ -83,13 +92,13 @@ adapters:
       action: disable this ruleset adapter and return to policy-required review
 ```
 
-The record must not contain secret values. `id`, `state`, `owner`, `scope`,
-`expectedOutcome`, `evidence`, `reviewBy`, and the rollback trigger and action
-are required for every recorded adapter. `enabledAt` is required for `pilot`,
-`enabled`, and `rollback`. A
+The record must not contain secret values. Each key under `adapters` is the
+stable repository-local adapter ID and is therefore unique within the record.
+`state`, `owner`, `scope`, `expectedOutcome`, `evidence`, `reviewBy`, and the
+rollback trigger and action are required for every recorded adapter. `enabledAt`
+is required for `pilot`, `enabled`, and `rollback`. A
 [valid JSON example](./schemas/examples/golden-path-hosting-adapter-selection-v1.valid.json)
-is provided; JSON is also valid YAML. The adapter ID is a stable
-repository-local identifier such as
+is provided; JSON is also valid YAML. Example adapter IDs include
 `protected-ref`, `environment-review`, `organization-secret`,
 `dependency-review`, or `private-attestation`.
 

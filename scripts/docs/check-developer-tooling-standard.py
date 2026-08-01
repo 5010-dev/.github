@@ -19,6 +19,7 @@ STANDARD_ROOT = REPO_ROOT / "docs/standards/developer-tooling"
 STANDARD_VERSION = "2026.07"
 CONTRACT_VERSION = "golden-path/v1"
 EXPECTED_DECISIONS = {f"GP-{number:03d}" for number in range(6, 21)}
+FULL_DATE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 
 REQUIRED_PATHS = [
     "docs/standards/developer-tooling/README.md",
@@ -156,13 +157,18 @@ def resolve_local_ref(root_schema: dict[str, Any], ref: str) -> Any:
     return value
 
 
+def parse_full_date(value: str) -> dt.date | None:
+    if FULL_DATE.fullmatch(value) is None:
+        return None
+    try:
+        return dt.date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
 def validate_format(value: str, format_name: str) -> bool:
     if format_name == "date":
-        try:
-            dt.date.fromisoformat(value)
-            return True
-        except ValueError:
-            return False
+        return parse_full_date(value) is not None
     if format_name == "date-time":
         try:
             parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
@@ -553,6 +559,17 @@ def validate_schema_validator_self_tests() -> None:
         STANDARD_ROOT / "schemas/golden-path-exceptions-v1.schema.json",
         "exception ID",
     )
+    for label, value in (
+        ("compact exception date", "20260801"),
+        ("ISO week exception date", "2026-W31-5"),
+    ):
+        invalid_exception_date = copy.deepcopy(exceptions)
+        invalid_exception_date["exceptions"][0]["expiresAt"] = value
+        require_schema_rejection(
+            invalid_exception_date,
+            STANDARD_ROOT / "schemas/golden-path-exceptions-v1.schema.json",
+            label,
+        )
 
     output = load_json(
         STANDARD_ROOT
@@ -675,13 +692,12 @@ def validate_metadata_example() -> None:
 
 def parse_date(value: Any, context: str) -> dt.date | None:
     if not isinstance(value, str):
-        report(f"{context}: expected an ISO date")
+        report(f"{context}: expected an RFC 3339 full-date")
         return None
-    try:
-        return dt.date.fromisoformat(value)
-    except ValueError:
-        report(f"{context}: expected an ISO date")
-        return None
+    parsed = parse_full_date(value)
+    if parsed is None:
+        report(f"{context}: expected an RFC 3339 full-date")
+    return parsed
 
 
 def validate_exceptions_example() -> None:

@@ -19,7 +19,9 @@ The check scaffolds a temporary example, verifies it with the consumer
 conformance checker, confirms that a second scaffold refuses to overwrite the
 generated files, and validates the Developer Tooling documents, stable rule
 catalog, runtime catalog, schemas, examples, bootstrap locator, and workflow
-template.
+template. It also validates both governance workflows' complete trigger paths,
+least-privilege permissions, immutable actions, pinned runners, and checkout
+credential handling.
 
 The
 [documentation governance workflow](../../.github/workflows/docs.yml) runs this
@@ -75,9 +77,10 @@ That release check verifies the pinned release and standard-snapshot manifests,
 their digests and attestations, and every policy-owned machine snapshot file.
 It then previews and materializes the documentation fixture in a temporary
 directory, compares the deterministic plans, executes the generated bootstrap
-wrapper, and checks the candidate with the released checker. It never writes to
-a consumer repository and does not duplicate checker or generator source in
-this policy repository.
+wrapper, checks the candidate with the released checker, and proves that the
+workflow-template profile sentinel exits as a usage error until replaced. It
+never writes to a consumer repository and does not duplicate checker or
+generator source in this policy repository.
 
 ## Scaffold
 

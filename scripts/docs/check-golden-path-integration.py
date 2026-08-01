@@ -20,6 +20,7 @@ SHA256 = re.compile(r"^[a-f0-9]{64}$")
 DIGEST = re.compile(r"^sha256:[a-f0-9]{64}$")
 COMMIT = re.compile(r"^[a-f0-9]{40}$")
 SEMVER = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
+PROFILE_PLACEHOLDER = "REPLACE_WITH_EXACT_PROFILES"
 
 
 class ValidationError(Exception):
@@ -251,7 +252,7 @@ def validate_workflow_template(locator: dict[str, Any]) -> None:
         f"uses: {implementation['automation']['reusableWorkflow']}",
         "permissions:\n  contents: read",
         "working-directory: .",
-        "profiles: '[]'",
+        f"profiles: '{PROFILE_PLACEHOLDER}'",
         f"checker-version: '{release['version']}'",
         f"source-commit: '{release['sourceCommit']}'",
         f"github-cli-version: '{implementation['verifier']['githubCliVersion']}'",
@@ -269,6 +270,12 @@ def validate_workflow_template(locator: dict[str, Any]) -> None:
     for text in required:
         if text not in workflow:
             raise ValidationError(f"workflow template omits immutable caller text: {text}")
+    try:
+        json.loads(PROFILE_PLACEHOLDER)
+    except json.JSONDecodeError:
+        pass
+    else:
+        raise ValidationError("workflow template profile placeholder must be invalid JSON")
     if workflow.count("$default-branch") != 2:
         raise ValidationError("workflow template must use the default-branch placeholder for push and pull request")
     forbidden = [
@@ -397,6 +404,7 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
     capability_path = local_file(locator["discovery"]["capabilityMatrix"], "capability matrix")
     bootstrap = bootstrap_path.read_text()
     capability = capability_path.read_text()
+    bootstrap_script = (ROOT / "scripts/docs/check-golden-path-bootstrap.sh").read_text()
     for text in (
         "golden-path-bootstrap.v1.json",
         "golden-path-quality.yml",
@@ -418,10 +426,19 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
         "golden-path-hosting-adapter-selection/v1",
         "schemas/golden-path-hosting-adapter-selection-v1.schema.json",
         "Require an environment claim only when a paid Environment adapter is selected",
+        "immutable OIDC",
         "Rollout and rollback",
     ):
         if text not in capability:
             raise ValidationError(f"capability matrix omits required boundary: {text}")
+    for text in (
+        f"--expected-profiles {PROFILE_PLACEHOLDER}",
+        '[[ "$placeholder_status" -ne 2 ]]',
+    ):
+        if text not in bootstrap_script:
+            raise ValidationError(
+                f"released bootstrap check omits profile-sentinel assertion: {text}"
+            )
 
 
 def validate_hosting_adapter_schema(locator: dict[str, Any]) -> None:
@@ -468,19 +485,28 @@ def validate_hosting_adapter_schema(locator: dict[str, Any]) -> None:
     if findings:
         raise ValidationError("hosting adapter example is invalid: " + "; ".join(findings))
 
+    adapters = example.get("adapters")
+    if not isinstance(adapters, dict) or len(adapters) != 1:
+        raise ValidationError("hosting adapter example must contain exactly one keyed adapter")
+    adapter_id = next(iter(adapters))
+
     invalid_examples: list[tuple[str, dict[str, Any]]] = []
     missing_owner = copy.deepcopy(example)
-    del missing_owner["adapters"][0]["owner"]
+    del missing_owner["adapters"][adapter_id]["owner"]
     invalid_examples.append(("missing owner", missing_owner))
     missing_enabled_at = copy.deepcopy(example)
-    del missing_enabled_at["adapters"][0]["enabledAt"]
+    del missing_enabled_at["adapters"][adapter_id]["enabledAt"]
     invalid_examples.append(("missing activation time", missing_enabled_at))
     secret_property = copy.deepcopy(example)
-    secret_property["adapters"][0]["secretValue"] = "must-not-be-recorded"
+    secret_property["adapters"][adapter_id]["secretValue"] = "must-not-be-recorded"
     invalid_examples.append(("secret-like extra property", secret_property))
     invalid_state = copy.deepcopy(example)
-    invalid_state["adapters"][0]["state"] = "unknown"
+    invalid_state["adapters"][adapter_id]["state"] = "unknown"
     invalid_examples.append(("unknown state", invalid_state))
+    invalid_adapter_id = copy.deepcopy(example)
+    invalid_adapter = invalid_adapter_id["adapters"].pop(adapter_id)
+    invalid_adapter_id["adapters"]["Invalid Adapter"] = invalid_adapter
+    invalid_examples.append(("invalid adapter ID", invalid_adapter_id))
     for label, invalid in invalid_examples:
         negative_findings: list[str] = []
         validator.validate_json_schema_instance(
@@ -584,6 +610,7 @@ def validate_governance_workflow(locator: dict[str, Any]) -> None:
             raise ValidationError(f"governance workflow action is not full-SHA pinned: {reference}")
     required_paths = {
         ".github/workflows/golden-path-bootstrap.yml",
+        ".github/workflows/docs.yml",
         "docs/decisions/0006-adopt-developer-tooling-golden-path.md",
         "docs/guides/adopting-developer-tooling.md",
         "docs/guides/bootstrap-new-repository.md",
@@ -608,6 +635,98 @@ def validate_governance_workflow(locator: dict[str, Any]) -> None:
         raise ValidationError("governance bootstrap job permissions must be exactly contents: read")
 
 
+def validate_documentation_workflow_source(workflow: str) -> None:
+    required = [
+        "runs-on: ubuntu-24.04",
+        "uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "run: scripts/docs/check-repository.sh",
+        "persist-credentials: false",
+    ]
+    for text in required:
+        if workflow.count(text) != 1:
+            raise ValidationError(
+                f"documentation workflow must contain exactly one required control: {text}"
+            )
+    for match in re.finditer(r"^\s*uses:\s+([^\s#]+)", workflow, re.MULTILINE):
+        reference = match.group(1)
+        if reference.startswith("./"):
+            continue
+        if not re.search(r"@[a-f0-9]{40}$", reference):
+            raise ValidationError(
+                f"documentation workflow action is not full-SHA pinned: {reference}"
+            )
+
+    required_paths = {
+        "**/*.md",
+        ".github/workflows/docs.yml",
+        ".github/workflows/golden-path-bootstrap.yml",
+        "docs/guides/golden-path-bootstrap.v1.json",
+        "docs/guides/schemas/**",
+        "docs/standards/developer-tooling/**",
+        "scripts/docs/**",
+        "workflow-templates/**",
+    }
+    pull_request_paths = workflow_event_paths(workflow, "pull_request")
+    push_paths = workflow_event_paths(workflow, "push")
+    if set(pull_request_paths) != required_paths or set(push_paths) != required_paths:
+        raise ValidationError(
+            "documentation workflow trigger paths differ from the complete governance source set"
+        )
+    if pull_request_paths != push_paths:
+        raise ValidationError(
+            "documentation workflow pull_request and push path ordering differs"
+        )
+    if workflow.count("permissions: {}") != 1:
+        raise ValidationError(
+            "documentation workflow top-level permissions must be exactly empty"
+        )
+    if permission_mapping(workflow, 4, "documentation governance job") != {"contents": "read"}:
+        raise ValidationError(
+            "documentation governance job permissions must be exactly contents: read"
+        )
+
+
+def validate_documentation_workflow() -> None:
+    workflow = (ROOT / ".github/workflows/docs.yml").read_text()
+    validate_documentation_workflow_source(workflow)
+    mutations = [
+        (
+            "additional write permission",
+            workflow.replace(
+                "      contents: read\n",
+                "      contents: read\n      actions: write\n",
+                1,
+            ),
+        ),
+        (
+            "missing workflow-template path",
+            workflow.replace('      - "workflow-templates/**"\n', ""),
+        ),
+        (
+            "mutable runner",
+            workflow.replace("runs-on: ubuntu-24.04", "runs-on: ubuntu-latest", 1),
+        ),
+        (
+            "credential-persisting checkout",
+            workflow.replace(
+                "        with:\n          persist-credentials: false\n",
+                "",
+                1,
+            ),
+        ),
+    ]
+    for label, mutation in mutations:
+        if mutation == workflow:
+            raise ValidationError(
+                f"documentation workflow self-test could not construct {label}"
+            )
+        try:
+            validate_documentation_workflow_source(mutation)
+        except ValidationError:
+            continue
+        raise ValidationError(f"documentation workflow validator accepted {label}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Validate the policy-owned Golden Path bootstrap integration"
@@ -624,6 +743,7 @@ def main() -> int:
         validate_fixture_and_docs(locator)
         validate_hosting_adapter_schema(locator)
         validate_governance_workflow(locator)
+        validate_documentation_workflow()
         if arguments.snapshot_manifest is not None:
             validate_standard_snapshot(locator, arguments.snapshot_manifest)
     except ValidationError as error:

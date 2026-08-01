@@ -20,9 +20,9 @@ jobs:
     with:
       runner: ubuntu-24.04
       working-directory: .
-      # Replace [] with the exact profiles in .github/golden-path.yaml.
-      # The empty selection deliberately fails closed until classified.
-      profiles: '[]'
+      # Replace this invalid JSON sentinel with the exact profile array in
+      # .github/golden-path.yaml. It deliberately fails closed until replaced.
+      profiles: 'REPLACE_WITH_EXACT_PROFILES'
       checker-version: '0.2.0'
       source-commit: '1c590b377dfc38047a1c9766ab0ea3ac9b954d3b'
       github-cli-version: '2.96.0'
