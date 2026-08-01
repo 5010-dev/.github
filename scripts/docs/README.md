@@ -66,7 +66,7 @@ python3 scripts/docs/check-golden-path-integration.py
 The path-scoped
 [Golden Path bootstrap workflow](../../.github/workflows/golden-path-bootstrap.yml)
 additionally installs the exact, checksum- and provenance-verified Golden Path
-`0.2.0` release and runs:
+release selected by the bootstrap locator and runs:
 
 ```bash
 GOLDEN_PATH_BIN=/path/to/verified/golden-path \

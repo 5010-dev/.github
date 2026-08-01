@@ -37,12 +37,11 @@ The policy repository separately verifies the release's
 schema, and example sources. Before execution:
 
 - compare each downloaded file with the locator's SHA-256;
-- run `gh attestation verify` with GitHub CLI `2.96.0`, the repository
-  `5010-dev/engineering-tooling`, signer workflow
-  `5010-dev/engineering-tooling/.github/workflows/release.yml`, source and
-  signer digest `1c590b377dfc38047a1c9766ab0ea3ac9b954d3b`, and source ref
-  `refs/tags/v0.2.0`; and
-- confirm that the executable reports `golden-path 0.2.0`.
+- run `gh attestation verify` with the exact GitHub CLI version, repository,
+  signer workflow, source and signer digest, and tag ref declared by the
+  locator; and
+- confirm that the executable reports the exact release version declared by
+  the locator.
 
 Do not execute a moving tag, default-branch checkout, redirecting raw file, or
 network-to-interpreter pipeline. A later release is adopted by reviewing an
@@ -114,7 +113,8 @@ just ci
 ```
 
 Replace the example timestamp and profile array with the evaluation time and
-actual declared profiles. Golden Path `0.2.0` is report-only, so evidence is
+actual declared profiles. A stable lifecycle does not by itself make
+conformance platform-enforced. Under report-only enforcement, evidence is
 visible without claiming that the hosting platform blocks merge. Repository
 owners separately decide when their adoption becomes policy-required or uses a
 paid platform-enforcement adapter.

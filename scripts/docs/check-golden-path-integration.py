@@ -410,6 +410,8 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
         "golden-path-quality.yml",
         "golden-path-exceptions.yaml",
         "GitHub capability matrix",
+        "exact GitHub CLI version",
+        "exact release version declared by",
         "--write",
         "separate empty candidate",
     ):
@@ -434,10 +436,14 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
     for text in (
         f"--expected-profiles {PROFILE_PLACEHOLDER}",
         '[[ "$placeholder_status" -ne 2 ]]',
+        'release["schemaVersion"] == "golden-path-release-manifest/v2"',
+        'release["lifecycle"] == "stable"',
+        'release["enforcement"] == ["report-only"]',
+        'release["components"]["assetBundle"]["version"]',
     ):
         if text not in bootstrap_script:
             raise ValidationError(
-                f"released bootstrap check omits profile-sentinel assertion: {text}"
+                f"released bootstrap check omits required assertion: {text}"
             )
 
 
