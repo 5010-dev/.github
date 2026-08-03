@@ -199,16 +199,24 @@ explicit maintainer direction.
 
 ## Releases and versioning
 
-Release only from validated `main`. Once a release tag or artifact is published,
-treat it as immutable; publish a new version to correct it.
+Release only from validated `main`. Once a release tag, registry version, or
+artifact is published, treat it as immutable; publish a correction version and
+use an ecosystem-native deprecate, yank, or retract operation when appropriate.
 
-Each repository owns its versioning scheme, tag format, changelog policy, and
-release automation. Document those details in the repository README or
-development guide. Consumer-facing packages and APIs should follow their
-ecosystem's versioning and compatibility conventions.
+Organization release units must follow the
+[Release and Versioning Standard](https://github.com/5010-dev/.github/blob/main/docs/standards/release-versioning/README.md).
+It defines artifact profiles, version and release identity, compatibility
+lifecycle, release evidence, automation boundaries, and exceptions.
 
-Every production release must be traceable to its source commit, release tag,
-and published artifact.
+Each repository owns its exact versions, release units, native manifests, tag
+format, changelog policy, release automation, current support state, and release
+history. Document those details in the repository README or development guide.
+
+Every production release must be traceable to its source commit, an applicable
+tag or ref or a repository-native release identifier, and its exact artifact
+or deployment identity. Git tags, GitHub Releases, changelog files, checksums,
+SBOMs, provenance, and attestations apply according to the artifact profile;
+they are not universal requirements for every deployment.
 
 ## Repository-specific instructions
 

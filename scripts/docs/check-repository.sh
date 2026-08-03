@@ -24,6 +24,7 @@ required_sources=(
     docs/decisions/0004-adopt-arc42-engineering-documentation-system.md
     docs/decisions/0005-adopt-ecs-service-delivery-workflow-envelope.md
     docs/decisions/0006-adopt-developer-tooling-golden-path.md
+    docs/decisions/0007-adopt-release-and-versioning-standard.md
     docs/decisions/README.md
     docs/platform/README.md
     docs/platform/ecs-deployment-contract.md
@@ -39,6 +40,12 @@ required_sources=(
     docs/standards/engineering-documentation/contract.md
     docs/standards/engineering-documentation/arc42-profile.md
     docs/standards/engineering-documentation/lifecycle-and-validation.md
+    docs/standards/release-versioning/README.md
+    docs/standards/release-versioning/profiles.md
+    docs/standards/release-versioning/lifecycle.md
+    docs/standards/release-versioning/release-evidence.md
+    docs/standards/release-versioning/automation.md
+    docs/standards/release-versioning/exceptions.md
     docs/guides/README.md
     docs/guides/adopting-developer-tooling.md
     docs/guides/bootstrap-new-repository.md
