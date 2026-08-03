@@ -1,7 +1,8 @@
 # Compatibility lifecycle
 
 Maturity and support are separate dimensions. Every consumer-selectable release
-line MUST identify its maturity channel and, once stable, its support state.
+line MUST identify its maturity channel. Stable and Incubating release lines
+MUST also identify their support state.
 
 ## Maturity channels
 
@@ -11,16 +12,19 @@ line MUST identify its maturity channel and, once stable, its support state.
 | Alpha | Compatibility is not promised; known consumers still receive breaking-change notice |
 | Beta | Intended compatibility direction is established; support and retirement expectations are declared before broad consumption |
 | RC | Final release candidate; intentional compatibility changes require a new RC and renewed validation |
+| Incubating | SemVer `0.x` line with a consumer-selectable but not yet Stable compatibility contract |
 | Stable | Declared compatibility surface is protected under the selected version scheme |
 
 Release units MAY skip channels that add no useful validation boundary. Native
 ecosystem spelling and ordering take precedence. `dev`, `staging`, and
 `production` are environments, not maturity channels.
 
-The default registry channel and mutable `latest` alias MUST select the preferred
-stable release. A prerelease MUST use a native prerelease version or separate
-channel. Stable promotion publishes a new final version; it MUST NOT mutate an
-existing prerelease, tag, or artifact.
+The default registry channel and mutable `latest` alias MUST select the Stable
+release whose support state is Preferred. When a release unit has no Stable
+release, the channel or alias MUST instead select the Incubating release whose
+support state is Preferred and MUST NOT imply Stable maturity. A prerelease MUST
+use a native prerelease version or separate channel. Stable promotion publishes
+a new final version; it MUST NOT mutate an existing prerelease, tag, or artifact.
 
 ## Support states
 
@@ -28,7 +32,8 @@ existing prerelease, tag, or artifact.
 Preferred -> Supported -> Deprecated -> EOL
 ```
 
-- **Preferred** is the default stable line for new consumers.
+- **Preferred** is the default line for new consumers: Stable when available,
+  otherwise Incubating.
 - **Supported** receives the fixes declared by its repository policy.
 - **Deprecated** has a successor or retirement path and remains supported only
   to the stated level until its deadline.
@@ -37,16 +42,18 @@ Preferred -> Supported -> Deprecated -> EOL
 A Deprecated line MUST NOT receive new features. It receives only the fixes
 declared by its repository support policy until its deadline.
 
-A stable line can be Deprecated while another stable line is Preferred. By
-default, a release unit supports one latest preferred stable line. N-1, LTS,
-maintenance branches, and backports are not automatic requirements. A
-repository supporting multiple lines MUST record each line's end date, fix and
-backport scope, and owner. This standard does not require a roll-forward-only
-service to create a maintenance branch or backport policy.
+A Stable or Incubating line can be Deprecated while another line is Preferred.
+By default, a release unit supports one latest Preferred line: Stable when
+available, otherwise Incubating. N-1, LTS, maintenance branches, and backports
+are not automatic requirements. A repository supporting multiple lines MUST
+record each line's end date, fix and backport scope, and owner. This standard
+does not require a roll-forward-only service to create a maintenance branch or
+backport policy.
 
 ## Incubating `0.x`
 
-A SemVer `0.x` line is Incubating rather than Stable.
+A SemVer `0.x` line is Incubating rather than Stable and MUST use the support
+state transitions above.
 
 - A compatible fix SHOULD increment patch and a breaking change SHOULD
   increment minor unless the ecosystem defines more specific behavior.
@@ -67,10 +74,12 @@ The default notice period is proportional to consumer reach:
 | Alpha | No fixed period; known consumers MUST be notified |
 | Beta | Consumer-reach period and promotion or retirement target MUST be declared on entry |
 
-An internal period shorter than 90 days MAY be used when all affected owners,
-migration states, and cutover evidence are known. The repository MUST record the
-affected consumers, reason, mitigation, approval, and review date as an
-exception.
+A repository shortening an applicable 90- or 180-day default MUST use either a
+recorded exception or the emergency-change path below. A recorded exception
+MUST identify the affected or reasonably discoverable consumers, reason,
+mitigation, approval, review date, and evidence supporting the shorter period.
+For external or unidentified consumers, the repository MUST also record its
+discovery and notification attempts and the accepted residual risk.
 
 ## Stable deprecation contract
 
@@ -105,11 +114,14 @@ Lifecycle deprecation and a defective release are different states:
 - **Deleted** removes availability and is reserved for secrets, malware, legal,
   privacy, or equivalent integrity incidents where preservation is unsafe.
 
-A published version, tag, or artifact MUST NOT be overwritten. Repositories
-MUST publish a correction release and SHOULD prefer ecosystem-native
-deprecate, yank, or retract operations over deletion. Emergency deletion MUST
-record credential rotation or containment, affected scope, replacement,
-required consumer action, owner, and follow-up review.
+A published version, tag, or artifact identifier MUST NOT be overwritten or
+reused for different content, including after deletion. Repositories SHOULD
+prefer ecosystem-native deprecate, yank, or retract operations over deletion.
+If corrected content remains intended for distribution, it MUST use a new
+version or repository-native release identifier. Otherwise, a repository MAY
+yank or retract the defective release without publishing a replacement.
+Emergency deletion MUST record credential rotation or containment, affected
+scope, replacement, required consumer action, owner, and follow-up review.
 
 Database migrations are superseded by later migrations rather than deprecated,
 yanked, or deleted. Mutable container aliases do not express support state.
@@ -119,8 +131,8 @@ yanked, or deleted. Mutable container aliases do not express support state.
 Security, regulatory, legal, privacy, or integrity emergencies MAY shorten a
 notice period or require an immediate breaking change. The owning repository
 MUST record the affected scope, reason, replacement, consumer action, owner,
-approval, and follow-up review. Emergency authority does not permit silent
-artifact overwrite or false compatibility claims.
+approval, and follow-up review. Emergency authority does not permit artifact
+overwrite, identifier reuse, or false compatibility claims.
 
 ## Relevant upstream specifications
 

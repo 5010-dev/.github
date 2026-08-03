@@ -722,6 +722,7 @@ def validate_documentation_workflow_source(workflow: str) -> None:
         "docs/guides/golden-path-bootstrap.v1.json",
         "docs/guides/schemas/**",
         "docs/standards/developer-tooling/**",
+        "docs/standards/release-versioning/**",
         "scripts/docs/**",
         "workflow-templates/**",
     }

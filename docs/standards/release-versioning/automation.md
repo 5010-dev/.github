@@ -15,9 +15,10 @@ away from the releasing repository.
 | Generic failure and evidence semantics | Build, publish, deploy, verify, recover, and current history |
 
 Production deployment mutation, rollout, rollback, runtime readiness, and
-operational verification remain owned by applicable platform delivery standards
-and repository workflows. Release automation MUST carry the required release
-identity into those workflows but MUST NOT replace their safety contract.
+operational verification remain owned by applicable
+[platform delivery standards](../../platform/README.md) and repository
+workflows. Release automation MUST carry the required release identity into
+those workflows but MUST NOT replace their safety contract.
 
 ## Required publication sequence
 

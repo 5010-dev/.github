@@ -47,7 +47,7 @@ record:
 
 An exception MUST NOT permit a release to claim an identity, compatibility
 level, publication state, or verification result that has not been established.
-It MUST NOT silently overwrite published history.
+It MUST NOT overwrite a published identity or reuse it for different content.
 
 A `SHOULD` deviation MAY be documented in normal repository decision or release
 records when the rationale and impact are clear. A `MUST` or `MUST NOT`
@@ -61,10 +61,10 @@ legal, privacy, regulatory, or integrity incident. The operator MUST record the
 scope, action, reason, affected consumers, replacement, approval or emergency
 authority, and follow-up review as soon as it is safe to do so.
 
-Emergency handling does not authorize silent version reuse, fabricated
-evidence, or an undocumented permanent policy change. The follow-up review MUST
-either close the deviation, create a normal time-bounded exception, or propose a
-change to this standard.
+Emergency handling does not authorize version or artifact identifier reuse,
+fabricated evidence, or an undocumented permanent policy change. The follow-up
+review MUST either close the deviation, create a normal time-bounded exception,
+or propose a change to this standard.
 
 ## Closing an exception
 
