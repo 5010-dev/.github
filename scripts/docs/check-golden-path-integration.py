@@ -395,7 +395,13 @@ def validate_standard_snapshot(
     )
     if aggregate["algorithm"] != "sha256":
         raise ValidationError("standard snapshot aggregate algorithm differs")
-    if aggregate["definition"] != "SHA-256 of sorted shasum lines for every snapshot file except manifest.json":
+    expected_aggregate_definition = (
+        "SHA-256 of UTF-8 lines sorted by snapshot-relative path, each formatted as "
+        f"<file-sha256>  standards/snapshots/{standard['version']}/"
+        "<snapshot-relative-path>\\n, "
+        "excluding manifest.json"
+    )
+    if aggregate["definition"] != expected_aggregate_definition:
         raise ValidationError("standard snapshot aggregate definition differs")
     aggregate_digest = require_text(aggregate["digest"], "standard snapshot aggregate digest")
     if not SHA256.fullmatch(aggregate_digest):
