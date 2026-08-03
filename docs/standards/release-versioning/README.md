@@ -81,7 +81,7 @@ They MUST NOT be presented through a stable or preferred channel.
 | Source revision | The immutable commit SHA used as release input |
 | Artifact identity | A registry identity plus digest, integrity value, or checksum that identifies exact published bytes |
 | Deployment identity | The selected source revision, artifact or change identity, configuration evidence, and target environment state |
-| Maturity channel | Development/Snapshot, Alpha, Beta, RC, or Stable release expectation |
+| Maturity channel | Development/Snapshot, Alpha, Beta, RC, Incubating, or Stable release expectation |
 | Support state | Preferred, Supported, Deprecated, or EOL status of a version line |
 
 ## Core contract
@@ -109,6 +109,7 @@ repository-native version or release identifier
                        v
              immutable source SHA
                        |
+                       v
           applicable tag/ref boundary
                        |
                        v
@@ -153,9 +154,10 @@ versions, release status, or migration progress as part of this standard.
   versions. This standard governs general project artifacts and relates those
   assets to the same immutable release principles without redefining GP-009 or
   GP-020.
-- Platform delivery standards own deployment mutation, rollout, rollback,
-  readiness, and runtime verification. This standard owns only the release
-  identity and evidence that those workflows carry.
+- [Platform delivery standards](../../platform/README.md) own deployment
+  mutation, rollout, rollback, readiness, and runtime verification. This
+  standard owns only the release identity and evidence that those workflows
+  carry.
 - The [Engineering documentation standard](../engineering-documentation/README.md)
   owns documentation placement, lifecycle, and canonical authority maps.
 - Product launches, business milestones, and customer-facing product names are

@@ -103,8 +103,9 @@ MUST identify the recorded source revision. A moved or recreated release tag is
 an integrity incident.
 
 Registry versions, released files, tags, and published release assets MUST NOT
-be overwritten. Correction, deprecation, yank, retraction, and emergency
-deletion follow the [Compatibility lifecycle](./lifecycle.md).
+be overwritten or, after deletion, reused for different content. Correction,
+deprecation, yank, retraction, and emergency deletion follow the
+[Compatibility lifecycle](./lifecycle.md).
 
 ## Relevant upstream specifications
 

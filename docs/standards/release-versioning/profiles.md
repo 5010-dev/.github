@@ -36,7 +36,9 @@ A release unit MAY use Calendar Versioning when time is the primary meaning of a
 coordinated policy snapshot, support catalog, data release, or release train.
 CalVer MUST NOT be treated as a compatibility guarantee. A serialized contract
 with breaking evolution MUST maintain a separate compatibility epoch or schema
-major.
+major. A CalVer release unit MUST define its calendar resolution and a
+deterministic sequence or micro segment that disambiguates multiple releases or
+corrections within one calendar period.
 
 ### Monotonic and source identifiers
 
