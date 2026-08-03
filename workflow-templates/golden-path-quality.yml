@@ -16,17 +16,17 @@ concurrency:
 
 jobs:
   conformance:
-    uses: 5010-dev/engineering-tooling/.github/workflows/golden-path-quality.yml@ce66d80e5a18d76d8094af9c481a31a656fa881b
+    uses: 5010-dev/engineering-tooling/.github/workflows/golden-path-quality.yml@46e9175e2f97b192ef61a5a0320a396f87b9e5ca
     with:
       runner: ubuntu-24.04
       working-directory: .
       # Replace this invalid JSON sentinel with the exact profile array in
       # .github/golden-path.yaml. It deliberately fails closed until replaced.
       profiles: 'REPLACE_WITH_EXACT_PROFILES'
-      checker-version: '1.0.0'
-      source-commit: 'ce66d80e5a18d76d8094af9c481a31a656fa881b'
+      checker-version: '1.0.1'
+      source-commit: '46e9175e2f97b192ef61a5a0320a396f87b9e5ca'
       github-cli-version: '2.97.0'
-      darwin-amd64-sha256: '1c9088632c17bc7c30baf573bed6c294c73f3d2e65f821885cdd7b1542859712'
-      darwin-arm64-sha256: 'bf878d3d4033934865f0e7e0d2dbfa42cbbaa79cfa43185c42672f451c93847e'
-      linux-amd64-sha256: '6dcfb6d480942e96554da81f6f254791859fa4614197cbf5edf2d5bb318f08b6'
-      linux-arm64-sha256: 'ee35378fa39c60720ab4b1d804aacf0ad71263b3aabbb2cf669912f56428b5e7'
+      darwin-amd64-sha256: 'adcb2e5c4a2f17f800541f7ce05fccf3353ce08df1837ed065a273ecdf970803'
+      darwin-arm64-sha256: '19e73bcc19c16953dda1241beaa016004eb6e4e8d7cdc96ef090b942d88cbce6'
+      linux-amd64-sha256: '9d22518948b1cb0294aaa58c2079942a1434bd2fe3113417782e7b418182e1b7'
+      linux-arm64-sha256: 'b500e89ea7a2a171b520ed55a174a58a935b0d2346419fbb06fcec2819b0147e'
