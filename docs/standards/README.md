@@ -9,6 +9,9 @@ Organization standards define reusable requirements that apply across
   Golden Path for root commands, toolchain and dependency authority, immutable
   distribution, language and IaC profiles, conformance, runtime support, build
   hygiene, and exceptions.
+- [Release and Versioning](./release-versioning/README.md) — define artifact
+  profiles, version and release identity, compatibility lifecycle, release
+  evidence, automation boundaries, and exceptions.
 - [Engineering documentation](./engineering-documentation/README.md) — apply the
   organization arc42 profile as the canonical documentation system for
   engineering repositories and independently governed engineering layers.
