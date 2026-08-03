@@ -1,18 +1,19 @@
 # Release automation
 
-Release automation implements the artifact profile and evidence contract. It is
-not the source of normative policy and does not transfer publication ownership
-away from the releasing repository.
+Release automation and research-record publication or finalization automation
+implement the artifact profile and evidence contract. They are not the source of
+normative policy and do not transfer publication or finalization ownership away
+from the owning repository.
 
 ## Ownership
 
-| Organization standard or shared implementation | Releasing repository |
+| Organization standard or shared implementation | Owning repository |
 | --- | --- |
-| Artifact-profile outcomes and portable evidence fields | Exact release unit and version decision |
-| Optional schemas, checker contracts, and adapter interfaces | Native manifests and release metadata |
-| Selection criteria for reusable automation | Trigger, approval, environment, and publication timing |
+| Artifact-profile outcomes and portable evidence fields | Exact release unit and version or research-record decision |
+| Optional schemas, checker contracts, and adapter interfaces | Native manifests, release metadata, and research metadata |
+| Selection criteria for reusable automation | Trigger, approval, environment, publication or finalization timing, and owning research authority |
 | Immutable implementation release and compatibility information | Credentials, registry and cloud access, and least-privilege permissions |
-| Generic failure and evidence semantics | Build, publish, deploy, verify, recover, and current history |
+| Generic failure and evidence semantics | Build or research execution ownership, publish, finalize, deploy, verify, recover, and current history |
 
 Production deployment mutation, rollout, rollback, runtime readiness, and
 operational verification remain owned by applicable
@@ -25,39 +26,82 @@ those workflows but MUST NOT replace their safety contract.
 Automation MUST perform the applicable phases in this order or prove an
 equivalent fail-closed order:
 
-1. Resolve the release unit, profile, version source, requested version, and
-   target channel.
-2. Verify validated `main`, exact source revision, and required source or
-   manifest state.
-3. Verify version, tag or ref, registry, and channel uniqueness and consistency.
-4. Build, test, and package once from the selected source boundary.
-5. Compute the exact artifact identity and the checksum, SBOM, or provenance
-   evidence required or selected by the applicable profile and capability.
+1. Resolve the release unit, profile, version or research-record source,
+   requested identifier, and applicable channel or record status.
+2. Verify validated `main` for a governed publication, or the exact immutable
+   source boundary selected by the owning research contract for internal record
+   finalization, plus required source or manifest state.
+3. Verify applicable version, research identifier, tag or ref, registry, channel,
+   and status uniqueness and consistency.
+4. Build, test, and package once from the selected source boundary, or select the
+   already-produced research artifacts and frozen manifest from the owning
+   research workflow.
+5. Compute the exact artifact or research-record identity and the checksum, SBOM,
+   digest, or provenance evidence required or selected by the applicable profile
+   and capability.
 6. Create a draft or staging record where the distribution system permits it.
-7. Publish the immutable artifact and release record without overwriting an
-   existing identity.
-8. Verify registry lookup, pull, install, execution, digest, or deployment state
-   according to the profile.
+7. Publish or finalize the immutable artifact and release or research record
+   without overwriting an existing identity.
+8. Verify registry lookup, pull, install, execution, digest, deployment, manifest,
+   or terminal-record state according to the profile.
 9. Emit durable release evidence and an explicit success, staged, partial, or
    failed state.
 
-Publication of the same release unit MUST be serialized. A workflow MUST NOT use
-concurrency cancellation that can interrupt an older run after irreversible
-publication begins. Every remote mutation and verification loop MUST be bounded
-and report an unambiguous failure when its result cannot be established.
+Publication or finalization of the same release unit and intended version or
+repository-native identifier MUST be serialized. Independent research runs with
+distinct preallocated immutable identities MAY execute concurrently. A workflow
+MUST NOT use concurrency cancellation that can interrupt an older run after
+irreversible publication or finalization begins. Every remote mutation and
+verification loop MUST be bounded and report an unambiguous failure when its
+result cannot be established.
 
-## Partial publication and recovery
+## Native client distribution
 
-Release publication is not generally transactional. Automation MUST identify
-which steps are reversible and which registry operations are permanent.
+Native client automation MUST treat signed build production, store submission,
+store review, approval, phased release, and full availability as distinct states.
+It MUST NOT report a build as publicly released solely because upload or review
+submission succeeded. A retry MUST re-read platform state and MUST NOT reuse a
+version and build identity for different content.
 
-- Before immutable publication, a draft MAY be completed, replaced, or removed
-  under the distribution system's documented recovery semantics.
-- After a package version, tag, image digest, or immutable release is published,
-  recovery MUST NOT overwrite it. Use a correction release and an applicable
-  deprecate, yank, or retract operation.
-- A partial result MUST retain source, intended version, completed publication
-  identities, failed phase, owner action, and retry or correction path.
+Store review and rollout are asynchronous external operations, so an automation
+run MAY terminate in an explicit staged or pending state with durable evidence
+and an owner action. Product-facing release notes MAY be generated as a draft,
+but externally published customer text requires the human approval defined by
+[Release records and evidence](./release-evidence.md).
+
+## Research artifact publication
+
+Research artifact publication automation MUST verify the exact source,
+applicable manifest schema, artifact identities and digests, lineage, and owning
+record status required by the selected profile before publishing or finalizing a
+record whose status was established by the owning research workflow. It MUST
+fail closed when a required input, output, digest, predecessor, amendment, retry,
+or citation relationship is missing or ambiguous.
+
+Automation MAY validate structure, integrity, completeness, and declared
+relationships. It MUST NOT infer or publish scientific validity, interpretation,
+or approval, execute the scientific protocol merely to satisfy this publication
+sequence, or establish a terminal research status without the owning research
+authority's recorded decision. The research workflow MAY invoke publication
+automation in the same execution, but it retains scientific execution and status
+authority. A retry, correction, or rerun MUST create or select an append-only
+successor identity rather than mutate a terminal record.
+
+## Partial publication or finalization and recovery
+
+Release publication and research-record finalization are not generally
+transactional. Automation MUST identify which steps are reversible and which
+registry, archive, or record operations are permanent.
+
+- Before immutable publication or finalization, a draft MAY be completed,
+  replaced, or removed under the owning system's documented recovery semantics.
+- After a package version, tag, image digest, accepted native build, immutable
+  release, or immutable research record is published or finalized, recovery
+  MUST NOT overwrite it. Use the applicable correction, successor, deprecate,
+  yank, retract, supersession, or withdrawal operation.
+- A partial result MUST retain source, intended version or research-record
+  identifier, completed publication or finalization identities, failed phase,
+  owner action, and retry, correction, or successor path.
 - A retry MUST re-read remote state and fail when it would create a conflicting
   identity or claim success for a different artifact.
 
@@ -71,8 +115,8 @@ implementation only when all of the following are true:
 1. at least two stable implementations of the same artifact profile demonstrate
    the same outcome and recovery semantics;
 2. the common interface has a small, typed input and named-secret surface;
-3. the caller retains version, trigger, credentials, publication, and recovery
-   decisions;
+3. the caller retains version or research-record identifier, trigger,
+   credentials, publication or finalization, and recovery decisions;
 4. non-trivial logic has a deterministic local or shared-core test path; and
 5. the implementation has an immutable version or commit pin, compatibility
    record, upgrade path, and rollback path.
@@ -81,7 +125,7 @@ A caller MUST pin a reusable workflow or action to an immutable full commit SHA
 or an organization-approved immutable release locator. A moving branch or tag
 MUST NOT be the execution identity for publication-capable shared automation.
 
-The releasing repository MUST own an intentionally thin caller. Thin describes
+The owning repository MUST own an intentionally thin caller. Thin describes
 the responsibility boundary, not a line-count target: GitHub Actions owns event,
 permissions, credential setup, concurrency, invocation, and summaries, while
 deterministic release logic remains locally or independently executable.
@@ -132,3 +176,7 @@ when it produces the same evidence, immutability, failure, and recovery outcomes
 - [GitHub Packages with GitHub Actions](https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions)
 - [Changesets](https://github.com/changesets/changesets)
 - [Release Please](https://github.com/googleapis/release-please)
+- [Apple bundle version](https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleversion)
+- [Android app versioning](https://developer.android.com/studio/publish/versioning)
+- [FAIR Principles for Research Software](https://doi.org/10.15497/RDA00068)
+- [FORCE11 Software Citation Principles](https://force11.org/info/software-citation-principles-published-2016/)

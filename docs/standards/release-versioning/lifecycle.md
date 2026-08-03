@@ -1,8 +1,12 @@
 # Compatibility lifecycle
 
-Maturity and support are separate dimensions. Every consumer-selectable release
-line MUST identify its maturity channel. Stable and Incubating release lines
-MUST also identify their support state.
+Maturity and support are separate dimensions. Every consumer-selectable software
+or product release line MUST identify its maturity channel. Stable and
+Incubating release lines MUST also identify their support state. Research
+artifacts and datasets or models retained as scientific records use a
+repository-defined research record status instead. An independently consumed
+operational dataset or model with a declared compatibility surface also uses the
+applicable software or product maturity and support states.
 
 ## Maturity channels
 
@@ -25,6 +29,27 @@ release, the channel or alias MUST instead select the Incubating release whose
 support state is Preferred and MUST NOT imply Stable maturity. A prerelease MUST
 use a native prerelease version or separate channel. Stable promotion publishes
 a new final version; it MUST NOT mutate an existing prerelease, tag, or artifact.
+
+## Research record status
+
+The owning research contract MUST define a status vocabulary that distinguishes
+mutable work from immutable registered, published, or terminal records. It MUST
+also define how corrected, superseded, withdrawn, failed, aborted, or otherwise
+non-successful records remain discoverable when those states are applicable.
+
+A research status communicates record state and lineage, not software
+compatibility, support, statistical confidence, scientific validity, or product
+readiness. When the same artifact is both a scientific record and a reusable
+software release, it MUST use both its research record status and the applicable
+software maturity and support states.
+
+Registered preregistrations, published snapshots, terminal experiment runs, and
+released dataset, model, or result identities MUST be immutable. A correction,
+amendment, retry, or rerun creates a successor identity and links the predecessor
+rather than editing the prior record. Withdrawal or invalidation MUST preserve
+the prior identity, reason, affected scope, successor when known, owner, and
+decision timestamp unless legal, privacy, or equivalent integrity requirements
+make continued availability unsafe.
 
 ## Support states
 
@@ -124,7 +149,16 @@ Emergency deletion MUST record credential rotation or containment, affected
 scope, replacement, required consumer action, owner, and follow-up review.
 
 Database migrations are superseded by later migrations rather than deprecated,
-yanked, or deleted. Mutable container aliases do not express support state.
+yanked, or deleted. Research records follow their correction, supersession, and
+withdrawal contract rather than package yanking semantics. Mutable container
+aliases and native-app staged-rollout percentages do not express support state.
+
+A native client build already accepted or distributed by a store MUST NOT be
+replaced under the same platform version and build identity. Pausing rollout,
+removing a build from new distribution, or requiring an upgrade changes delivery
+or support state but does not erase the released identity. Corrected executable
+content requires a new platform-compliant build identifier and, when the platform
+or declared product policy requires it, a new user-facing version.
 
 ## Emergency change
 
@@ -132,7 +166,8 @@ Security, regulatory, legal, privacy, or integrity emergencies MAY shorten a
 notice period or require an immediate breaking change. The owning repository
 MUST record the affected scope, reason, replacement, consumer action, owner,
 approval, and follow-up review. Emergency authority does not permit artifact
-overwrite, identifier reuse, or false compatibility claims.
+or research-record overwrite, identifier reuse, false compatibility claims, or
+fabricated scientific status.
 
 ## Relevant upstream specifications
 
@@ -145,3 +180,5 @@ overwrite, identifier reuse, or false compatibility claims.
 - [npm package deprecation](https://docs.npmjs.com/deprecating-and-undeprecating-packages-or-package-versions/)
 - [RFC 9745: The Deprecation HTTP response header field](https://www.rfc-editor.org/rfc/rfc9745.html)
 - [RFC 8594: The Sunset HTTP header field](https://www.rfc-editor.org/rfc/rfc8594.html)
+- [OSF registrations and preregistrations](https://help.osf.io/article/330-welcome-to-registrations)
+- [DataCite versioning guidance](https://support.datacite.org/docs/versioning)

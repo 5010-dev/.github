@@ -15,7 +15,7 @@ repositories; GitHub does not inherit them automatically.
 - [`pull_request_template.md`](./pull_request_template.md) — default pull request template
 - [`docs/README.md`](./docs/README.md) — organization engineering documentation index
 - [`Developer Tooling Standard`](./docs/standards/developer-tooling/README.md) — canonical Golden Path for commands, toolchains, dependencies, language and IaC profiles, conformance, and exceptions
-- [`Release and Versioning Standard`](./docs/standards/release-versioning/README.md) — artifact profiles, version and release identity, compatibility lifecycle, evidence, automation, and exceptions
+- [`Release and Versioning Standard`](./docs/standards/release-versioning/README.md) — software, native-client, and research-artifact profiles; release and record identity; lifecycle; evidence; automation; and exceptions
 - [`Golden Path bootstrap`](./docs/guides/bootstrap-new-repository.md) — immutable implementation locator, new-repository materialization, and validation procedure
 - [`GitHub hosting capability profile`](./docs/guides/github-hosting-capabilities.md) — Free private baseline and optional paid-adapter boundaries
 - [`Golden Path workflow template`](./workflow-templates/golden-path-quality.yml) — organization discovery starter for a repository-owned thin caller
