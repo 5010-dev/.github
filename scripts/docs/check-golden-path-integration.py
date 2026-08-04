@@ -66,6 +66,49 @@ def require_text(value: Any, name: str) -> str:
     return value
 
 
+def validate_explicit_materialization_modes(value: Any) -> list[str]:
+    mode_order = ["bootstrap", "adoption"]
+    if (
+        not isinstance(value, list)
+        or any(not isinstance(mode, str) for mode in value)
+        or len(value) != len(set(value))
+        or any(mode not in set(mode_order) for mode in value)
+        or ("adoption" in value and "bootstrap" not in value)
+        or value != [mode for mode in mode_order if mode in value]
+    ):
+        raise ValidationError(
+            "release explicitMaterializationModes must be a unique supported subset "
+            "and adoption requires explicit bootstrap support"
+        )
+    return value
+
+
+def validate_explicit_materialization_modes_self_test() -> None:
+    for value in ([], ["bootstrap"], ["bootstrap", "adoption"]):
+        if validate_explicit_materialization_modes(value) != value:
+            raise ValidationError(
+                "explicit materialization mode self-test changed a valid value"
+            )
+
+    invalid_values = (
+        ("non-list string", "adoption"),
+        ("null value", None),
+        ("adoption without bootstrap", ["adoption"]),
+        ("non-canonical order", ["adoption", "bootstrap"]),
+        ("duplicate mode", ["bootstrap", "bootstrap"]),
+        ("unsupported mode", ["bootstrap", "upgrade"]),
+        ("non-string mode", ["bootstrap", 1]),
+    )
+    for label, value in invalid_values:
+        try:
+            validate_explicit_materialization_modes(value)
+        except ValidationError:
+            continue
+        raise ValidationError(
+            f"explicit materialization mode self-test accepted {label}"
+        )
+
+
 def calver_key(value: str, name: str) -> tuple[int, int, int]:
     match = CALVER.fullmatch(require_text(value, name))
     if match is None:
@@ -177,21 +220,7 @@ def validate_locator() -> dict[str, Any]:
         require_text(release["contractVersion"], "release.contractVersion")
     ):
         raise ValidationError("release contractVersion is invalid")
-    materialization_modes = release["explicitMaterializationModes"]
-    materialization_mode_order = ["bootstrap", "adoption"]
-    if (
-        not isinstance(materialization_modes, list)
-        or any(not isinstance(mode, str) for mode in materialization_modes)
-        or len(materialization_modes) != len(set(materialization_modes))
-        or any(mode not in {"bootstrap", "adoption"} for mode in materialization_modes)
-        or ("adoption" in materialization_modes and "bootstrap" not in materialization_modes)
-        or materialization_modes
-        != [mode for mode in materialization_mode_order if mode in materialization_modes]
-    ):
-        raise ValidationError(
-            "release explicitMaterializationModes must be a unique supported subset "
-            "and adoption requires explicit bootstrap support"
-        )
+    validate_explicit_materialization_modes(release["explicitMaterializationModes"])
     if not DIGEST.fullmatch(
         require_text(release["catalogDigest"], "release.catalogDigest")
     ):
@@ -965,6 +994,7 @@ def main() -> int:
     )
     arguments = parser.parse_args()
     try:
+        validate_explicit_materialization_modes_self_test()
         validate_snapshot_source_binding_self_test()
         if (arguments.snapshot_manifest is None) != (arguments.release_manifest is None):
             raise ValidationError(
