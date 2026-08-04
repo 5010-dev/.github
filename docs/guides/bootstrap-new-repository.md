@@ -135,8 +135,19 @@ paid platform-enforcement adapter.
 
 ## Existing repositories
 
-Do not run new-repository generation over an existing tree. Follow
-[Migrating existing developer tooling](./migrating-developer-tooling.md) and use
-the released upgrade preview with a separate candidate directory. Migration
-scope, scheduling, exceptions, and current conformance remain owned by that
-repository and are not tracked by this central repository.
+Do not run new-repository `bootstrap` generation over an existing tree. Follow
+[Migrating existing developer tooling](./migrating-developer-tooling.md). A
+repository without a generated asset inventory uses the selected immutable
+release's explicit `materializationMode: adoption` path and the validated
+[existing-service adoption fixture](../../scripts/docs/fixtures/golden-path-adoption/existing-service.v1.json)
+to create a fixed control-plane baseline in a separate empty candidate. A
+repository that already has a committed generated asset inventory uses
+`upgrade` instead.
+
+If the release selected by the bootstrap locator does not yet declare
+`adoption` in `explicitMaterializationModes`, do not substitute an unreleased
+default-branch binary or hand-build metadata and asset inventory.
+Repository-local migration preparation may continue until the locator selects
+a compatible stable release. Migration scope, scheduling, exceptions, and
+current conformance remain owned by that repository and are not tracked by
+this central repository.

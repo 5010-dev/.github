@@ -11,9 +11,11 @@ registry.
 
 For a new repository, use the
 [Golden Path bootstrap guide](./bootstrap-new-repository.md) to select and
-verify the exact implementation release, preview materialization, and connect
-repository-local validation. Existing repositories continue with the migration
-guide after this policy classification.
+verify the exact implementation release, preview full starter materialization,
+and connect repository-local validation. An existing repository uses the
+[migration guide](./migrating-developer-tooling.md) and the release's explicit
+`adoption` mode for its first generated control-plane baseline. It does not use
+the new-repository starter as a source migration.
 
 ## 1. Classify the repository
 
@@ -33,10 +35,20 @@ not-applicable path.
 
 Create `.github/golden-path.yaml` from the
 [metadata schema](../standards/developer-tooling/schemas/golden-path-metadata-v1.schema.json).
-Record the exact standard, contract, and stable asset bundle versions.
+Record the exact standard, contract, and stable asset bundle versions. When the
+approved implementation generates this file, preserve it as a whole generated
+asset instead of editing it by hand.
 
 Metadata describes applicable policy. It does not store repository names,
 teams, current commits, pull requests, rollout status, or product version.
+
+An existing repository's adoption request declares each component's actual
+capabilities explicitly, including an empty array when none apply. It also
+declares the production or release representative targets the repository
+really supports, with at least one `primary` or `secondary` target. A target is
+not inferred from a CI runner, profile, or successful compilation. The
+generator aggregates these request declarations into metadata; it does not
+inspect existing code and invent support claims.
 
 Separately inventory the operational project or workspace root for every
 selected native profile. When those roots match generated artifact component
@@ -103,6 +115,30 @@ local or CI commands.
 
 Repository-native files remain the executable As-built authority. Shared
 implementation does not redefine the standard.
+
+Use the materialization path that matches the repository state:
+
+- `bootstrap` creates a complete starter for a new repository;
+- `adoption` creates the first Golden Path control-plane baseline for an
+  existing repository; and
+- `upgrade` updates a repository only after a generated asset inventory has
+  been committed.
+
+The `golden-path-generator-request/v1` adoption baseline contains the canonical
+request, generated metadata, generated asset inventory, immutable bootstrap
+script, and thin caller workflow. It does not create or replace source entry
+points, native manifests or locks, mise or Just configuration, dependency
+automation, or repository-specific build, smoke, release, deployment, and
+state-management behavior. Generate it into a separate empty candidate and
+integrate the reviewed files through the repository's own contribution flow.
+
+`golden-path-plan.json` is staging evidence, not a managed repository asset.
+If an existing file collides with a generated control-plane path, review the
+two files deliberately. Do not rewrite the generated asset inventory or digest
+to bless repository-local bytes. Either adopt the generated file, move local
+behavior outside the managed path where the contract permits, or retain an
+intentional customization knowing that a later upgrade must report and resolve
+the conflict.
 
 ## 7. Validate and review
 

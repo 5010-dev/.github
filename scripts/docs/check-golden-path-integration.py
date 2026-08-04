@@ -157,6 +157,7 @@ def validate_locator() -> dict[str, Any]:
             "tag",
             "standardVersion",
             "contractVersion",
+            "explicitMaterializationModes",
             "catalogDigest",
             "sourceCommit",
             "snapshotAggregateDigest",
@@ -176,6 +177,21 @@ def validate_locator() -> dict[str, Any]:
         require_text(release["contractVersion"], "release.contractVersion")
     ):
         raise ValidationError("release contractVersion is invalid")
+    materialization_modes = release["explicitMaterializationModes"]
+    materialization_mode_order = ["bootstrap", "adoption"]
+    if (
+        not isinstance(materialization_modes, list)
+        or any(not isinstance(mode, str) for mode in materialization_modes)
+        or len(materialization_modes) != len(set(materialization_modes))
+        or any(mode not in {"bootstrap", "adoption"} for mode in materialization_modes)
+        or ("adoption" in materialization_modes and "bootstrap" not in materialization_modes)
+        or materialization_modes
+        != [mode for mode in materialization_mode_order if mode in materialization_modes]
+    ):
+        raise ValidationError(
+            "release explicitMaterializationModes must be a unique supported subset "
+            "and adoption requires explicit bootstrap support"
+        )
     if not DIGEST.fullmatch(
         require_text(release["catalogDigest"], "release.catalogDigest")
     ):
@@ -266,6 +282,7 @@ def validate_locator() -> dict[str, Any]:
             "workflowTemplate",
             "workflowTemplateProperties",
             "dryRunFixture",
+            "adoptionFixture",
             "hostingAdapterSchema",
             "hostingAdapterExample",
         },
@@ -513,6 +530,8 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
     capability_path = local_file(locator["discovery"]["capabilityMatrix"], "capability matrix")
     bootstrap = bootstrap_path.read_text()
     capability = capability_path.read_text()
+    adopting = (ROOT / "docs/guides/adopting-developer-tooling.md").read_text()
+    migrating = (ROOT / "docs/guides/migrating-developer-tooling.md").read_text()
     bootstrap_script = (ROOT / "scripts/docs/check-golden-path-bootstrap.sh").read_text()
     for text in (
         "golden-path-bootstrap.v1.json",
@@ -524,9 +543,39 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
         "exact release version declared by",
         "--write",
         "separate empty candidate",
+        "materializationMode: adoption",
     ):
         if text not in bootstrap:
             raise ValidationError(f"bootstrap guide omits required adoption boundary: {text}")
+    for text in (
+        "`bootstrap` creates a complete starter",
+        "`adoption` creates the first Golden Path control-plane baseline",
+        "`upgrade` updates a repository only after a generated asset inventory",
+        "golden-path-plan.json",
+        "Do not rewrite the generated asset inventory or digest",
+    ):
+        if text not in adopting:
+            raise ValidationError(
+                f"adoption guide omits required materialization boundary: {text}"
+            )
+    for text in (
+        "materializationMode: adoption",
+        "Repository without a generated inventory",
+        "Existing adoption baseline",
+        "Legacy or bootstrap baseline changing to adoption",
+        "--request /path/to/existing-repository/.github/golden-path-request.json",
+        "--request /path/to/adoption-request.json",
+        ".github/golden-path-request.json",
+        ".github/golden-path-assets.json",
+        "scripts/golden-path",
+        "A fabricated asset",
+        "is not an adoption baseline",
+        "customized retired assets must conflict",
+    ):
+        if text not in migrating:
+            raise ValidationError(
+                f"migration guide omits required adoption boundary: {text}"
+            )
     for text in (
         "github-free-private",
         "report-only",
@@ -550,11 +599,65 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
         'release["lifecycle"] == "stable"',
         'release["enforcement"] == ["report-only"]',
         'release["components"]["assetBundle"]["version"]',
+        'release["explicitMaterializationModes"]',
+        'locator["discovery"]["adoptionFixture"]',
+        'if [[ "$supports_adoption" == "true" ]]',
+        "expected_managed_paths",
+        'request["materializationMode"] == "adoption"',
     ):
         if text not in bootstrap_script:
             raise ValidationError(
                 f"released bootstrap check omits required assertion: {text}"
             )
+
+
+def validate_adoption_fixture(locator: dict[str, Any]) -> None:
+    fixture_path = local_file(
+        locator["discovery"]["adoptionFixture"], "adoption fixture"
+    )
+    fixture = require_object(
+        load_json(fixture_path),
+        "existing-repository adoption fixture",
+        {
+            "schemaVersion",
+            "materializationMode",
+            "layout",
+            "projectName",
+            "projectSlug",
+            "targets",
+            "components",
+        },
+    )
+    expected = {
+        "schemaVersion": "golden-path-generator-request/v1",
+        "materializationMode": "adoption",
+        "layout": "single",
+        "projectName": "Golden Path Existing Service Fixture",
+        "projectSlug": "golden-path-existing-service-fixture",
+        "targets": [
+            {
+                "os": "linux",
+                "architecture": "amd64",
+                "runtime": "container",
+                "tier": "primary",
+                "execution": False,
+            }
+        ],
+        "components": [
+            {
+                "name": "service",
+                "path": ".",
+                "profiles": ["go"],
+                "artifactTypes": ["service", "container"],
+                "capabilities": ["build", "format", "lint", "test"],
+            }
+        ],
+    }
+    if fixture != expected:
+        raise ValidationError(
+            "existing-repository adoption fixture differs from the fixed "
+            "capability, target, and materialization boundary"
+        )
 
 
 def validate_hosting_adapter_schema(locator: dict[str, Any]) -> None:
@@ -731,11 +834,13 @@ def validate_governance_workflow(locator: dict[str, Any]) -> None:
         "docs/guides/adopting-developer-tooling.md",
         "docs/guides/bootstrap-new-repository.md",
         "docs/guides/github-hosting-capabilities.md",
+        "docs/guides/migrating-developer-tooling.md",
         "docs/guides/golden-path-bootstrap.v1.json",
         "docs/guides/schemas/**",
         "docs/standards/developer-tooling/**",
         "scripts/docs/check-golden-path-bootstrap.sh",
         "scripts/docs/check-golden-path-integration.py",
+        "scripts/docs/fixtures/golden-path-adoption/**",
         "scripts/docs/fixtures/golden-path-bootstrap/**",
         "workflow-templates/**",
     }
@@ -868,6 +973,7 @@ def main() -> int:
         locator = validate_locator()
         validate_workflow_template(locator)
         validate_fixture_and_docs(locator)
+        validate_adoption_fixture(locator)
         validate_hosting_adapter_schema(locator)
         validate_governance_workflow(locator)
         validate_documentation_workflow()
