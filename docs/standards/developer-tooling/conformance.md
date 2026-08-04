@@ -1,7 +1,7 @@
 # Golden Path conformance
 
 - Status: Accepted
-- Standard version: `2026.07`
+- Standard version: `2026.08`
 - Contract version: `golden-path/v1`
 
 Conformance is evaluated from repository-local declarations and checked-in
@@ -12,6 +12,7 @@ files. There is no central repository inventory or live conformance registry.
 | Input | Authority |
 | --- | --- |
 | `.github/golden-path.yaml` | Selected standard, asset bundle, profiles, artifact types, capabilities, and applicability |
+| `.github/golden-path-native-roots.yaml` | Optional repository-owned override for actual native dependency roots when generated component paths are not the native authority |
 | `.github/golden-path-exceptions.yaml` | Approved, scoped, expiring MUST-rule exceptions |
 | Native manifests and locks | Actual toolchain, dependency, build, and package semantics |
 | Bundled rule/runtime catalogs | Exact offline normative snapshot used by a checker release |
@@ -22,6 +23,16 @@ configuration failure.
 
 The metadata schema is
 [`golden-path-metadata/v1`](./schemas/golden-path-metadata-v1.schema.json).
+
+The optional native-root schema is
+[`golden-path-native-roots/v1`](./schemas/golden-path-native-roots-v1.schema.json).
+When the file is absent, the checker retains component-scoped inference for
+generated layouts and repository-root evaluation for legacy aggregate metadata.
+When present, its roots replace those inference paths only for native-root
+scoped rules. The checker MUST reject unknown profiles, aggregate mismatches,
+duplicate root IDs, and overlapping roots that claim the same profile.
+Artifact-type and capability applicability continues to come from generated
+component or aggregate metadata, not from the native-root declaration.
 
 ## Rule semantics
 

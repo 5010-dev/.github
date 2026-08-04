@@ -1,7 +1,7 @@
 # Golden Path exceptions
 
 - Status: Accepted
-- Standard version: `2026.07`
+- Standard version: `2026.08`
 - Schema: [`golden-path-exceptions/v1`](./schemas/golden-path-exceptions-v1.schema.json)
 
 An exception is a repository-local, reviewable, time-bounded waiver for one or
@@ -20,6 +20,12 @@ Every exception MUST include:
 - at least one approval authority, durable reference, and approval date;
 - a risk class; and
 - an expiry date.
+
+A finding evaluated at an explicit native dependency root is identified by its
+native profile and repository-relative finding path. An exception for such a
+finding MUST use profile and/or path scope; artifact-type or capability scope
+does not identify a dependency root because those axes remain component or
+aggregate metadata.
 
 An exception MUST NOT:
 

@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Profile ID: `node-typescript`
-- Standard version: `2026.07`
+- Standard version: `2026.08`
 
 This profile combines a common TypeScript quality contract with artifact-specific
 module, build, workspace, and publishing behavior.
@@ -109,8 +109,11 @@ declaration emit, or typecheck.
   `devEngines.packageManager` constraint MUST accept that same version.
 - pnpm MUST NOT download or select the Node runtime; mise remains the runtime
   owner.
-- A multi-package repository MUST use root `pnpm-workspace.yaml` and one root
-  `pnpm-lock.yaml`.
+- A multi-package Node dependency graph MUST use one pnpm workspace with
+  `pnpm-workspace.yaml` and `pnpm-lock.yaml` at that workspace root.
+- Independent Node dependency graphs MAY retain separate project or workspace
+  roots and locks when they do not use cross-root `workspace:` dependencies and
+  each root independently satisfies exact-manager and frozen-install rules.
 - Internal dependencies MUST use `workspace:`.
 - Repeated third-party versions MAY use the default pnpm catalog. Named catalogs
   are reserved for an intentional compatibility or migration matrix.

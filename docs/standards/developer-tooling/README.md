@@ -1,9 +1,9 @@
 # Developer Tooling Standard
 
 - Status: Accepted
-- Standard version: `2026.07`
+- Standard version: `2026.08`
 - Contract version: `golden-path/v1`
-- Last reviewed: 2026-07-30
+- Last reviewed: 2026-08-04
 
 This standard defines the organization Golden Path for developer tooling,
 repository-local build and quality commands, language and Infrastructure as Code
@@ -25,7 +25,8 @@ The authority order is:
 
 1. this standard and its versioned rule and schema sources;
 2. a released immutable snapshot of this standard consumed by shared tooling;
-3. repository-local Golden Path metadata and approved exceptions;
+3. repository-local Golden Path metadata, explicit native-root declarations,
+   and approved exceptions;
 4. repository-local native manifests, locks, toolchain selectors, commands, and
    caller workflows as the executable As-built authority; and
 5. CI results and optional hosting-platform enforcement as current evidence.
@@ -89,7 +90,7 @@ An applicable repository records at least:
 ```yaml
 schemaVersion: golden-path-metadata/v1
 contractVersion: golden-path/v1
-standardVersion: "2026.07"
+standardVersion: "2026.08"
 assetBundleVersion: "1.0.0"
 profiles:
   - node-typescript
@@ -103,8 +104,26 @@ capabilities:
   - build
 ```
 
+This example shows the current normative contract shape, not the version
+implemented by every released checker. During a bounded publication lag, a
+repository MUST keep the `standardVersion` implemented by the locator-selected
+tooling release and MUST NOT hand-copy a newer value from this example. See
+[version axes](./distribution.md#version-axes) for the ordered publication
+rules.
+
 The schema does not store repository names, teams, current commits, pull
 requests, migration state, or a central conformance registry.
+
+Artifact components describe what a repository builds or releases. Native
+dependency roots describe where ecosystem managers own manifests, locks, and
+locked preparation. A simple repository infers roots from its generated
+components. A repository whose native roots do not match those component paths
+MUST additionally declare
+`.github/golden-path-native-roots.yaml` using
+[`golden-path-native-roots/v1`](./schemas/golden-path-native-roots-v1.schema.json).
+Each entry records only a stable root ID, repository-relative path, and native
+profiles. That file is repository-owned As-built configuration and MUST NOT be
+inserted into or replace whole-file generated metadata.
 
 ## Ownership planes
 

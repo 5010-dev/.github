@@ -25,6 +25,7 @@ required_sources=(
     docs/decisions/0005-adopt-ecs-service-delivery-workflow-envelope.md
     docs/decisions/0006-adopt-developer-tooling-golden-path.md
     docs/decisions/0007-adopt-release-and-versioning-standard.md
+    docs/decisions/0008-separate-artifact-components-from-native-dependency-roots.md
     docs/decisions/README.md
     docs/platform/README.md
     docs/platform/ecs-deployment-contract.md

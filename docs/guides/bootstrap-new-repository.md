@@ -9,23 +9,32 @@ The machine-readable
 [bootstrap locator](./golden-path-bootstrap.v1.json) binds this procedure to an
 exact release, source commit, archive checksums, verifier version, and reusable
 automation commit. It is an operational locator, not a second policy source.
+It separately records the current accepted standard and the standard actually
+implemented by the selected release. When those versions temporarily differ
+during a coordinated publication, bootstrap uses and reports the release's
+implemented version; the newer normative behavior becomes available only
+after the locator selects a matching immutable release.
 
 ## Before generating files
 
 1. Classify the repository using the standard's independent profile, artifact,
    and capability axes. Do not infer policy from an existing repository.
-2. Use `applicability.status: applicable` for a buildable repository. Use
+2. Inventory each selected native profile's operational project or workspace
+   roots separately from artifact components. Plan a repository-owned
+   `.github/golden-path-native-roots.yaml` only when those boundaries differ;
+   do not add artifact types or capabilities to that sidecar.
+3. Use `applicability.status: applicable` for a buildable repository. Use
    `not-applicable` only for the bounded archived, generated-only, asset-only,
    or non-buildable cases allowed by the
    [conformance contract](../standards/developer-tooling/conformance.md#applicability).
-3. Select the latest preferred runtime lines from the
+4. Select the latest preferred runtime lines from the
    [runtime support catalog](../standards/developer-tooling/runtime-support.md)
    unless compatibility requirements justify a supported line.
-4. Identify any required deviation before generation. Exceptions are recorded
+5. Identify any required deviation before generation. Exceptions are recorded
    in `.github/golden-path-exceptions.yaml` and must satisfy the
    [exception contract](../standards/developer-tooling/exceptions.md); a local
    override or disabled check is not an exception.
-5. Confirm the hosting baseline and optional adapters in the
+6. Confirm the hosting baseline and optional adapters in the
    [GitHub capability matrix](./github-hosting-capabilities.md).
 
 ## Obtain the exact implementation
@@ -84,6 +93,11 @@ toolchain files, native manifests and locks, bootstrap script, and caller
 workflow. Inspect these as repository code, set the caller's exact profile
 array, customize only repository-owned behavior, and commit the reviewed files
 through that repository's normal contribution flow.
+
+If the inventoried native roots differ from the generated component paths, add
+the schema-valid native-root sidecar as repository-owned configuration after
+materialization. It is not a generated asset and must not change the generated
+metadata or asset digest.
 
 ## Enable repository-local validation
 

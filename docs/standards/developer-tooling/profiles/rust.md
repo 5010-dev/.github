@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Profile ID: `rust`
-- Standard version: `2026.07`
+- Standard version: `2026.08`
 
 rustup and Cargo are the Rust operational owners. mise prepares Just and
 external support CLIs but MUST NOT repin Rust or Cargo dependencies.
