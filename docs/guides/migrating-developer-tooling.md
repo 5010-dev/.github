@@ -26,7 +26,10 @@ standard does not name a repository as the implementation to copy.
 Inspect:
 
 - runtime selectors and installer ownership;
-- native manifests, locks, workspace files, and generated dependency records;
+- artifact component boundaries separately from native project and workspace
+  roots;
+- native manifests, locks, workspace files, and generated dependency records,
+  including independent graphs for the same profile;
 - root and CI commands;
 - format, lint, typecheck, test, build, package, publish, and release paths;
 - IaC static and stateful workflows;
@@ -56,18 +59,26 @@ conditional controls.
 
 A useful default order is:
 
-1. metadata that truthfully describes the current target;
-2. one toolchain owner and exact supported versions;
-3. native manifests, locks, and frozen preparation;
-4. root Just commands over existing real checks;
-5. profile quality and artifact gates;
-6. shared asset materialization and immutable references;
-7. dependency, vulnerability, cache, supply-chain, and platform controls; and
-8. removal of superseded selectors, locks, scripts, and temporary exceptions.
+1. generated metadata that truthfully describes the policy target;
+2. a repository-owned `.github/golden-path-native-roots.yaml` only when actual
+   dependency roots differ from generated component paths;
+3. one toolchain owner and exact supported versions;
+4. native manifests, locks, and frozen preparation;
+5. root Just commands over existing real checks;
+6. profile quality and artifact gates;
+7. shared asset materialization and immutable references;
+8. dependency, vulnerability, cache, supply-chain, and platform controls; and
+9. removal of superseded selectors, locks, scripts, and temporary exceptions.
 
 Repository constraints may require a different order. A toolchain or lock
 migration should not be mixed with unrelated behavior changes when separation
 improves review and rollback.
+
+The native-root sidecar records only stable IDs, repository-relative paths,
+and native profiles. Profiles with disjoint dependency authority MAY share a
+path, while independent roots for one profile remain separate. Preserve
+whole-file generated metadata and its asset digest; repository-specific root
+layout belongs in the sidecar rather than a custom metadata extension.
 
 ## 4. Preserve operational authority
 

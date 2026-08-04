@@ -70,6 +70,13 @@ roots. Each toolchain and dependency graph retains one operational owner. Root
 Just commands orchestrate the selected profiles without copying native
 semantics into the central standard.
 
+Artifact components and native dependency roots are separate axes. A simple
+generated layout MAY infer one root per component. A layout with shared
+workspaces, cross-language artifacts, or several independent roots for one
+profile MUST declare its actual roots through
+`.github/golden-path-native-roots.yaml`. Sharing a Git repository does not by
+itself require unrelated native dependency graphs to merge.
+
 Profile conflicts are configuration errors. A combined repository MUST NOT make
 one ecosystem's lockfile, runtime installer, or formatter authoritative over an
 unrelated ecosystem.

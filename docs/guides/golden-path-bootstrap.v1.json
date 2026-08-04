@@ -2,14 +2,15 @@
   "schemaVersion": "golden-path-bootstrap/v1",
   "baseline": "github-free-private",
   "standard": {
-    "version": "2026.07",
+    "version": "2026.08",
     "contractVersion": "golden-path/v1",
     "repository": "https://github.com/5010-dev/.github",
     "snapshotPath": "docs/standards/developer-tooling",
     "entrypoint": "docs/standards/developer-tooling/README.md",
     "ruleCatalog": "docs/standards/developer-tooling/rules/catalog.v1.json",
-    "catalogDigest": "sha256:c2ec366495c5f2aa124a886152aadd1f4f0d1b7dcb34beb674c9dfa0db4b86ac",
+    "catalogDigest": "sha256:6e8f0d979f55974dc693f21b0d559ec42cf67aaf48d09d9c8be46fb33fa30f9b",
     "metadataSchema": "docs/standards/developer-tooling/schemas/golden-path-metadata-v1.schema.json",
+    "nativeRootsSchema": "docs/standards/developer-tooling/schemas/golden-path-native-roots-v1.schema.json",
     "exceptionSchema": "docs/standards/developer-tooling/schemas/golden-path-exceptions-v1.schema.json"
   },
   "implementation": {
@@ -18,6 +19,9 @@
     "release": {
       "version": "1.0.1",
       "tag": "v1.0.1",
+      "standardVersion": "2026.07",
+      "contractVersion": "golden-path/v1",
+      "catalogDigest": "sha256:c2ec366495c5f2aa124a886152aadd1f4f0d1b7dcb34beb674c9dfa0db4b86ac",
       "sourceCommit": "46e9175e2f97b192ef61a5a0320a396f87b9e5ca",
       "snapshotAggregateDigest": "sha256:e62a016975a65b0e085c999891032400ea6e8b0dd8ef25f64cef978191319e52",
       "url": "https://github.com/5010-dev/engineering-tooling/releases/tag/v1.0.1",

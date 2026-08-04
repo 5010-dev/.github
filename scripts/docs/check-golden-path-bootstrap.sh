@@ -197,6 +197,9 @@ result = read_json(result_path)
 
 implementation = locator["implementation"]
 expected_release = implementation["release"]
+expected_standard_version = expected_release["standardVersion"]
+expected_contract_version = expected_release["contractVersion"]
+expected_catalog_digest = expected_release["catalogDigest"]
 expected_source = {
     "repository": implementation["repository"],
     "commit": expected_release["sourceCommit"],
@@ -207,10 +210,10 @@ require(release["schemaVersion"] == "golden-path-release-manifest/v2", "release 
 require(release["releaseVersion"] == expected_release["version"], "release version")
 require(release["lifecycle"] == "stable", "release lifecycle")
 require(release["enforcement"] == ["report-only"], "release enforcement")
-require(release["standardVersion"] == locator["standard"]["version"], "standard version")
-require(release["contractVersion"] == locator["standard"]["contractVersion"], "contract version")
+require(release["standardVersion"] == expected_standard_version, "standard version")
+require(release["contractVersion"] == expected_contract_version, "contract version")
 require(release["source"] == expected_source, "release source identity")
-require(release["catalogDigest"] == locator["standard"]["catalogDigest"], "release catalog digest")
+require(release["catalogDigest"] == expected_catalog_digest, "release catalog digest")
 standard_snapshot = release["standardSnapshot"]
 require(standard_snapshot["file"] == {
     "name": expected_release["snapshotManifest"]["name"],
@@ -254,7 +257,7 @@ require(release["components"]["automation"]["version"] == expected_release["vers
 require(preview == written == read_json(candidate / "golden-path-plan.json"), "deterministic plans")
 require(preview["schemaVersion"] == "golden-path-materialization-plan/v1", "plan schema")
 require(preview["operation"] == "generate", "plan operation")
-require(preview["standardVersion"] == locator["standard"]["version"], "plan standard version")
+require(preview["standardVersion"] == expected_standard_version, "plan standard version")
 require(preview["releaseVersion"] == expected_release["version"], "plan release version")
 require(preview["assetBundleVersion"] == expected_release["version"], "plan asset bundle version")
 require(preview["conflictCount"] == 0, "plan conflicts")
@@ -262,7 +265,7 @@ require(preview["changes"] and all(change["status"] == "create" for change in pr
 
 assets = read_json(candidate / ".github/golden-path-assets.json")
 require(assets["schemaVersion"] == "golden-path-generated-assets/v1", "generated assets schema")
-require(assets["standardVersion"] == locator["standard"]["version"], "generated standard version")
+require(assets["standardVersion"] == expected_standard_version, "generated standard version")
 require(assets["releaseVersion"] == expected_release["version"], "generated release version")
 require(assets["assetBundleVersion"] == expected_release["version"], "generated asset bundle version")
 require(assets["source"] == expected_source, "generated source identity")
@@ -290,10 +293,10 @@ for forbidden in ("@main", "@dev", "@latest", "secrets: inherit", "environment:"
     require(forbidden not in workflow, f"generated workflow forbidden text {forbidden}")
 
 require(result["schemaVersion"] == "golden-path-checker-output/v1", "checker output schema")
-require(result["contractVersion"] == locator["standard"]["contractVersion"], "checker contract version")
-require(result["standardVersion"] == locator["standard"]["version"], "checker standard version")
+require(result["contractVersion"] == expected_contract_version, "checker contract version")
+require(result["standardVersion"] == expected_standard_version, "checker standard version")
 require(result["checkerVersion"] == expected_release["version"], "checker version")
-require(result["catalogDigest"] == locator["standard"]["catalogDigest"], "checker catalog digest")
+require(result["catalogDigest"] == expected_catalog_digest, "checker catalog digest")
 require(result["profiles"] == ["documentation"], "checker profiles")
 require(result["enforcement"] == "report-only", "checker enforcement")
 require(result["exitCode"] == 0, "checker exit code")

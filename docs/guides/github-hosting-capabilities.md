@@ -1,7 +1,7 @@
 # GitHub hosting capability profile
 
 - Baseline: GitHub Free organization with private repositories
-- Standard: `2026.07`
+- Standard: `2026.08`
 - Verified: 2026-08-01
 - Status: Informative platform capability mapping
 

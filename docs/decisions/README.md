@@ -14,6 +14,7 @@ index.
 | [ADR-0005](./0005-adopt-ecs-service-delivery-workflow-envelope.md)     | Accepted               | Adopt an ECS service delivery workflow envelope               |
 | [ADR-0006](./0006-adopt-developer-tooling-golden-path.md)              | Accepted               | Adopt the organization Developer Tooling Golden Path          |
 | [ADR-0007](./0007-adopt-release-and-versioning-standard.md)             | Accepted               | Adopt the organization Release and Versioning Standard        |
+| [ADR-0008](./0008-separate-artifact-components-from-native-dependency-roots.md) | Accepted | Separate artifact components from native dependency roots |
 
 Organization standards and platform contracts hold the current normative view.
 ADRs explain why those views were accepted.

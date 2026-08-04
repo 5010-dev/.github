@@ -1,7 +1,7 @@
 # Dependency management
 
 - Status: Accepted
-- Standard version: `2026.07`
+- Standard version: `2026.08`
 
 Each ecosystem's native manager owns dependency resolution. mise owns selected
 runtime and support-tool bootstrap; Just exposes stable commands. Neither
@@ -27,6 +27,24 @@ For each ecosystem build root:
   package-manager configuration; and
 - native workspace and lock boundaries MUST be preserved.
 
+A native dependency root is an ecosystem manager's operational project or
+workspace boundary, not necessarily the Git repository root or an artifact
+component path. Several artifacts MAY share one native root, and one artifact
+MAY participate in more than one ecosystem root. Roots for disjoint profiles
+MAY use the same repository-relative path. Two roots for the same profile MUST
+NOT overlap because that would create competing authority for one dependency
+graph.
+
+A repository whose native roots differ from its generated component paths MUST
+declare `.github/golden-path-native-roots.yaml`. Each declared root selects the
+native profiles evaluated at that path, and each selected profile MUST also
+appear in the aggregate declaration in `.github/golden-path.yaml`. Every
+selected native profile MUST be covered by at least one root. Artifact types
+and capabilities remain component or aggregate metadata; they MUST NOT be
+duplicated onto dependency roots. The native-root file is repository-owned and
+MUST preserve the generated ownership and digest of
+`.github/golden-path.yaml`.
+
 Dependency groups SHOULD separate runtime, development, test, and optional
 surfaces. Caches MAY accelerate installation, but cache hits MUST NOT be
 correctness requirements.
@@ -51,11 +69,13 @@ against, its native manifest and resolution record.
 ## Node.js and TypeScript
 
 - pnpm is the only default package manager.
-- Root `package.json` MUST declare exact `packageManager: pnpm@x.y.z`.
+- Each Node.js project or workspace root `package.json` MUST declare exact
+  `packageManager: pnpm@x.y.z`.
 - pnpm MUST NOT be independently versioned in mise.
 - `pnpm-lock.yaml` MUST be committed and CI MUST explicitly use
   `--frozen-lockfile`.
-- A workspace MUST use root `pnpm-workspace.yaml`, one root lock, and
+- A pnpm workspace MUST use its root `pnpm-workspace.yaml`, one workspace-root
+  lock, and
   `workspace:` for internal packages.
 - pnpm 11 project settings belong in `pnpm-workspace.yaml`.
 - Install scripts MUST be approved through `allowBuilds`;

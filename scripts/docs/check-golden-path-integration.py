@@ -20,6 +20,8 @@ SHA256 = re.compile(r"^[a-f0-9]{64}$")
 DIGEST = re.compile(r"^sha256:[a-f0-9]{64}$")
 COMMIT = re.compile(r"^[a-f0-9]{40}$")
 SEMVER = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
+CALVER = re.compile(r"^(?P<year>[0-9]{4})\.(?P<month>0[1-9]|1[0-2])(?:\.(?P<ordinal>[1-9][0-9]*))?$")
+CONTRACT = re.compile(r"^golden-path/v[1-9][0-9]*$")
 PROFILE_PLACEHOLDER = "REPLACE_WITH_EXACT_PROFILES"
 
 
@@ -64,6 +66,17 @@ def require_text(value: Any, name: str) -> str:
     return value
 
 
+def calver_key(value: str, name: str) -> tuple[int, int, int]:
+    match = CALVER.fullmatch(require_text(value, name))
+    if match is None:
+        raise ValidationError(f"{name} must be a stable YYYY.MM[.N] CalVer")
+    return (
+        int(match.group("year")),
+        int(match.group("month")),
+        int(match.group("ordinal") or "0"),
+    )
+
+
 def local_file(locator: str, name: str) -> Path:
     relative = Path(require_text(locator, name))
     if relative.is_absolute() or ".." in relative.parts:
@@ -101,6 +114,7 @@ def validate_locator() -> dict[str, Any]:
             "ruleCatalog",
             "catalogDigest",
             "metadataSchema",
+            "nativeRootsSchema",
             "exceptionSchema",
         },
     )
@@ -114,12 +128,14 @@ def validate_locator() -> dict[str, Any]:
         raise ValidationError("bootstrap snapshot path differs from the canonical standard directory")
     rule_catalog = local_file(standard["ruleCatalog"], "standard.ruleCatalog")
     local_file(standard["metadataSchema"], "standard.metadataSchema")
+    local_file(standard["nativeRootsSchema"], "standard.nativeRootsSchema")
     local_file(standard["exceptionSchema"], "standard.exceptionSchema")
     standard_source = entrypoint.read_text()
     version_match = re.search(r"^- Standard version: `([^`]+)`$", standard_source, re.MULTILINE)
     contract_match = re.search(r"^- Contract version: `([^`]+)`$", standard_source, re.MULTILINE)
     if not version_match or version_match.group(1) != standard["version"]:
         raise ValidationError("bootstrap standard version differs from the canonical entrypoint")
+    current_standard_key = calver_key(standard["version"], "standard.version")
     if not contract_match or contract_match.group(1) != standard["contractVersion"]:
         raise ValidationError("bootstrap contract version differs from the canonical entrypoint")
     actual_catalog_digest = f"sha256:{hashlib.sha256(rule_catalog.read_bytes()).hexdigest()}"
@@ -139,6 +155,9 @@ def validate_locator() -> dict[str, Any]:
         {
             "version",
             "tag",
+            "standardVersion",
+            "contractVersion",
+            "catalogDigest",
             "sourceCommit",
             "snapshotAggregateDigest",
             "url",
@@ -148,6 +167,19 @@ def validate_locator() -> dict[str, Any]:
         },
     )
     version = require_text(release["version"], "release.version")
+    release_standard_key = calver_key(
+        release["standardVersion"], "release.standardVersion"
+    )
+    if release_standard_key > current_standard_key:
+        raise ValidationError("release standardVersion is newer than the current standard")
+    if not CONTRACT.fullmatch(
+        require_text(release["contractVersion"], "release.contractVersion")
+    ):
+        raise ValidationError("release contractVersion is invalid")
+    if not DIGEST.fullmatch(
+        require_text(release["catalogDigest"], "release.catalogDigest")
+    ):
+        raise ValidationError("release catalogDigest is invalid")
     commit = require_text(release["sourceCommit"], "release.sourceCommit")
     if not SEMVER.fullmatch(version) or release["tag"] != f"v{version}":
         raise ValidationError("release version and tag are not an exact stable SemVer pair")
@@ -370,11 +402,24 @@ def validate_standard_snapshot(
     )
     standard = locator["standard"]
     release = locator["implementation"]["release"]
+    expected_release_source = {
+        "repository": locator["implementation"]["repository"],
+        "commit": release["sourceCommit"],
+        "tag": release["tag"],
+    }
+    if release_manifest.get("standardVersion") != release["standardVersion"]:
+        raise ValidationError("release manifest standard version differs")
+    if release_manifest.get("contractVersion") != release["contractVersion"]:
+        raise ValidationError("release manifest contract version differs")
+    if release_manifest.get("catalogDigest") != release["catalogDigest"]:
+        raise ValidationError("release manifest catalog digest differs")
+    if release_manifest.get("source") != expected_release_source:
+        raise ValidationError("release manifest source identity differs")
     if snapshot["schemaVersion"] != "golden-path-standard-snapshot/v1":
         raise ValidationError("standard snapshot manifest schemaVersion differs")
-    if snapshot["standardVersion"] != standard["version"]:
+    if snapshot["standardVersion"] != release["standardVersion"]:
         raise ValidationError("standard snapshot manifest version differs")
-    if snapshot["contractVersion"] != standard["contractVersion"]:
+    if snapshot["contractVersion"] != release["contractVersion"]:
         raise ValidationError("standard snapshot manifest contract differs")
     source = require_object(
         snapshot["source"],
@@ -397,7 +442,7 @@ def validate_standard_snapshot(
         raise ValidationError("standard snapshot aggregate algorithm differs")
     expected_aggregate_definition = (
         "SHA-256 of UTF-8 lines sorted by snapshot-relative path, each formatted as "
-        f"<file-sha256>  standards/snapshots/{standard['version']}/"
+        f"<file-sha256>  standards/snapshots/{release['standardVersion']}/"
         "<snapshot-relative-path>\\n, "
         "excluding manifest.json"
     )
@@ -408,10 +453,15 @@ def validate_standard_snapshot(
         raise ValidationError("standard snapshot aggregate digest is invalid")
     if f"sha256:{aggregate_digest}" != release["snapshotAggregateDigest"]:
         raise ValidationError("standard snapshot aggregate differs from the release locator")
+    if release_snapshot["aggregateDigest"] != release["snapshotAggregateDigest"]:
+        raise ValidationError("release manifest standard snapshot aggregate differs")
 
     declared_files = snapshot["files"]
     if not isinstance(declared_files, dict) or not declared_files:
         raise ValidationError("standard snapshot file inventory is empty")
+    if release["standardVersion"] != standard["version"]:
+        return
+
     snapshot_root = (ROOT / standard["snapshotPath"]).resolve()
     actual_machine_files = {
         path.relative_to(snapshot_root).as_posix()
@@ -439,7 +489,7 @@ def validate_standard_snapshot(
         if actual_digest != expected_digest:
             raise ValidationError(f"standard snapshot file digest differs: {relative}")
         aggregate_lines.append(
-            f"{actual_digest}  standards/snapshots/{standard['version']}/{relative}\n"
+            f"{actual_digest}  standards/snapshots/{release['standardVersion']}/{relative}\n"
         )
     actual_aggregate = hashlib.sha256("".join(aggregate_lines).encode()).hexdigest()
     if actual_aggregate != aggregate_digest:
@@ -468,6 +518,7 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
         "golden-path-bootstrap.v1.json",
         "golden-path-quality.yml",
         "golden-path-exceptions.yaml",
+        "golden-path-native-roots.yaml",
         "GitHub capability matrix",
         "exact GitHub CLI version",
         "exact release version declared by",

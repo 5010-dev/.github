@@ -16,10 +16,11 @@ from urllib.parse import urlparse
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STANDARD_ROOT = REPO_ROOT / "docs/standards/developer-tooling"
-STANDARD_VERSION = "2026.07"
+STANDARD_VERSION = "2026.08"
 CONTRACT_VERSION = "golden-path/v1"
 EXPECTED_DECISIONS = {f"GP-{number:03d}" for number in range(6, 21)}
 FULL_DATE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+CALVER = re.compile(r"^(?P<year>[0-9]{4})\.(?P<month>0[1-9]|1[0-2])(?:\.(?P<ordinal>[1-9][0-9]*))?$")
 
 REQUIRED_PATHS = [
     "docs/standards/developer-tooling/README.md",
@@ -44,16 +45,20 @@ REQUIRED_PATHS = [
     "docs/standards/developer-tooling/rules/runtime-support.v1.json",
     "docs/standards/developer-tooling/schemas/README.md",
     "docs/standards/developer-tooling/schemas/golden-path-metadata-v1.schema.json",
+    "docs/standards/developer-tooling/schemas/golden-path-native-roots-v1.schema.json",
     "docs/standards/developer-tooling/schemas/golden-path-exceptions-v1.schema.json",
     "docs/standards/developer-tooling/schemas/golden-path-checker-output-v1.schema.json",
     "docs/standards/developer-tooling/schemas/golden-path-rule-catalog-v1.schema.json",
     "docs/standards/developer-tooling/schemas/runtime-support-v1.schema.json",
     "docs/standards/developer-tooling/schemas/examples/golden-path-metadata-v1.valid.json",
+    "docs/standards/developer-tooling/schemas/examples/golden-path-native-roots-v1.valid.json",
     "docs/standards/developer-tooling/schemas/examples/golden-path-exceptions-v1.valid.json",
     "docs/standards/developer-tooling/schemas/examples/golden-path-checker-output-v1.valid.json",
     "docs/guides/adopting-developer-tooling.md",
     "docs/guides/migrating-developer-tooling.md",
+    "docs/guides/github-hosting-capabilities.md",
     "docs/decisions/0006-adopt-developer-tooling-golden-path.md",
+    "docs/decisions/0008-separate-artifact-components-from-native-dependency-roots.md",
 ]
 
 KNOWN_PROFILE_IDS = {
@@ -107,6 +112,19 @@ errors: list[str] = []
 
 def report(message: str) -> None:
     errors.append(message)
+
+
+def calver_key(value: Any) -> tuple[int, int, int] | None:
+    if not isinstance(value, str):
+        return None
+    match = CALVER.fullmatch(value)
+    if match is None:
+        return None
+    return (
+        int(match.group("year")),
+        int(match.group("month")),
+        int(match.group("ordinal") or "0"),
+    )
 
 
 def reject_duplicate_json_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -458,6 +476,7 @@ def validate_schema_sources() -> None:
     seen_ids: set[str] = set()
     expected_versions = {
         "golden-path-metadata-v1.schema.json": "golden-path-metadata/v1",
+        "golden-path-native-roots-v1.schema.json": "golden-path-native-roots/v1",
         "golden-path-exceptions-v1.schema.json": "golden-path-exceptions/v1",
         "golden-path-checker-output-v1.schema.json": "golden-path-checker-output/v1",
         "golden-path-rule-catalog-v1.schema.json": "golden-path-rule-catalog/v1",
@@ -500,6 +519,11 @@ def validate_contract_instances() -> None:
             STANDARD_ROOT
             / "schemas/examples/golden-path-metadata-v1.valid.json",
             STANDARD_ROOT / "schemas/golden-path-metadata-v1.schema.json",
+        ),
+        (
+            STANDARD_ROOT
+            / "schemas/examples/golden-path-native-roots-v1.valid.json",
+            STANDARD_ROOT / "schemas/golden-path-native-roots-v1.schema.json",
         ),
         (
             STANDARD_ROOT
@@ -546,6 +570,25 @@ def validate_schema_validator_self_tests() -> None:
         invalid_metadata,
         STANDARD_ROOT / "schemas/golden-path-metadata-v1.schema.json",
         "metadata profile",
+    )
+
+    native_roots = load_json(
+        STANDARD_ROOT
+        / "schemas/examples/golden-path-native-roots-v1.valid.json"
+    )
+    invalid_native_roots = copy.deepcopy(native_roots)
+    invalid_native_roots["roots"][0]["profiles"] = ["documentation"]
+    require_schema_rejection(
+        invalid_native_roots,
+        STANDARD_ROOT / "schemas/golden-path-native-roots-v1.schema.json",
+        "native-root profile",
+    )
+    conflated_native_roots = copy.deepcopy(native_roots)
+    conflated_native_roots["roots"][0]["artifactTypes"] = ["library"]
+    require_schema_rejection(
+        conflated_native_roots,
+        STANDARD_ROOT / "schemas/golden-path-native-roots-v1.schema.json",
+        "artifact classification in a native-root declaration",
     )
 
     exceptions = load_json(
@@ -644,6 +687,19 @@ def validate_metadata_enum_alignment() -> None:
                     f"{path.relative_to(REPO_ROOT)}: {definition} enum and "
                     "validator constants have drifted"
                 )
+
+    native_path = STANDARD_ROOT / "schemas/golden-path-native-roots-v1.schema.json"
+    native_schema = load_json(native_path)
+    if native_schema is not None:
+        native_values = set(
+            native_schema.get("$defs", {}).get("nativeProfile", {}).get("enum", [])
+        )
+        expected_native = KNOWN_PROFILE_IDS - {"documentation"}
+        if native_values != expected_native:
+            report(
+                f"{native_path.relative_to(REPO_ROOT)}: nativeProfile enum and "
+                "validator constants have drifted"
+            )
 
 
 def validate_metadata_example() -> None:
@@ -973,10 +1029,12 @@ def validate_rule_catalog() -> None:
             report(f"{item_context}.waivable: expected a boolean")
         if not isinstance(rule["highRisk"], bool):
             report(f"{item_context}.highRisk: expected a boolean")
-        if rule["introducedIn"] != STANDARD_VERSION:
+        introduced = calver_key(rule["introducedIn"])
+        current_standard = calver_key(STANDARD_VERSION)
+        if introduced is None or current_standard is None or introduced > current_standard:
             report(
-                f"{item_context}.introducedIn: initial catalog must use "
-                f"{STANDARD_VERSION}"
+                f"{item_context}.introducedIn: must be a valid standard release "
+                f"no later than {STANDARD_VERSION}"
             )
 
         source = rule["source"]
@@ -1167,7 +1225,9 @@ def validate_runtime_catalog() -> None:
     if python_selectors.get("3.11", {}).get(
         "organizationDisposition"
     ) != "supported":
-        report(f"{context}: Python 3.11 must remain supported in 2026.07")
+        report(
+            f"{context}: Python 3.11 must remain supported in {STANDARD_VERSION}"
+        )
     if python_selectors.get("3.10", {}).get("supportEndsAt") != "2026-10-31":
         report(
             f"{context}: Python 3.10 compatibility window must end 2026-10-31"
@@ -1237,6 +1297,8 @@ def validate_traceability_and_scope() -> None:
             REPO_ROOT / "docs/guides/migrating-developer-tooling.md",
             REPO_ROOT
             / "docs/decisions/0006-adopt-developer-tooling-golden-path.md",
+            REPO_ROOT
+            / "docs/decisions/0008-separate-artifact-components-from-native-dependency-roots.md",
         ]
     )
     for path in sorted(set(scope_paths)):
@@ -1247,6 +1309,38 @@ def validate_traceability_and_scope() -> None:
                     f"{path.relative_to(REPO_ROOT)}: central standard contains "
                     f"a repository-coupled {label}"
                 )
+
+
+def validate_adoption_guides() -> None:
+    capability_path = REPO_ROOT / "docs/guides/github-hosting-capabilities.md"
+    capability = capability_path.read_text(encoding="utf-8")
+    if not re.search(
+        rf"^- Standard: `{re.escape(STANDARD_VERSION)}`$",
+        capability,
+        re.MULTILINE,
+    ):
+        report(
+            f"{capability_path.relative_to(REPO_ROOT)}: standard version must be "
+            f"{STANDARD_VERSION}"
+        )
+
+    required_boundaries = {
+        "docs/guides/adopting-developer-tooling.md": (
+            ".github/golden-path-native-roots.yaml",
+            "Do not copy artifact types or capabilities",
+            "do not edit generated `.github/golden-path.yaml`",
+        ),
+        "docs/guides/migrating-developer-tooling.md": (
+            ".github/golden-path-native-roots.yaml",
+            "whole-file generated metadata",
+            "independent roots for one profile",
+        ),
+    }
+    for relative, phrases in required_boundaries.items():
+        source = (REPO_ROOT / relative).read_text(encoding="utf-8")
+        for phrase in phrases:
+            if phrase not in source:
+                report(f"{relative}: missing native-root adoption boundary {phrase!r}")
 
 
 def main() -> int:
@@ -1274,6 +1368,7 @@ def main() -> int:
     validate_rule_catalog()
     validate_runtime_catalog()
     validate_traceability_and_scope()
+    validate_adoption_guides()
 
     if errors:
         for error in errors:

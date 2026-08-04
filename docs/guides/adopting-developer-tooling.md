@@ -38,6 +38,18 @@ Record the exact standard, contract, and stable asset bundle versions.
 Metadata describes applicable policy. It does not store repository names,
 teams, current commits, pull requests, rollout status, or product version.
 
+Separately inventory the operational project or workspace root for every
+selected native profile. When those roots match generated artifact component
+paths, keep the inferred compact model. When workspaces are shared across
+artifacts, different profiles share one directory, or one profile has several
+independent dependency graphs, create
+`.github/golden-path-native-roots.yaml` from the
+[native-root schema](../standards/developer-tooling/schemas/golden-path-native-roots-v1.schema.json).
+Each entry records only a stable ID, repository-relative path, and native
+profiles. Do not copy artifact types or capabilities into the root declaration,
+and do not edit generated `.github/golden-path.yaml` to describe As-built root
+layout.
+
 ## 3. Establish the toolchain and dependencies
 
 Apply the common contracts before profile details:

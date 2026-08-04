@@ -1,7 +1,7 @@
 # Golden Path distribution and versioning
 
 - Status: Accepted
-- Standard version: `2026.07`
+- Standard version: `2026.08`
 - Contract version: `golden-path/v1`
 
 Golden Path assets use different distribution modes according to ownership,
@@ -163,6 +163,25 @@ Asset-bundle and executable SemVer communicates compatibility:
 | Backward-compatible rule, profile, or optional field | New CalVer release | Same major and `extensions` boundary | Minor when behavior/assets are added |
 | Compatible implementation repair | Same normative source or new correction release | Same major | Patch |
 | Removed/changed required field, rule meaning, or consumer command | New CalVer release | New compatibility major | Major with migration guide |
+
+Normative publication and shared-implementation publication are separate,
+ordered events. The bootstrap locator records both the current accepted
+standard and the exact standard, contract, and catalog implemented by its
+selected tooling release. A newly accepted compatible standard MAY therefore
+be newer than the selected tooling release for a bounded publication window.
+During that window:
+
+- the tooling release and generated repositories MUST report the implemented
+  standard version, never the newer normative version;
+- the locator MUST continue to verify the older immutable snapshot and release
+  evidence using the implemented version's identifiers;
+- bootstrap MUST use only behavior implemented by that selected release; and
+- the locator MUST be updated to a matching release before the new standard's
+  executable behavior is presented as available.
+
+An implementation version MUST NOT be newer than the current accepted
+standard. Version separation is a release-train state, not permission for the
+implementation to reinterpret or weaken either snapshot.
 
 ## Standard lifecycle
 
