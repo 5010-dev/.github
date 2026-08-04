@@ -21,6 +21,7 @@
       "tag": "v1.1.0",
       "standardVersion": "2026.08",
       "contractVersion": "golden-path/v1",
+      "explicitMaterializationModes": [],
       "catalogDigest": "sha256:6e8f0d979f55974dc693f21b0d559ec42cf67aaf48d09d9c8be46fb33fa30f9b",
       "sourceCommit": "cebac127c71406e7818237fcd83ad39fe7a472bc",
       "snapshotAggregateDigest": "sha256:2ccb04cf3c5a9345f632b42be16bd75d8f4c5e1439210b140b57037cf6dc6a17",
@@ -77,6 +78,7 @@
     "workflowTemplate": "workflow-templates/golden-path-quality.yml",
     "workflowTemplateProperties": "workflow-templates/golden-path-quality.properties.json",
     "dryRunFixture": "scripts/docs/fixtures/golden-path-bootstrap/documentation.yaml",
+    "adoptionFixture": "scripts/docs/fixtures/golden-path-adoption/existing-service.v1.json",
     "hostingAdapterSchema": "docs/guides/schemas/golden-path-hosting-adapter-selection-v1.schema.json",
     "hostingAdapterExample": "docs/guides/schemas/examples/golden-path-hosting-adapter-selection-v1.valid.json"
   }

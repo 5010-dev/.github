@@ -57,6 +57,7 @@ REQUIRED_PATHS = [
     "docs/guides/adopting-developer-tooling.md",
     "docs/guides/migrating-developer-tooling.md",
     "docs/guides/github-hosting-capabilities.md",
+    "scripts/docs/fixtures/golden-path-adoption/existing-service.v1.json",
     "docs/decisions/0006-adopt-developer-tooling-golden-path.md",
     "docs/decisions/0008-separate-artifact-components-from-native-dependency-roots.md",
 ]
@@ -1329,11 +1330,14 @@ def validate_adoption_guides() -> None:
             ".github/golden-path-native-roots.yaml",
             "Do not copy artifact types or capabilities",
             "do not edit generated `.github/golden-path.yaml`",
+            "`adoption` creates the first Golden Path control-plane baseline",
         ),
         "docs/guides/migrating-developer-tooling.md": (
             ".github/golden-path-native-roots.yaml",
             "whole-file generated metadata",
             "independent roots for one profile",
+            "materializationMode: adoption",
+            "customized retired assets must conflict",
         ),
     }
     for relative, phrases in required_boundaries.items():

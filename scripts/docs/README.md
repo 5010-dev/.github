@@ -63,6 +63,14 @@ coverage, and governance-workflow wiring without network access:
 python3 scripts/docs/check-golden-path-integration.py
 ```
 
+The same local check validates the existing-repository adoption fixture and the
+documented `bootstrap` / first `adoption` / later `upgrade` boundary. The
+released end-to-end exercise remains bound to the immutable release selected by
+the locator. A release with no declared explicit materialization mode skips the
+adoption execution; once the locator declares `adoption`, the same gate must
+preview and materialize the fixture with that pinned release and verify its
+exact five-file managed asset boundary.
+
 The path-scoped
 [Golden Path bootstrap workflow](../../.github/workflows/golden-path-bootstrap.yml)
 additionally installs the exact, checksum- and provenance-verified Golden Path

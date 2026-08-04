@@ -36,6 +36,8 @@ values = [
     implementation["repositorySlug"],
     implementation["verifier"]["githubCliVersion"],
     implementation["verifier"]["signerWorkflow"],
+    "true" if "adoption" in release["explicitMaterializationModes"] else "false",
+    locator["discovery"]["adoptionFixture"],
 ]
 for value in values:
     if not isinstance(value, str) or not value or "\n" in value:
@@ -44,7 +46,7 @@ for value in values:
 PY
 )
 
-if [[ "${#locator_values[@]}" -ne 10 ]]; then
+if [[ "${#locator_values[@]}" -ne 12 ]]; then
     echo "error: bootstrap locator did not produce the expected release identity" >&2
     exit 2
 fi
@@ -59,6 +61,18 @@ snapshot_manifest_sha256="${locator_values[6]}"
 repository_slug="${locator_values[7]}"
 github_cli_version="${locator_values[8]}"
 signer_workflow="${locator_values[9]}"
+supports_adoption="${locator_values[10]}"
+adoption_fixture_path="${locator_values[11]}"
+adoption_fixture="$repo_root/$adoption_fixture_path"
+
+if [[ "$supports_adoption" != "true" && "$supports_adoption" != "false" ]]; then
+    echo "error: bootstrap locator returned an invalid adoption-support flag" >&2
+    exit 2
+fi
+if [[ ! -f "$adoption_fixture" ]]; then
+    echo "error: bootstrap locator adoption fixture is missing" >&2
+    exit 2
+fi
 
 temp_parent="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
 test_root="$(mktemp -d "$temp_parent/5010-golden-path-bootstrap.XXXXXX")"
@@ -158,6 +172,113 @@ placeholder_status=0
 if [[ "$placeholder_status" -ne 2 ]]; then
     echo "error: workflow-template profile sentinel did not fail with a usage error" >&2
     exit 1
+fi
+
+if [[ "$supports_adoption" == "true" ]]; then
+    adoption_preview_plan="$test_root/adoption-preview-plan.json"
+    adoption_write_plan="$test_root/adoption-write-plan.json"
+    adoption_candidate="$test_root/adoption-candidate"
+
+    "$binary" generate \
+        --request "$adoption_fixture" \
+        --release-manifest "$release_manifest" \
+        >"$adoption_preview_plan"
+
+    "$binary" generate \
+        --request "$adoption_fixture" \
+        --release-manifest "$release_manifest" \
+        --write \
+        --output "$adoption_candidate" \
+        >"$adoption_write_plan"
+
+    test "$(GOLDEN_PATH_BIN="$binary" "$adoption_candidate/scripts/golden-path" --version)" = "golden-path $release_version"
+
+    python3 - \
+        "$adoption_fixture" \
+        "$adoption_preview_plan" \
+        "$adoption_write_plan" \
+        "$adoption_candidate" \
+        "$release_version" <<'PY'
+import json
+import pathlib
+import stat
+import sys
+
+(
+    fixture_path,
+    preview_path,
+    write_path,
+    candidate_path,
+) = map(pathlib.Path, sys.argv[1:5])
+release_version = sys.argv[5]
+
+def read_json(path):
+    with path.open(encoding="utf-8") as source:
+        return json.load(source)
+
+def require(condition, message):
+    if not condition:
+        raise SystemExit(f"released adoption validation failed: {message}")
+
+fixture = read_json(fixture_path)
+preview = read_json(preview_path)
+written = read_json(write_path)
+candidate = candidate_path.resolve()
+plan = read_json(candidate / "golden-path-plan.json")
+request = read_json(candidate / ".github/golden-path-request.json")
+metadata = read_json(candidate / ".github/golden-path.yaml")
+assets = read_json(candidate / ".github/golden-path-assets.json")
+
+expected_managed_paths = {
+    ".github/golden-path-assets.json",
+    ".github/golden-path-request.json",
+    ".github/golden-path.yaml",
+    ".github/workflows/developer-tooling.yml",
+    "scripts/golden-path",
+}
+expected_inventory_paths = expected_managed_paths - {
+    ".github/golden-path-assets.json"
+}
+actual_files = {
+    str(path.relative_to(candidate))
+    for path in candidate.rglob("*")
+    if path.is_file()
+}
+
+require(preview == written == plan, "deterministic plans")
+require(preview["schemaVersion"] == "golden-path-materialization-plan/v1", "plan schema")
+require(preview["operation"] == "generate", "plan operation")
+require(preview["releaseVersion"] == release_version, "plan release version")
+require(preview["conflictCount"] == 0, "plan conflicts")
+require({change["path"] for change in preview["changes"]} == expected_managed_paths, "plan paths")
+require(all(change["status"] == "create" for change in preview["changes"]), "plan changes")
+require(actual_files == expected_managed_paths | {"golden-path-plan.json"}, "candidate files")
+require(assets["schemaVersion"] == "golden-path-generated-assets/v1", "asset inventory schema")
+require(assets["releaseVersion"] == release_version, "asset inventory release version")
+require({asset["path"] for asset in assets["files"]} == expected_inventory_paths, "asset inventory")
+require("golden-path-plan.json" not in {asset["path"] for asset in assets["files"]}, "plan exclusion")
+require(stat.S_IMODE((candidate / "scripts/golden-path").stat().st_mode) == 0o755, "script mode")
+
+require(fixture["materializationMode"] == "adoption", "fixture materialization mode")
+require(request["materializationMode"] == "adoption", "canonical materialization mode")
+require(request["targets"] == fixture["targets"], "canonical targets")
+require(len(request["components"]) == len(fixture["components"]), "canonical components")
+for actual, expected in zip(request["components"], fixture["components"], strict=True):
+    for field in ("profiles", "artifactTypes", "capabilities"):
+        require(sorted(actual[field]) == sorted(expected[field]), f"canonical component {field}")
+
+expected_profiles = sorted({value for item in fixture["components"] for value in item["profiles"]})
+expected_artifacts = sorted({value for item in fixture["components"] for value in item["artifactTypes"]})
+expected_capabilities = sorted({value for item in fixture["components"] for value in item["capabilities"]})
+require(metadata["profiles"] == expected_profiles, "metadata profiles")
+require(metadata["artifactTypes"] == expected_artifacts, "metadata artifact types")
+require(metadata["capabilities"] == expected_capabilities, "metadata capabilities")
+require(metadata["targets"] == fixture["targets"], "metadata targets")
+require(
+    metadata["extensions"]["dev.fiftyten.generator"]["materializationMode"] == "adoption",
+    "metadata materialization mode",
+)
+PY
 fi
 
 python3 - \
