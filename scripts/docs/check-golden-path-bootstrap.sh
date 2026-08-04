@@ -263,7 +263,7 @@ require(fixture["materializationMode"] == "adoption", "fixture materialization m
 require(request["materializationMode"] == "adoption", "canonical materialization mode")
 require(request["targets"] == fixture["targets"], "canonical targets")
 require(len(request["components"]) == len(fixture["components"]), "canonical components")
-for actual, expected in zip(request["components"], fixture["components"], strict=True):
+for actual, expected in zip(request["components"], fixture["components"]):
     for field in ("profiles", "artifactTypes", "capabilities"):
         require(sorted(actual[field]) == sorted(expected[field]), f"canonical component {field}")
 
