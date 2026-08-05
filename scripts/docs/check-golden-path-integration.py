@@ -822,6 +822,85 @@ def permission_mapping(workflow: str, indent: int, context: str) -> dict[str, st
     return values
 
 
+def workflow_structural_lines(workflow: str) -> list[tuple[int, str]]:
+    result: list[tuple[int, str]] = []
+    block_scalar_indent: int | None = None
+    for line in workflow.splitlines():
+        if not line.strip():
+            continue
+        indent = len(line) - len(line.lstrip(" "))
+        if block_scalar_indent is not None:
+            if indent > block_scalar_indent:
+                continue
+            block_scalar_indent = None
+        result.append((indent, line))
+        if re.search(r":\s*[>|][0-9+-]*\s*(?:#.*)?$", line):
+            block_scalar_indent = indent
+    return result
+
+
+def workflow_action_references(workflow: str) -> list[str]:
+    references: list[str] = []
+    block_pattern = re.compile(
+        r'''\s*(?:-\s+)?(?:uses|"uses"|'uses')\s*:\s+'''
+        r'''(?P<reference>"[^"]+"|'[^']+'|[^\s#]+)\s*(?:#.*)?'''
+    )
+    flow_pattern = re.compile(
+        r'''(?:\{|,)\s*(?:uses|"uses"|'uses')\s*:\s*'''
+        r'''(?P<reference>"[^"]+"|'[^']+'|[^,}\s]+)\s*(?=,|})'''
+    )
+    for _, line in workflow_structural_lines(workflow):
+        match = block_pattern.fullmatch(line)
+        if match:
+            references.append(match.group("reference").strip("\"'"))
+            continue
+        stripped = line.strip()
+        if not (
+            re.match(r"-?\s*\{", stripped)
+            or re.match(r'''(?:[A-Za-z0-9_.-]+|"[^"]+"|'[^']+')\s*:\s*\{''', stripped)
+        ):
+            continue
+        for flow_match in flow_pattern.finditer(stripped):
+            references.append(flow_match.group("reference").strip("\"'"))
+    return references
+
+
+def validate_workflow_action_pins(workflow: str, context: str) -> None:
+    for reference in workflow_action_references(workflow):
+        if reference.startswith(("./", "$/")):
+            continue
+        if not re.search(r"@[a-f0-9]{40}$", reference):
+            raise ValidationError(
+                f"{context} action is not full-SHA pinned: {reference}"
+            )
+
+
+def validate_workflow_action_parser_self_test() -> None:
+    workflow = """jobs:
+  call:
+    uses: octo/example/.github/workflows/quality.yml@0123456789abcdef0123456789abcdef01234567
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@89abcdef0123456789abcdef0123456789abcdef
+      - "uses": 'octo/quoted@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      - { name: Flow step, uses: octo/flow@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb }
+      - name: Literal script text
+        run: |
+          uses: actions/checkout@v5
+"""
+    expected = [
+        "octo/example/.github/workflows/quality.yml@0123456789abcdef0123456789abcdef01234567",
+        "actions/checkout@89abcdef0123456789abcdef0123456789abcdef",
+        "octo/quoted@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "octo/flow@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    ]
+    if workflow_action_references(workflow) != expected:
+        raise ValidationError(
+            "workflow action parser does not distinguish structural uses from block scalars"
+        )
+
+
 def validate_governance_workflow(locator: dict[str, Any]) -> None:
     workflow = (ROOT / ".github/workflows/golden-path-bootstrap.yml").read_text()
     implementation = locator["implementation"]
@@ -850,12 +929,7 @@ def validate_governance_workflow(locator: dict[str, Any]) -> None:
     for text in required:
         if text not in workflow:
             raise ValidationError(f"governance workflow omits bootstrap integration text: {text}")
-    for match in re.finditer(r"^\s*uses:\s+([^\s#]+)", workflow, re.MULTILINE):
-        reference = match.group(1)
-        if reference.startswith("./"):
-            continue
-        if not re.search(r"@[a-f0-9]{40}$", reference):
-            raise ValidationError(f"governance workflow action is not full-SHA pinned: {reference}")
+    validate_workflow_action_pins(workflow, "governance workflow")
     required_paths = {
         ".github/workflows/golden-path-bootstrap.yml",
         ".github/workflows/docs.yml",
@@ -897,14 +971,7 @@ def validate_documentation_workflow_source(workflow: str) -> None:
             raise ValidationError(
                 f"documentation workflow must contain exactly one required control: {text}"
             )
-    for match in re.finditer(r"^\s*uses:\s+([^\s#]+)", workflow, re.MULTILINE):
-        reference = match.group(1)
-        if reference.startswith("./"):
-            continue
-        if not re.search(r"@[a-f0-9]{40}$", reference):
-            raise ValidationError(
-                f"documentation workflow action is not full-SHA pinned: {reference}"
-            )
+    validate_workflow_action_pins(workflow, "documentation workflow")
 
     required_paths = {
         "**/*.md",
@@ -940,7 +1007,25 @@ def validate_documentation_workflow_source(workflow: str) -> None:
 def validate_documentation_workflow() -> None:
     workflow = (ROOT / ".github/workflows/docs.yml").read_text()
     validate_documentation_workflow_source(workflow)
+    block_scalar_text = workflow.replace(
+        "        run: scripts/docs/check-repository.sh\n",
+        "        run: scripts/docs/check-repository.sh\n\n"
+        "      - name: Preserve literal workflow-like text\n"
+        "        run: |\n"
+        "          uses: actions/checkout@v5\n",
+        1,
+    )
+    validate_documentation_workflow_source(block_scalar_text)
     mutations = [
+        (
+            "flow-style mutable action",
+            workflow.replace(
+                "      - name: Run canonical documentation gate\n",
+                "      - { uses: actions/setup-node@v4 }\n\n"
+                "      - name: Run canonical documentation gate\n",
+                1,
+            ),
+        ),
         (
             "additional write permission",
             workflow.replace(
@@ -994,6 +1079,7 @@ def main() -> int:
     )
     arguments = parser.parse_args()
     try:
+        validate_workflow_action_parser_self_test()
         validate_explicit_materialization_modes_self_test()
         validate_snapshot_source_binding_self_test()
         if (arguments.snapshot_manifest is None) != (arguments.release_manifest is None):
