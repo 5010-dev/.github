@@ -822,6 +822,33 @@ def permission_mapping(workflow: str, indent: int, context: str) -> dict[str, st
     return values
 
 
+def yaml_without_trailing_comment(line: str) -> str:
+    quote: str | None = None
+    escaped = False
+    index = 0
+    while index < len(line):
+        character = line[index]
+        if quote == '"':
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == quote:
+                quote = None
+        elif quote == "'":
+            if character == quote:
+                if index + 1 < len(line) and line[index + 1] == quote:
+                    index += 1
+                else:
+                    quote = None
+        elif character in {'"', "'"}:
+            quote = character
+        elif character == "#" and (index == 0 or line[index - 1].isspace()):
+            return line[:index].rstrip()
+        index += 1
+    return line.rstrip()
+
+
 def workflow_structural_lines(workflow: str) -> list[tuple[int, str]]:
     result: list[tuple[int, str]] = []
     block_scalar_indent: int | None = None
@@ -833,8 +860,11 @@ def workflow_structural_lines(workflow: str) -> list[tuple[int, str]]:
             if indent > block_scalar_indent:
                 continue
             block_scalar_indent = None
-        result.append((indent, line))
-        if re.search(r":\s*[>|][0-9+-]*\s*(?:#.*)?$", line):
+        structural = yaml_without_trailing_comment(line)
+        if not structural.strip():
+            continue
+        result.append((indent, structural))
+        if re.search(r":\s*[>|][0-9+-]*\s*$", structural):
             block_scalar_indent = indent
     return result
 
@@ -855,12 +885,23 @@ def workflow_action_references(workflow: str) -> list[str]:
             references.append(match.group("reference").strip("\"'"))
             continue
         stripped = line.strip()
+        if re.match(r'''(?:steps|jobs)\s*:\s*\[''', stripped):
+            raise ValidationError(
+                "workflow action parser does not support flow-style job or step sequences"
+            )
         if not (
             re.match(r"-?\s*\{", stripped)
             or re.match(r'''(?:[A-Za-z0-9_.-]+|"[^"]+"|'[^']+')\s*:\s*\{''', stripped)
         ):
             continue
-        for flow_match in flow_pattern.finditer(stripped):
+        if stripped.count("{") != 1 or stripped.count("}") != 1 or not stripped.endswith("}"):
+            raise ValidationError(
+                "workflow action parser does not support nested or multiline flow mappings"
+            )
+        matches = list(flow_pattern.finditer(stripped))
+        if re.search(r'''(?:^|[{,])\s*(?:uses|"uses"|'uses')\s*:''', stripped) and not matches:
+            raise ValidationError("workflow flow mapping contains an unreadable uses reference")
+        for flow_match in matches:
             references.append(flow_match.group("reference").strip("\"'"))
     return references
 
@@ -899,6 +940,41 @@ def validate_workflow_action_parser_self_test() -> None:
         raise ValidationError(
             "workflow action parser does not distinguish structural uses from block scalars"
         )
+    comment_spoof = """jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Extra step # example: |
+        uses: actions/setup-node@v4
+"""
+    if workflow_action_references(comment_spoof) != ["actions/setup-node@v4"]:
+        raise ValidationError("workflow action parser lets comments spoof block scalars")
+    try:
+        validate_workflow_action_pins(comment_spoof, "workflow parser self-test")
+    except ValidationError:
+        pass
+    else:
+        raise ValidationError("workflow action parser accepted a comment-hidden mutable action")
+    unsupported_flows = {
+        "flow sequence": """jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps: [{uses: actions/setup-node@v4}]
+""",
+        "multiline flow mapping": """jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - {name: setup,
+         uses: actions/setup-node@v4}
+""",
+    }
+    for label, unsupported_flow in unsupported_flows.items():
+        try:
+            workflow_action_references(unsupported_flow)
+        except ValidationError:
+            continue
+        raise ValidationError(f"workflow action parser accepted an unsupported {label}")
 
 
 def validate_governance_workflow(locator: dict[str, Any]) -> None:
@@ -1018,11 +1094,30 @@ def validate_documentation_workflow() -> None:
     validate_documentation_workflow_source(block_scalar_text)
     mutations = [
         (
+            "comment-spoofed mutable action",
+            workflow.replace(
+                "      - name: Run canonical documentation gate\n",
+                "      - name: Extra step # example: |\n"
+                "        uses: actions/setup-node@v4\n\n"
+                "      - name: Run canonical documentation gate\n",
+                1,
+            ),
+        ),
+        (
             "flow-style mutable action",
             workflow.replace(
                 "      - name: Run canonical documentation gate\n",
                 "      - { uses: actions/setup-node@v4 }\n\n"
                 "      - name: Run canonical documentation gate\n",
+                1,
+            ),
+        ),
+        (
+            "unsupported flow-style step sequence",
+            workflow.replace(
+                "    steps:\n",
+                "    steps: [{uses: actions/setup-node@v4}]\n"
+                "    ignored-steps:\n",
                 1,
             ),
         ),
