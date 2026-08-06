@@ -17,55 +17,55 @@
     "repository": "https://github.com/5010-dev/engineering-tooling",
     "repositorySlug": "5010-dev/engineering-tooling",
     "release": {
-      "version": "1.2.2",
-      "tag": "v1.2.2",
+      "version": "1.2.3",
+      "tag": "v1.2.3",
       "standardVersion": "2026.08",
       "contractVersion": "golden-path/v1",
       "explicitMaterializationModes": ["bootstrap", "adoption"],
       "catalogDigest": "sha256:6e8f0d979f55974dc693f21b0d559ec42cf67aaf48d09d9c8be46fb33fa30f9b",
-      "sourceCommit": "3aab60d0770853d45b6da179cbc45f6f6639d40f",
+      "sourceCommit": "36767ad2b289b46e2af1257484c8db27ea45062e",
       "snapshotAggregateDigest": "sha256:2ccb04cf3c5a9345f632b42be16bd75d8f4c5e1439210b140b57037cf6dc6a17",
-      "url": "https://github.com/5010-dev/engineering-tooling/releases/tag/v1.2.2",
+      "url": "https://github.com/5010-dev/engineering-tooling/releases/tag/v1.2.3",
       "manifest": {
         "name": "release-manifest.json",
-        "url": "https://github.com/5010-dev/engineering-tooling/releases/download/v1.2.2/release-manifest.json",
-        "sha256": "bf03f379570f71d8e4e5965d3e19486b5a11cdf036225d212032b7e1b84be37f"
+        "url": "https://github.com/5010-dev/engineering-tooling/releases/download/v1.2.3/release-manifest.json",
+        "sha256": "ce7a4ec00e817052c27bba7bcec398030cd00fa9f7f570408fb12be769f3199d"
       },
       "snapshotManifest": {
         "name": "standard-snapshot-manifest.json",
-        "url": "https://github.com/5010-dev/engineering-tooling/releases/download/v1.2.2/standard-snapshot-manifest.json",
+        "url": "https://github.com/5010-dev/engineering-tooling/releases/download/v1.2.3/standard-snapshot-manifest.json",
         "sha256": "4121f0f9668a76163f5f84fb5623398b6afce2b6fa32de83ce05ca7737fedbc7"
       },
       "archives": [
         {
           "os": "darwin",
           "architecture": "amd64",
-          "name": "golden-path_1.2.2_darwin_amd64.tar.gz",
-          "sha256": "5eac78733a7f3448b560d9994dac3e25affef060a23a8cfcb7ff2283865df651"
+          "name": "golden-path_1.2.3_darwin_amd64.tar.gz",
+          "sha256": "f5441ddaebc9cb58d4ff39a0d9d51315a92892a958b7bd08284ff197fe7a65db"
         },
         {
           "os": "darwin",
           "architecture": "arm64",
-          "name": "golden-path_1.2.2_darwin_arm64.tar.gz",
-          "sha256": "e6bd8402f6653945f6a39b575eb3c22e684480f4295a7b4ab89a0d52004ac388"
+          "name": "golden-path_1.2.3_darwin_arm64.tar.gz",
+          "sha256": "32ac3478f5e29d740e82614376b2ce21307e8cd6b95eaede0acceac5b5a374e8"
         },
         {
           "os": "linux",
           "architecture": "amd64",
-          "name": "golden-path_1.2.2_linux_amd64.tar.gz",
-          "sha256": "7f2dc5fe4665ed014829dffdee5c83ba926ca5014f98d9d69cc592605eb6f20e"
+          "name": "golden-path_1.2.3_linux_amd64.tar.gz",
+          "sha256": "1fc67c2f75727c47156dc4db199868659cc86f0b2540279f6698f2e8a1fff1c2"
         },
         {
           "os": "linux",
           "architecture": "arm64",
-          "name": "golden-path_1.2.2_linux_arm64.tar.gz",
-          "sha256": "020f8c5b315f265260dfb0d61a953a3043c90071ca23c3f7ea83666f58062854"
+          "name": "golden-path_1.2.3_linux_arm64.tar.gz",
+          "sha256": "4e247b827e71016e88cd4541f2a192663b69a36a88cf1808ea21502d092c23e7"
         }
       ]
     },
     "automation": {
-      "reusableWorkflow": "5010-dev/engineering-tooling/.github/workflows/golden-path-quality.yml@3aab60d0770853d45b6da179cbc45f6f6639d40f",
-      "setupAction": "5010-dev/engineering-tooling/actions/setup-golden-path@3aab60d0770853d45b6da179cbc45f6f6639d40f"
+      "reusableWorkflow": "5010-dev/engineering-tooling/.github/workflows/golden-path-quality.yml@36767ad2b289b46e2af1257484c8db27ea45062e",
+      "setupAction": "5010-dev/engineering-tooling/actions/setup-golden-path@36767ad2b289b46e2af1257484c8db27ea45062e"
     },
     "verifier": {
       "githubCliVersion": "2.97.0",
