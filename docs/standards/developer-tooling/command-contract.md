@@ -94,7 +94,7 @@ The conformance checker evaluates at least:
 - non-mutating `check`, `ci`, format-check, lint, and typecheck paths;
 - `ci` composition through `check`;
 - separation of deployment/release mutation;
-- deterministic repository-local imports, modules, and scripts; and
+- deterministic repository-local imports, modules, and scripts;
 - quality caller workflows' use of `just ci`; and
 - structural conformance callers' use of the checker without replaying the
   repository quality graph.
