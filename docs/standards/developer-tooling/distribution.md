@@ -84,6 +84,13 @@ repository-owned caller. It MUST:
 - delegate structural evaluation to the checker-only reusable conformance
   workflow rather than reproduce the repository quality graph.
 
+The checker-only delegation requirement applies to a tooling release that
+declares the current standard version. During the bounded interval after a
+standard is accepted and before a compatible tooling release is published, the
+discovery template MAY remain pinned to the latest supported release contract.
+The bootstrap locator, workflow template, and template properties description
+MUST move together when the compatible release becomes available.
+
 The policy repository validates only its own source and templates. A template is
 not a mutable cross-repository runtime dependency.
 
