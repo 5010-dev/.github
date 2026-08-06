@@ -1,7 +1,7 @@
 # GitHub hosting capability profile
 
 - Baseline: GitHub Free organization with private repositories
-- Standard: `2026.08`
+- Standard: `2026.08.1`
 - Verified: 2026-08-01
 - Status: Informative platform capability mapping
 
@@ -14,7 +14,7 @@ before changing the baseline or enabling a paid adapter.
 
 | Surface | Baseline use | Boundary |
 | --- | --- | --- |
-| GitHub Actions | Run the repository-owned thin caller, `just ci`, and report-only checker | A failing job does not by itself prove that merge is blocked. Private-repository minutes and storage are plan quotas. |
+| GitHub Actions | Run repository-owned quality CI through `just ci` once and run the checker-only, report-only conformance caller independently | A failing job does not by itself prove that merge is blocked. Private-repository minutes and storage are plan quotas. |
 | Repository Actions secrets | Forward only explicitly named secrets when a job needs them | Golden Path conformance itself needs no consumer secret. Never use `secrets: inherit` as the default. |
 | OpenID Connect | Prefer short-lived cloud credentials with exact repository, ref, and workflow claims | Cloud IAM and the caller own authorization. Require an environment claim only when a paid Environment adapter is selected; OIDC availability does not create an approval boundary. |
 | Dependency graph | Keep the repository dependency inventory enabled where supported | It is an input to dependency features, not complete vulnerability or license evidence. |

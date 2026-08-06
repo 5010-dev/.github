@@ -1,6 +1,6 @@
 {
   "schemaVersion": "runtime-support/v1",
-  "standardVersion": "2026.08",
+  "standardVersion": "2026.08.1",
   "asOf": "2026-07-30",
   "profiles": {
     "node": {

@@ -148,10 +148,17 @@ Run the repository root gate:
 just ci
 ```
 
-Run the version-compatible Golden Path checker when available. Review manual
-and hybrid rules using durable evidence rather than interpreting a structural
-green result as proof of runtime, hosting-plan, advisory, release, or
-deployment state.
+Run the version-compatible Golden Path checker separately. The quality workflow
+runs `just ci` once; the structural conformance workflow MUST NOT run it again.
+Use the default concise text or job summary for actionable findings. The
+complete JSON result remains the canonical machine output and may be retained
+when repository evidence policy needs it; routine passing runs do not require
+a duplicate artifact. Request exhaustive passing and skipped detail only for
+diagnosis.
+
+Review manual and hybrid rules using durable evidence rather than interpreting
+a structural green result as proof of runtime, hosting-plan, advisory, release,
+or deployment state.
 
 If an applicable MUST cannot be met, add the minimum schema-valid, approved,
 expiring exception. High-risk deviations also require remediation tracking and

@@ -1,9 +1,9 @@
 # Developer Tooling Standard
 
 - Status: Accepted
-- Standard version: `2026.08`
+- Standard version: `2026.08.1`
 - Contract version: `golden-path/v1`
-- Last reviewed: 2026-08-04
+- Last reviewed: 2026-08-06
 
 This standard defines the organization Golden Path for developer tooling,
 repository-local build and quality commands, language and Infrastructure as Code
@@ -90,7 +90,7 @@ An applicable repository records at least:
 ```yaml
 schemaVersion: golden-path-metadata/v1
 contractVersion: golden-path/v1
-standardVersion: "2026.08"
+standardVersion: "2026.08.1"
 assetBundleVersion: "1.0.0"
 profiles:
   - node-typescript
@@ -184,6 +184,17 @@ New repositories use the latest preferred standard and stable asset bundle.
 Existing repositories adopt through repository-owned, reviewable work. The
 standard does not maintain repository migration schedules or conformance
 status.
+
+`2026.08.1` narrows the caller-workflow contract so quality CI owns
+repository execution through `just ci`, while structural conformance runs the
+checker without repeating the quality graph. It also makes the shared tooling
+support cadence and ECS checklist trigger explicit. These are compatible
+corrections to `golden-path/v1`; they do not invalidate repositories or tooling
+releases that implement `2026.08`.
+
+`DT-CMD-005` and `DT-ASSET-007` retain their original meanings and retire in
+`2026.08.1` without replacement. The quality/conformance execution split is a
+workflow implementation contract, not a new consumer conformance rule.
 
 - [Adopting the Developer Tooling Standard](../../guides/adopting-developer-tooling.md)
 - [Bootstrapping a new repository](../../guides/bootstrap-new-repository.md)

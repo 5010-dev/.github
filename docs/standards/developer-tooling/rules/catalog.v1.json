@@ -1,7 +1,7 @@
 {
   "schemaVersion": "golden-path-rule-catalog/v1",
   "contractVersion": "golden-path/v1",
-  "standardVersion": "2026.08",
+  "standardVersion": "2026.08.1",
   "rules": [
     {
       "id": "DT-META-001",
@@ -175,7 +175,7 @@
       "assertion": "The caller invokes root just ci or the exact same repository-owned implementation path without reimplementing the quality graph.",
       "remediation": "Make the workflow prepare the declared environment and call just ci; remove duplicated or unrelated quality orchestration.",
       "introducedIn": "2026.07",
-      "retiredIn": null,
+      "retiredIn": "2026.08.1",
       "replacement": null
     },
     {
@@ -700,7 +700,7 @@
       "assertion": "The template has matching metadata, valid workflow syntax, minimum permissions, and a repository-owned caller that delegates quality behavior to just ci.",
       "remediation": "Correct template metadata and syntax, reduce permissions, and remove repository-specific quality logic from the starter.",
       "introducedIn": "2026.07",
-      "retiredIn": null,
+      "retiredIn": "2026.08.1",
       "replacement": null
     },
     {
