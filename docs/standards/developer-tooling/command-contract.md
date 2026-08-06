@@ -1,7 +1,7 @@
 # Developer tooling command contract
 
 - Status: Accepted
-- Standard version: `2026.08`
+- Standard version: `2026.08.1`
 - Contract version: `golden-path/v1`
 
 This contract defines the stable commands that developers and CI use. Native
@@ -46,11 +46,14 @@ not implement.
   their permission, credential, and mutation boundaries are independently
   reviewable. Separate workflow files are the default, but equivalent explicit
   job or reusable-workflow boundaries MAY satisfy this requirement.
-- CI SHOULD be thin orchestration that prepares the exact environment and calls
-  `just ci`; workflow YAML SHOULD NOT reimplement the quality graph.
-- Every required caller workflow MUST invoke root `just ci` or the exact same
-  repository-owned implementation path. Running unrelated steps is not
-  evidence that `just ci` ran.
+- Quality CI SHOULD be thin orchestration that prepares the exact environment
+  and calls `just ci`; workflow YAML SHOULD NOT reimplement the quality graph.
+- Every required quality caller workflow MUST invoke root `just ci` or the
+  exact same repository-owned implementation path. Running unrelated steps is
+  not evidence that `just ci` ran.
+- A structural conformance caller MUST run the compatible checker and MUST NOT
+  invoke `just ci` a second time. It is independent evidence about checked-in
+  contract structure, not another execution owner for repository quality.
 - External, credentialed, long-running, or destructive suites MUST use
   separately named commands such as `test-e2e` or a namespaced command.
 
@@ -92,6 +95,8 @@ The conformance checker evaluates at least:
 - `ci` composition through `check`;
 - separation of deployment/release mutation;
 - deterministic repository-local imports, modules, and scripts; and
-- the caller workflow's use of `just ci`.
+- quality caller workflows' use of `just ci`; and
+- structural conformance callers' use of the checker without replaying the
+  repository quality graph.
 
 Rule IDs: `DT-CMD-*`.

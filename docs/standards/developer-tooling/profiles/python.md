@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Profile ID: `python`
-- Standard version: `2026.08`
+- Standard version: `2026.08.1`
 
 uv owns Python project setup, interpreter selection, environments, dependency
 resolution, locking, and tool execution. Packaging backends and native system

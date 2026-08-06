@@ -1,7 +1,7 @@
 # Golden Path conformance
 
 - Status: Accepted
-- Standard version: `2026.08`
+- Standard version: `2026.08.1`
 - Contract version: `golden-path/v1`
 
 Conformance is evaluated from repository-local declarations and checked-in
@@ -84,10 +84,12 @@ separate explicit command with a non-mutating preview and reviewable output.
 
 ## Output
 
-Text and
 [`golden-path-checker-output/v1`](./schemas/golden-path-checker-output-v1.schema.json)
-JSON are required and describe the same finding set. SARIF is an optional
-derivative when code scanning is available.
+JSON is the complete canonical finding set. Human-readable text is a faithful,
+bounded projection of the same status, counts, and actionable findings. The
+default text output SHOULD omit individual passing and skipped findings; an
+explicit diagnostic option MUST make the exhaustive finding list available.
+SARIF is an optional derivative when code scanning is available.
 
 Consumers MUST ignore data inside the schema-defined `extensions` objects that
 they do not understand. New v1 data fields are added only through those
@@ -112,16 +114,25 @@ Exit codes are:
 | `2` | Schema-invalid metadata/exception, unknown or non-waivable rule reference, unsupported version, or other configuration error |
 | `3` | Internal checker error or incomplete evaluation |
 
-Text and JSON MUST use the same exit meaning. A report-only workflow preserves
-the actual finding and exit evidence even when the workflow wrapper does not
-block progress.
+Text and JSON MUST use the same exit meaning and status counts. Concision MUST
+NOT hide failures, warnings, errors, waivers, or expired exceptions. A
+report-only workflow preserves the actual finding and exit evidence even when
+the workflow wrapper does not block progress.
 
-The stable CI display name is `Developer Tooling / Conformance`.
+The stable CI display name is `Developer Tooling / Conformance`. The
+conformance workflow MUST run the checker only and MUST NOT prepare consumer
+toolchains, run `just init`, or run `just ci`; those belong to repository-owned
+quality CI. It SHOULD run independently so a quality failure does not suppress
+structural evidence.
+
 The workflow SHOULD emit annotations. Every conformance CI run MUST emit a
 bounded job summary containing the standard and checker versions, selected
-profiles, counts by finding status, applicable exception expiry dates, and
-remediation for non-passing findings. It MAY retain the JSON result as a
-short-lived artifact according to repository evidence policy.
+profiles, counts by finding status, a categorized skipped-count summary,
+applicable exception expiry dates, and remediation for actionable findings.
+The workflow MAY retain the complete JSON result as a short-lived artifact
+according to repository evidence policy. Artifact retention is not universal
+conformance evidence and MUST NOT be required when the bounded summary and
+check result satisfy the repository's evidence needs.
 
 A missing, skipped, cancelled, or otherwise unexecuted checker/workflow is not a
 passing result. Any policy or platform gate MUST require positive evidence from

@@ -460,8 +460,12 @@ ADR and a change to this standard rather than a repository-only record.
 
 ## Pull request conformance checklist
 
-Repositories MAY copy this checklist into a pull request that changes an ECS
-service delivery workflow or its local implementation.
+Repositories MUST use this checklist when a pull request changes an ECS
+delivery boundary: task-definition semantics, deployed image identity,
+deployment workflow behavior, target environment or approval boundary,
+rollback behavior, or health/readiness outcome. A dependency-only, tool-only,
+action-SHA, or reusable-workflow pin update that preserves those semantics MAY
+mark the checklist not applicable and does not require copying every item.
 
 Use the common block and every outcome block supported by the changed workflow.
 When the checklist evaluates a particular run, select exactly one outcome block.

@@ -240,7 +240,14 @@ work that is already conformant under an equivalent allowed adapter.
 ## 7. Verify and hand off
 
 Run native checks and `just ci` from a clean checkout. Then run the compatible
-Golden Path checker and review manual or external evidence separately.
+Golden Path checker separately without replaying the quality gate, and review
+manual or external evidence separately.
+
+Do not create a consumer pull request solely because the central locator moved
+to a newer compatible patch or minor release. A repository pinned to a
+supported `1.x` tooling release may batch that upgrade on its own maintenance
+cadence unless release notes identify a security, integrity, material
+false-failure, or unusable-workflow reason for immediate replacement.
 
 The repository owner closes its migration work only after the executable
 change, locks, generated files, documentation links, exceptions, and bounded
