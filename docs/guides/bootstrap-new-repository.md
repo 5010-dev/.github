@@ -77,8 +77,10 @@ writing:
   --release-manifest "$RELEASE_MANIFEST"
 ```
 
-Review the complete plan. Then materialize into a separate empty candidate
-directory, never directly over an existing repository:
+Review the complete plan emitted on standard output and retain it outside the
+candidate only when the repository's evidence policy requires it. Then
+materialize into a separate empty candidate directory, never directly over an
+existing repository:
 
 ```bash
 "$GOLDEN_PATH_BIN" generate \
@@ -88,11 +90,14 @@ directory, never directly over an existing repository:
   --output /path/to/empty-candidate
 ```
 
-The candidate owns its generated request, asset inventory, metadata, Just and
-toolchain files, native manifests and locks, bootstrap script, and caller
-workflow. Inspect these as repository code, set the caller's exact profile
-array, customize only repository-owned behavior, and commit the reviewed files
-through that repository's normal contribution flow.
+The candidate does not contain `golden-path-plan.json`. Golden Path upgrades
+continue to manage only the request, metadata, asset inventory, conformance
+caller, and bootstrap script. The generated README, source, native manifests
+and locks, Just and toolchain files, exceptions, dependency automation, and
+repository quality workflow are one-time repository-owned scaffold. Inspect
+all generated files as repository code, set the conformance caller's exact
+profile array, customize only repository-owned behavior, and commit the
+reviewed files through that repository's normal contribution flow.
 
 If the inventoried native roots differ from the generated component paths, add
 the schema-valid native-root sidecar as repository-owned configuration after
@@ -101,10 +106,16 @@ metadata or asset digest.
 
 ## Enable repository-local validation
 
-The preferred path is the caller generated with the release. The organization
-[workflow template](../../workflow-templates/golden-path-quality.yml) is a
-discovery starter for a repository that already has materialized Golden Path
-files. It intentionally contains the invalid JSON sentinel
+The generated `.github/workflows/quality.yml` is the repository-owned general
+CI path: it installs the pinned toolchain, runs `just init`, and executes
+`just ci` once on the organization `dev` branch flow. The generated
+`.github/workflows/developer-tooling.yml` is the separate structural
+conformance caller and does not repeat the repository quality gate.
+
+The preferred conformance path is the caller generated with the release. The
+organization [workflow template](../../workflow-templates/golden-path-quality.yml)
+is a discovery starter for a repository that already has materialized Golden
+Path files. It intentionally contains the invalid JSON sentinel
 `profiles: 'REPLACE_WITH_EXACT_PROFILES'`. The reusable workflow propagates the
 resulting checker usage error, so the job fails closed until the repository
 replaces that value with the exact profile array from `.github/golden-path.yaml`.

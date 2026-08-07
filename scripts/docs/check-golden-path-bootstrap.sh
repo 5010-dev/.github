@@ -224,7 +224,6 @@ fixture = read_json(fixture_path)
 preview = read_json(preview_path)
 written = read_json(write_path)
 candidate = candidate_path.resolve()
-plan = read_json(candidate / "golden-path-plan.json")
 request = read_json(candidate / ".github/golden-path-request.json")
 metadata = read_json(candidate / ".github/golden-path.yaml")
 assets = read_json(candidate / ".github/golden-path-assets.json")
@@ -245,14 +244,15 @@ actual_files = {
     if path.is_file()
 }
 
-require(preview == written == plan, "deterministic plans")
+require(preview == written, "deterministic stdout plans")
 require(preview["schemaVersion"] == "golden-path-materialization-plan/v1", "plan schema")
 require(preview["operation"] == "generate", "plan operation")
 require(preview["releaseVersion"] == release_version, "plan release version")
 require(preview["conflictCount"] == 0, "plan conflicts")
 require({change["path"] for change in preview["changes"]} == expected_managed_paths, "plan paths")
 require(all(change["status"] == "create" for change in preview["changes"]), "plan changes")
-require(actual_files == expected_managed_paths | {"golden-path-plan.json"}, "candidate files")
+require(actual_files == expected_managed_paths, "candidate files")
+require(not (candidate / "golden-path-plan.json").exists(), "plan excluded from candidate")
 require(assets["schemaVersion"] == "golden-path-generated-assets/v1", "asset inventory schema")
 require(assets["releaseVersion"] == release_version, "asset inventory release version")
 require({asset["path"] for asset in assets["files"]} == expected_inventory_paths, "asset inventory")
@@ -375,7 +375,7 @@ require(release["components"]["generator"]["enforcement"] == ["report-only"], "g
 require(release["components"]["assetBundle"]["version"] == expected_release["version"], "asset bundle component")
 require(release["components"]["automation"]["version"] == expected_release["version"], "automation component")
 
-require(preview == written == read_json(candidate / "golden-path-plan.json"), "deterministic plans")
+require(preview == written, "deterministic stdout plans")
 require(preview["schemaVersion"] == "golden-path-materialization-plan/v1", "plan schema")
 require(preview["operation"] == "generate", "plan operation")
 require(preview["standardVersion"] == expected_standard_version, "plan standard version")
@@ -383,6 +383,13 @@ require(preview["releaseVersion"] == expected_release["version"], "plan release 
 require(preview["assetBundleVersion"] == expected_release["version"], "plan asset bundle version")
 require(preview["conflictCount"] == 0, "plan conflicts")
 require(preview["changes"] and all(change["status"] == "create" for change in preview["changes"]), "plan changes")
+actual_files = {
+    str(path.relative_to(candidate))
+    for path in candidate.rglob("*")
+    if path.is_file()
+}
+require({change["path"] for change in preview["changes"]} == actual_files, "plan paths")
+require(not (candidate / "golden-path-plan.json").exists(), "plan excluded from candidate")
 
 assets = read_json(candidate / ".github/golden-path-assets.json")
 require(assets["schemaVersion"] == "golden-path-generated-assets/v1", "generated assets schema")
@@ -391,17 +398,26 @@ require(assets["releaseVersion"] == expected_release["version"], "generated rele
 require(assets["assetBundleVersion"] == expected_release["version"], "generated asset bundle version")
 require(assets["source"] == expected_source, "generated source identity")
 managed_paths = {asset["path"] for asset in assets["files"]}
-required_paths = {
+expected_managed_paths = {
+    ".github/golden-path-assets.json",
     ".github/golden-path.yaml",
     ".github/golden-path-request.json",
-    ".github/golden-path-exceptions.yaml",
     ".github/workflows/developer-tooling.yml",
+    "scripts/golden-path",
+}
+expected_inventory_paths = expected_managed_paths - {".github/golden-path-assets.json"}
+expected_repository_owned_paths = {
+    ".github/dependabot.yml",
+    ".github/golden-path-exceptions.yaml",
+    ".github/workflows/quality.yml",
+    "README.md",
     "justfile",
     "mise.toml",
     "mise.lock",
-    "scripts/golden-path",
 }
-require(required_paths <= managed_paths, "required managed paths")
+require(managed_paths == expected_inventory_paths, "bounded managed inventory")
+require(expected_managed_paths <= actual_files, "required managed files")
+require(expected_repository_owned_paths <= actual_files, "repository-owned bootstrap scaffold")
 
 workflow = (candidate / ".github/workflows/developer-tooling.yml").read_text()
 require(f"uses: {implementation['automation']['reusableWorkflow']}" in workflow, "generated workflow pin")
@@ -420,6 +436,26 @@ for retired_input in (
     require(f"{retired_input}:" not in workflow, f"retired generated input {retired_input}")
 for forbidden in ("@main", "@dev", "@latest", "secrets: inherit", "environment:"):
     require(forbidden not in workflow, f"generated workflow forbidden text {forbidden}")
+
+quality_workflow = (candidate / ".github/workflows/quality.yml").read_text()
+for required_text in (
+    "name: Repository / Quality",
+    "      - dev",
+    "      - main",
+    "uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654",
+    "run: just init",
+    "run: just ci",
+):
+    require(required_text in quality_workflow, f"repository quality workflow {required_text}")
+require(quality_workflow.count("run: just ci") == 1, "single repository quality gate")
+
+readme = (candidate / "README.md").read_text()
+for required_text in (
+    "Work starts\nfrom `dev`",
+    "the repository quality workflow—are repository-owned scaffolding",
+):
+    require(required_text in readme, f"bootstrap README {required_text}")
 
 require(result["schemaVersion"] == "golden-path-checker-output/v1", "checker output schema")
 require(result["contractVersion"] == expected_contract_version, "checker contract version")

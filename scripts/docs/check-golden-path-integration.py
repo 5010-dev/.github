@@ -564,6 +564,8 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
         "--write",
         "separate empty candidate",
         "materializationMode: adoption",
+        "plan emitted on standard output",
+        "repository-owned general\nCI path",
     ):
         if text not in bootstrap:
             raise ValidationError(f"bootstrap guide omits required adoption boundary: {text}")
@@ -571,7 +573,8 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
         "`bootstrap` creates a complete starter",
         "`adoption` creates the first Golden Path control-plane baseline",
         "`upgrade` updates a repository only after a generated asset inventory",
-        "golden-path-plan.json",
+        "Materialization plans are command output",
+        "candidate does not contain `golden-path-plan.json`",
         "Do not rewrite the generated asset inventory or digest",
     ):
         if text not in adopting:
@@ -588,9 +591,14 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
         ".github/golden-path-request.json",
         ".github/golden-path-assets.json",
         "scripts/golden-path",
+        "materialization plan is emitted on standard output",
+        "candidate does not contain `golden-path-plan.json`",
         "A fabricated asset",
         "is not an adoption baseline",
-        "customized retired assets must conflict",
+        "Only the five managed control-plane",
+        "inventory entries outside the fixed managed set",
+        "do not enter the upgrade plan",
+        "generator does not propose their removal",
     ):
         if text not in migrating:
             raise ValidationError(
@@ -624,6 +632,10 @@ def validate_fixture_and_docs(locator: dict[str, Any]) -> None:
         'if [[ "$supports_adoption" == "true" ]]',
         "expected_managed_paths",
         'request["materializationMode"] == "adoption"',
+        "deterministic stdout plans",
+        "plan excluded from candidate",
+        "repository-owned bootstrap scaffold",
+        "single repository quality gate",
     ):
         if text not in bootstrap_script:
             raise ValidationError(

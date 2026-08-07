@@ -1337,7 +1337,10 @@ def validate_adoption_guides() -> None:
             "whole-file generated metadata",
             "independent roots for one profile",
             "materializationMode: adoption",
-            "customized retired assets must conflict",
+            "Only the five managed control-plane",
+            "inventory entries outside the fixed managed set",
+            "do not enter the upgrade plan",
+            "generator does not propose their removal",
         ),
     }
     for relative, phrases in required_boundaries.items():
