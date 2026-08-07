@@ -163,8 +163,8 @@ contains only the fixed Golden Path control-plane files:
 - `.github/workflows/developer-tooling.yml`; and
 - `scripts/golden-path`.
 
-The candidate also contains `golden-path-plan.json`; treat it as staging
-evidence rather than managed repository configuration. Integrate the
+The materialization plan is emitted on standard output as external review
+evidence; the candidate does not contain `golden-path-plan.json`. Integrate the
 control-plane files through the repository's normal review without copying
 starter source, native manifests or locks, mise or Just configuration, or
 product-specific smoke and release behavior.
@@ -176,13 +176,15 @@ will report it as a conflict that must be resolved; do not change the recorded
 digest to hide that fact.
 
 After the baseline is committed, later releases use `upgrade` with the
-canonical request and a separate candidate. The inventory distinguishes
-unchanged generated files from repository customization. Deleted managed files
-and executable-mode changes are conflicts. When a prior bootstrap baseline is
-changed to adoption, unchanged starter-only assets may be proposed for removal,
-while customized retired assets must conflict and prevent candidate staging.
-Review every proposed removal against repository ownership; never treat the
-plan as authorization to delete product source, durable state, or operational
+canonical request and a separate candidate. Only the five managed control-plane
+files participate in update and conflict detection. Deleted managed files,
+modified managed bytes, and executable-mode changes are conflicts. When a
+released 1.3.0 full-scaffold inventory advances to 1.4.0 or later, prior
+inventory entries outside the fixed managed set are handed to repository
+ownership and do not enter the upgrade plan, regardless of local modification.
+The generator does not propose their removal. Review any later cleanup as a
+separate repository-owned change; never treat a materialization plan as
+authorization to delete product source, durable state, or operational
 configuration.
 
 ## 4. Choose safe sequencing

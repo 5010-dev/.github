@@ -132,13 +132,14 @@ automation, or repository-specific build, smoke, release, deployment, and
 state-management behavior. Generate it into a separate empty candidate and
 integrate the reviewed files through the repository's own contribution flow.
 
-`golden-path-plan.json` is staging evidence, not a managed repository asset.
-If an existing file collides with a generated control-plane path, review the
-two files deliberately. Do not rewrite the generated asset inventory or digest
-to bless repository-local bytes. Either adopt the generated file, move local
-behavior outside the managed path where the contract permits, or retain an
-intentional customization knowing that a later upgrade must report and resolve
-the conflict.
+Materialization plans are command output and external review evidence; the
+candidate does not contain `golden-path-plan.json`. If an existing file
+collides with a generated control-plane path, review the two files deliberately.
+Do not rewrite the generated asset inventory or digest to bless
+repository-local bytes. Either adopt the generated file, move local behavior
+outside the managed path where the contract permits, or retain an intentional
+customization knowing that a later upgrade must report and resolve the
+conflict.
 
 ## 7. Validate and review
 
