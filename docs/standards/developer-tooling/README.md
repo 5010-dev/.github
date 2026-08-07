@@ -1,9 +1,9 @@
 # Developer Tooling Standard
 
 - Status: Accepted
-- Standard version: `2026.08.1`
+- Standard version: `2026.08.2`
 - Contract version: `golden-path/v1`
-- Last reviewed: 2026-08-06
+- Last reviewed: 2026-08-07
 
 This standard defines the organization Golden Path for developer tooling,
 repository-local build and quality commands, language and Infrastructure as Code
@@ -90,7 +90,7 @@ An applicable repository records at least:
 ```yaml
 schemaVersion: golden-path-metadata/v1
 contractVersion: golden-path/v1
-standardVersion: "2026.08.1"
+standardVersion: "2026.08.2"
 assetBundleVersion: "1.0.0"
 profiles:
   - node-typescript
@@ -184,6 +184,15 @@ New repositories use the latest preferred standard and stable asset bundle.
 Existing repositories adopt through repository-owned, reviewable work. The
 standard does not maintain repository migration schedules or conformance
 status.
+
+`2026.08.2` completes the new-repository bootstrap ownership boundary. Only
+the canonical request, metadata, managed inventory, bootstrap script, and
+structural-conformance caller remain generator-managed. Source, onboarding,
+native manifests and locks, mise/Just files, dependency automation, and the
+repository quality workflow are repository-owned scaffold. Bootstrap quality
+CI runs `just ci` once; independent conformance remains checker-only and
+report-only. This is a compatible `golden-path/v1` correction and does not
+require existing consumers to upgrade on locator movement alone.
 
 `2026.08.1` narrows the caller-workflow contract so quality CI owns
 repository execution through `just ci`, while structural conformance runs the

@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Profile ID: `go`
-- Standard version: `2026.08.1`
+- Standard version: `2026.08.2`
 
 The Go profile prioritizes the official Go toolchain and module system over an
 additional build framework.

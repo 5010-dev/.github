@@ -1,7 +1,7 @@
 # Runtime support and lifecycle
 
 - Status: Accepted
-- Standard version: `2026.08.1`
+- Standard version: `2026.08.2`
 - Runtime catalog: [`runtime-support.v1.json`](./rules/runtime-support.v1.json)
 
 Runtime policy uses three independent axes. It does not collapse upstream

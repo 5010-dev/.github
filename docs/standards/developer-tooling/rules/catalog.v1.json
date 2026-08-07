@@ -1,7 +1,7 @@
 {
   "schemaVersion": "golden-path-rule-catalog/v1",
   "contractVersion": "golden-path/v1",
-  "standardVersion": "2026.08.1",
+  "standardVersion": "2026.08.2",
   "rules": [
     {
       "id": "DT-META-001",
