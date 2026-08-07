@@ -1,7 +1,7 @@
 # Golden Path conformance
 
 - Status: Accepted
-- Standard version: `2026.08.1`
+- Standard version: `2026.08.2`
 - Contract version: `golden-path/v1`
 
 Conformance is evaluated from repository-local declarations and checked-in
@@ -164,9 +164,12 @@ meaning.
 
 ## Rollout
 
-1. Existing repositories begin with report-only measurement.
-2. New or explicitly adopted repositories use policy-required conformance.
-3. A capable hosting plan MAY connect the stable check to platform enforcement.
+1. Existing, newly bootstrapped, and explicitly adopted repositories begin
+   with report-only measurement.
+2. A separate accepted policy change MAY move a defined repository scope to
+   policy-required conformance after rule and ownership readiness is proven.
+3. A capable hosting plan MAY connect a policy-required stable check to
+   platform enforcement.
 4. Existing violations are resolved by a repository-owned migration or an
    approved exception.
 

@@ -1,7 +1,7 @@
 # Dependency and build hygiene
 
 - Status: Accepted
-- Standard version: `2026.08.1`
+- Standard version: `2026.08.2`
 
 This cross-cutting profile separates three applicability layers:
 

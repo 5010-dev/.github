@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STANDARD_ROOT = REPO_ROOT / "docs/standards/developer-tooling"
-STANDARD_VERSION = "2026.08.1"
+STANDARD_VERSION = "2026.08.2"
 CONTRACT_VERSION = "golden-path/v1"
 EXPECTED_DECISIONS = {f"GP-{number:03d}" for number in range(6, 21)}
 FULL_DATE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")

@@ -1,7 +1,7 @@
 # Dependency management
 
 - Status: Accepted
-- Standard version: `2026.08.1`
+- Standard version: `2026.08.2`
 
 Each ecosystem's native manager owns dependency resolution. mise owns selected
 runtime and support-tool bootstrap; Just exposes stable commands. Neither

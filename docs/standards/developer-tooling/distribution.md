@@ -1,7 +1,7 @@
 # Golden Path distribution and versioning
 
 - Status: Accepted
-- Standard version: `2026.08.1`
+- Standard version: `2026.08.2`
 - Contract version: `golden-path/v1`
 
 Golden Path assets use different distribution modes according to ownership,
@@ -11,14 +11,29 @@ execution risk, and release lifecycle.
 
 | Mode | Assets | Consumption authority |
 | --- | --- | --- |
-| Materialized repository-local asset | mise/Just files, modules, scripts, language config, caller workflow, metadata skeleton | Reviewed files committed by the consumer repository |
+| Managed materialized integration asset | Canonical request, metadata, managed-asset inventory, bootstrap script, and structural-conformance caller | Generator/upgrader, through reviewed repository-local diffs |
+| Repository-owned scaffold | Source, README, native manifests and locks, mise/Just files, language config, dependency automation, and repository quality workflow | Repository after the initial materialization |
 | Immutable referenced automation | Stable reusable workflow or composite action | Full commit SHA plus caller-owned inputs and permissions |
 | Versioned released implementation | Checker, generator, CLI, package, schema/template bundle | Exact SemVer and checksum/digest; available provenance record |
 | Documentation link | This standard and adoption guides | Stable central normative path, not copied prose |
 
-Materialization is the default. A generated file becomes repository-local
-executable authority and is not required to remain byte-identical to its source
-template.
+Materialization is the default. Managed integration assets remain generator
+upgrade inputs, but a generated scaffold becomes repository-owned executable
+authority immediately and is not required to remain byte-identical to its
+source template. A generated asset inventory MUST distinguish these ownership
+classes by listing only the managed integration set. An upgrader MUST NOT
+overwrite, remove, copy into an upgrade candidate, or report a conflict for a
+repository-owned scaffold merely because an earlier generator listed it.
+
+The managed integration set is limited to
+`.github/golden-path-request.json`, `.github/golden-path.yaml`,
+`.github/golden-path-assets.json`,
+`.github/workflows/developer-tooling.yml`, and `scripts/golden-path`.
+The inventory file is managed implicitly because it cannot include its own
+content digest.
+Changing a managed file outside the generator requires deliberate conflict
+resolution. Every other bootstrap output is scaffold unless a future standard
+revision names it in the managed set.
 
 ## Immutable consumption
 
@@ -70,6 +85,13 @@ for a bounded repeated step sequence. Keep repository-specific quality
 behavior in `just ci`. A shared structural-conformance workflow MUST invoke the
 compatible checker without installing the consumer toolchain or replaying
 `just ci`.
+
+A new-repository bootstrap MUST also materialize a repository-owned quality
+workflow that prepares the exact checked-in toolchain, runs `just init`, and
+runs `just ci` exactly once. It MUST NOT call the structural-conformance
+workflow or replay the checker as a separate quality step. The independent
+conformance caller remains checker-only and report-only unless a later policy
+change explicitly selects a stronger enforcement state.
 
 ## Workflow-template discovery
 
