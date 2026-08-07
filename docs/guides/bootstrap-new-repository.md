@@ -111,8 +111,11 @@ replaces that value with the exact profile array from `.github/golden-path.yaml`
 
 Keep the caller's triggers, default-branch choice, path filters, concurrency,
 permissions, runner, working directory, profile input, environment adapter, and
-named secret forwarding repository-local. Keep the reusable workflow and setup
-action on their full source commit and keep every release checksum exact.
+named secret forwarding repository-local. Keep the reusable workflow and any
+directly invoked setup action on their full source commit. The reusable workflow
+owns release identity, checksum, and attestation verification, so generated
+callers must not repeat those inputs. A repository that invokes the setup action
+directly must keep its explicit release identity and checksum inputs exact.
 
 Run the following before merging the repository's adoption change:
 

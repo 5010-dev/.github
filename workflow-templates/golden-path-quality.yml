@@ -16,17 +16,10 @@ concurrency:
 
 jobs:
   conformance:
-    uses: 5010-dev/engineering-tooling/.github/workflows/golden-path-quality.yml@4c078bf7401b10fce9691c521d2887370963e74b
+    uses: 5010-dev/engineering-tooling/.github/workflows/golden-path-quality.yml@58b9cee44a7442899ab399ef1d04b0b2ba45052d
     with:
       runner: ubuntu-24.04
       working-directory: .
       # Replace this invalid JSON sentinel with the exact profile array in
       # .github/golden-path.yaml. It deliberately fails closed until replaced.
       profiles: 'REPLACE_WITH_EXACT_PROFILES'
-      checker-version: '1.2.4'
-      source-commit: '4c078bf7401b10fce9691c521d2887370963e74b'
-      github-cli-version: '2.97.0'
-      darwin-amd64-sha256: 'faa79fa548d56fd542768c74ac38ace904bf3e1541e8d3de09ae8278a47c8181'
-      darwin-arm64-sha256: '2e20064590c31fdf39d94483ee691da3f9076f34becebef11fb74c446db2c2d1'
-      linux-amd64-sha256: '43e780a52219d3917086cde358959ae53ce1dc6420c00770dec46d4f08c94628'
-      linux-arm64-sha256: '8abeb2021d3af995563e1f5f4746c1456c73695fa320cd2c2e3119cfbcb37245'

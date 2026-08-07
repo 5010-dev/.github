@@ -323,7 +323,6 @@ def validate_locator() -> dict[str, Any]:
 
 def validate_workflow_template(locator: dict[str, Any]) -> None:
     implementation = locator["implementation"]
-    release = implementation["release"]
     workflow_path = local_file(locator["discovery"]["workflowTemplate"], "workflow template")
     workflow = workflow_path.read_text()
     required = [
@@ -331,20 +330,7 @@ def validate_workflow_template(locator: dict[str, Any]) -> None:
         "permissions:\n  contents: read",
         "working-directory: .",
         f"profiles: '{PROFILE_PLACEHOLDER}'",
-        f"checker-version: '{release['version']}'",
-        f"source-commit: '{release['sourceCommit']}'",
-        f"github-cli-version: '{implementation['verifier']['githubCliVersion']}'",
     ]
-    archive_inputs = {
-        ("darwin", "amd64"): "darwin-amd64-sha256",
-        ("darwin", "arm64"): "darwin-arm64-sha256",
-        ("linux", "amd64"): "linux-amd64-sha256",
-        ("linux", "arm64"): "linux-arm64-sha256",
-    }
-    for archive in release["archives"]:
-        required.append(
-            f"{archive_inputs[(archive['os'], archive['architecture'])]}: '{archive['sha256']}'"
-        )
     for text in required:
         if text not in workflow:
             raise ValidationError(f"workflow template omits immutable caller text: {text}")
@@ -363,6 +349,11 @@ def validate_workflow_template(locator: dict[str, Any]) -> None:
         r"\benvironment:\s*",
         r"\bid-token:\s*write\b",
         r"\battestations:\s*write\b",
+        (
+            r"^\s+(?:checker-version|source-commit|github-cli-version|"
+            r"darwin-amd64-sha256|darwin-arm64-sha256|"
+            r"linux-amd64-sha256|linux-arm64-sha256):"
+        ),
     ]
     for pattern in forbidden:
         if re.search(pattern, workflow, re.IGNORECASE | re.MULTILINE):

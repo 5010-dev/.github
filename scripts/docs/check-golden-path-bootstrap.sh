@@ -405,11 +405,19 @@ require(required_paths <= managed_paths, "required managed paths")
 
 workflow = (candidate / ".github/workflows/developer-tooling.yml").read_text()
 require(f"uses: {implementation['automation']['reusableWorkflow']}" in workflow, "generated workflow pin")
-require(f"checker-version: '{expected_release['version']}'" in workflow, "generated checker version")
-require(f"source-commit: '{expected_release['sourceCommit']}'" in workflow, "generated source commit")
+require("runner: ubuntu-24.04" in workflow, "generated runner")
+require("working-directory: ." in workflow, "generated working directory")
 require("profiles: '[\"documentation\"]'" in workflow, "generated profiles")
-for archive in expected_release["archives"]:
-    require(archive["sha256"] in workflow, f"generated archive checksum {archive['name']}")
+for retired_input in (
+    "checker-version",
+    "source-commit",
+    "github-cli-version",
+    "darwin-amd64-sha256",
+    "darwin-arm64-sha256",
+    "linux-amd64-sha256",
+    "linux-arm64-sha256",
+):
+    require(f"{retired_input}:" not in workflow, f"retired generated input {retired_input}")
 for forbidden in ("@main", "@dev", "@latest", "secrets: inherit", "environment:"):
     require(forbidden not in workflow, f"generated workflow forbidden text {forbidden}")
 
