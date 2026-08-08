@@ -1,7 +1,7 @@
 # Dependency operations
 
 - Status: Accepted
-- Standard version: `2026.08.3`
+- Standard version: `2026.08.4`
 - Contract version: `golden-path/v1`
 
 This profile binds repository-owned dependency facts to organization risk
@@ -36,10 +36,10 @@ impact inference, CI command registry, or central approval queue.
 
 ## Root binding
 
-A `classified` root binds its existing native root ID to one or more existing
-`affectedReleaseUnits`. A contract or migration that must be validated but is
+A `classified` root binds its existing `nativeRootRef` to one or more existing
+`affectedArtifacts[].releaseUnitRef`. A contract or migration that must be validated but is
 not an artifact impact is listed separately in `validationOnly` with relationship
-kind `contract` or `migration`. The compiler MUST reject references not present
+kind `contract` or `migration` and `invariantReleaseUnitRef`. The compiler MUST reject references not present
 in the repository-owned files.
 
 Owner and release flow have repository defaults and MAY be overridden at root
@@ -75,7 +75,7 @@ the references and workflow linkage; it MUST NOT execute the command.
 
 ## Routine update policy
 
-A classified native root has a routine open-PR budget of `3` by default. The
+A classified native root has `maxOpenPullRequests: 3` by default. The
 budget is a **MUST**, is expressed through the selected adapter's native
 configuration, and excludes security updates and manual security remediation.
 An override MUST be a positive integer and MUST record reason, owner, and

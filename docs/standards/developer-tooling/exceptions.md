@@ -1,7 +1,7 @@
 # Golden Path exceptions
 
 - Status: Accepted
-- Standard version: `2026.08.3`
+- Standard version: `2026.08.4`
 - Schema: [`golden-path-exceptions/v1`](./schemas/golden-path-exceptions-v1.schema.json)
 
 An exception is a repository-local, reviewable, time-bounded waiver for one or

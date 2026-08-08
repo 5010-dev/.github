@@ -1,7 +1,7 @@
 # Developer Tooling Standard
 
 - Status: Accepted
-- Standard version: `2026.08.3`
+- Standard version: `2026.08.4`
 - Contract version: `golden-path/v1`
 - Last reviewed: 2026-08-09
 
@@ -91,7 +91,7 @@ An applicable repository records at least:
 ```yaml
 schemaVersion: golden-path-metadata/v1
 contractVersion: golden-path/v1
-standardVersion: "2026.08.3"
+standardVersion: "2026.08.4"
 assetBundleVersion: "1.0.0"
 profiles:
   - node-typescript
@@ -186,6 +186,12 @@ New repositories use the latest preferred standard and stable asset bundle.
 Existing repositories adopt through repository-owned, reviewable work. The
 standard does not maintain repository migration schedules or conformance
 status.
+
+`2026.08.4` completes the dependency evidence serialization accepted by
+GP-021. It adds repository/default-branch identity, PR node and ref SHAs, check
+rollups, alert identities, exact defer review fields, and source-bound report
+identity that were incomplete in `2026.08.3`. The serialized contract remains
+v1; no consumer had an immutable tooling release for the incomplete source.
 
 `2026.08.3` adds the repository-owned dependency policy compiler contract. It
 references existing native roots and release units, preserves repository-owned

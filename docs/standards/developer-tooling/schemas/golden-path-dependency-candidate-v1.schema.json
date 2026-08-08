@@ -29,9 +29,9 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["rootId", "status"],
+        "required": ["nativeRootRef", "status"],
         "properties": {
-          "rootId": {"type": "string", "minLength": 1},
+          "nativeRootRef": {"type": "string", "minLength": 1},
           "status": {"type": "string", "enum": ["classified", "pending-classification"]},
           "reason": {"type": "string", "minLength": 1}
         }

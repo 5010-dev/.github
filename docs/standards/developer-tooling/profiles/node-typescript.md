@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Profile ID: `node-typescript`
-- Standard version: `2026.08.3`
+- Standard version: `2026.08.4`
 
 This profile combines a common TypeScript quality contract with artifact-specific
 module, build, workspace, and publishing behavior.

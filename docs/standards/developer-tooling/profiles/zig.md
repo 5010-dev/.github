@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Profile IDs: `zig`, `zig-toolchain`
-- Standard version: `2026.08.3`
+- Standard version: `2026.08.4`
 
 Zig is conditional. It is enabled only for an intentionally adopted Zig
 artifact with an owner, supported targets, and maintenance capacity.
