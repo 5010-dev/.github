@@ -1,8 +1,183 @@
 {
   "schemaVersion": "golden-path-rule-catalog/v1",
   "contractVersion": "golden-path/v1",
-  "standardVersion": "2026.08.2",
+  "standardVersion": "2026.08.3",
   "rules": [
+    {
+      "id": "DT-DEP-005",
+      "title": "Dependency policy references repository-owned facts",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-021",
+        "document": "dependency-operations.md",
+        "anchor": "authority-boundaries"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": [],
+        "capabilities": ["dependency-automation"],
+        "condition": "A repository compiles dependency automation policy."
+      },
+      "assessment": "automated",
+      "severity": "error",
+      "waivable": false,
+      "highRisk": false,
+      "assertion": "Root bindings reference existing native-root and release-unit IDs without defining or inferring a second release-unit model.",
+      "remediation": "Declare the native root or release unit in its repository-owned authority, then reference its existing ID from dependency policy.",
+      "introducedIn": "2026.08.3",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-DEP-006",
+      "title": "Canonical dependency validation references repository just ci",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-021",
+        "document": "dependency-operations.md",
+        "anchor": "canonical-gate-reference"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": [],
+        "capabilities": ["dependency-automation"],
+        "condition": "A root is classified for routine dependency updates."
+      },
+      "assessment": "automated",
+      "severity": "error",
+      "waivable": false,
+      "highRisk": false,
+      "assertion": "The typed gate names repository-owned just ci and any workflow/job evidence resolves without central conformance executing the command.",
+      "remediation": "Reference the repository's canonical just ci command and an existing workflow/job when CI evidence is declared.",
+      "introducedIn": "2026.08.3",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-DEP-007",
+      "title": "Classified roots enforce a bounded routine PR budget",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-021",
+        "document": "dependency-operations.md",
+        "anchor": "routine-update-policy"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": [],
+        "capabilities": ["dependency-automation"],
+        "condition": "A classified root has routine update automation."
+      },
+      "assessment": "automated",
+      "severity": "error",
+      "waivable": false,
+      "highRisk": false,
+      "assertion": "The selected adapter enforces the compiled positive-integer budget, default 3, while security updates remain excluded.",
+      "remediation": "Set the native adapter limit to the compiled budget or declare a reason, owner, and reviewAfter override.",
+      "introducedIn": "2026.08.3",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-DEP-008",
+      "title": "Routine grouping preserves one risk and validation boundary",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-021",
+        "document": "dependency-operations.md",
+        "anchor": "routine-update-policy"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": [],
+        "capabilities": ["dependency-automation"],
+        "condition": "Routine dependency updates are grouped."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": false,
+      "highRisk": false,
+      "assertion": "Every group shares ecosystem, native root, affected artifact-unit set, validation boundary, and risk class.",
+      "remediation": "Split incompatible updates at the native root, artifact impact, validation, or risk boundary.",
+      "introducedIn": "2026.08.3",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-DEP-009",
+      "title": "Security routing is independent from routine queue controls",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-021",
+        "document": "dependency-operations.md",
+        "anchor": "security-route"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": [],
+        "capabilities": ["dependency-automation"],
+        "condition": "Dependency security alerts or remediation are enabled."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": false,
+      "highRisk": true,
+      "assertion": "Security visibility, reachable owner fallback, and canonical validation or manual remediation continue regardless of routine budget, grouping, or pending roots.",
+      "remediation": "Restore the security lane and fallback route; do not wait for routine regrouping or root classification.",
+      "introducedIn": "2026.08.3",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-DEP-010",
+      "title": "One adapter owns each dependency surface",
+      "level": "MUST_NOT",
+      "source": {
+        "decision": "GP-021",
+        "document": "dependency-operations.md",
+        "anchor": "routine-update-policy"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": [],
+        "capabilities": ["dependency-automation"],
+        "condition": "Dependabot or Renovate manages a dependency surface."
+      },
+      "assessment": "automated",
+      "severity": "error",
+      "waivable": false,
+      "highRisk": false,
+      "assertion": "Dependabot and Renovate do not manage the same ecosystem and native root.",
+      "remediation": "Select one adapter for the surface and remove the duplicate update configuration.",
+      "introducedIn": "2026.08.3",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-DEP-011",
+      "title": "Dependency preview and live report preserve evidence boundaries",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-021",
+        "document": "dependency-operations.md",
+        "anchor": "live-organization-report"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": [],
+        "capabilities": ["dependency-automation"],
+        "condition": "A dependency candidate or organization report is generated."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": false,
+      "highRisk": false,
+      "assertion": "Preview is deterministic and non-mutating, while live reports bind observation time, scope, query, source identity, digest, retention, and repository-owned defers.",
+      "remediation": "Regenerate from immutable repository facts and a digest-bound live observation; keep synthetic fixtures separate from pilot evidence.",
+      "introducedIn": "2026.08.3",
+      "retiredIn": null,
+      "replacement": null
+    },
     {
       "id": "DT-META-001",
       "title": "Applicable repositories declare Golden Path metadata",

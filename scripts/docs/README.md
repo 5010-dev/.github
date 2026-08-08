@@ -39,7 +39,7 @@ python3 scripts/docs/check-developer-tooling-standard.py
 
 This governance check verifies source completeness, JSON syntax, every Draft
 2020-12 keyword used by the local schemas, schema validation of catalogs and
-examples, negative contract fixtures, stable rule IDs, GP-006 through GP-020
+examples, negative contract fixtures, stable rule IDs, GP-006 through GP-021
 traceability, source headings, version alignment, runtime baseline invariants,
 example consistency, and repository-independence scans across the standard,
 guides, and owning ADR.

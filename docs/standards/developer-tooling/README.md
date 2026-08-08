@@ -1,9 +1,9 @@
 # Developer Tooling Standard
 
 - Status: Accepted
-- Standard version: `2026.08.2`
+- Standard version: `2026.08.3`
 - Contract version: `golden-path/v1`
-- Last reviewed: 2026-08-07
+- Last reviewed: 2026-08-09
 
 This standard defines the organization Golden Path for developer tooling,
 repository-local build and quality commands, language and Infrastructure as Code
@@ -74,6 +74,7 @@ Profiles and artifact types are separate axes. Identifiers such as
 | [Task runner](./task-runner.md) | Just import, module, script, and namespace boundaries |
 | [Toolchain management](./toolchain-management.md) | `mise`, native runtime owners, exact pins, and EOL |
 | [Dependency management](./dependency-management.md) | Native managers, manifests, locks, and frozen CI |
+| [Dependency operations](./dependency-operations.md) | Root binding, owner/release routing, PR budget, security route, preview, and live report contracts |
 | [Distribution](./distribution.md) | Materialization, immutable references, shared implementation, and release identity |
 | [Build hygiene](./build-hygiene.md) | Dependency automation, vulnerability, cache, SBOM, provenance, platform, and Dev Container rules |
 | [Runtime support](./runtime-support.md) | Lifecycle, organization disposition, migration, and initial support catalog |
@@ -90,7 +91,7 @@ An applicable repository records at least:
 ```yaml
 schemaVersion: golden-path-metadata/v1
 contractVersion: golden-path/v1
-standardVersion: "2026.08.2"
+standardVersion: "2026.08.3"
 assetBundleVersion: "1.0.0"
 profiles:
   - node-typescript
@@ -175,6 +176,7 @@ organization.
 | GP-018 | [Infrastructure as Code](./profiles/infrastructure.md) |
 | GP-019 | [Build hygiene](./build-hygiene.md) |
 | GP-020 | Versioning in this document, [distribution](./distribution.md), and [conformance](./conformance.md) |
+| GP-021 | [Dependency operations](./dependency-operations.md) and dependency schemas |
 
 Product, service, library, and API release versioning is outside this standard.
 
@@ -184,6 +186,12 @@ New repositories use the latest preferred standard and stable asset bundle.
 Existing repositories adopt through repository-owned, reviewable work. The
 standard does not maintain repository migration schedules or conformance
 status.
+
+`2026.08.3` adds the repository-owned dependency policy compiler contract. It
+references existing native roots and release units, preserves repository-owned
+canonical CI, keeps security routing independent from routine queue limits, and
+keeps live queue state outside offline conformance. It does not create a second
+release-unit system or a central approval queue.
 
 `2026.08.2` completes the new-repository bootstrap ownership boundary. Only
 the canonical request, metadata, managed inventory, bootstrap script, and

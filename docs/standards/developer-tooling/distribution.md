@@ -1,7 +1,7 @@
 # Golden Path distribution and versioning
 
 - Status: Accepted
-- Standard version: `2026.08.2`
+- Standard version: `2026.08.3`
 - Contract version: `golden-path/v1`
 
 Golden Path assets use different distribution modes according to ownership,
