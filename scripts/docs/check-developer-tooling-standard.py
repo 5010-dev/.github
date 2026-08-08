@@ -16,9 +16,9 @@ from urllib.parse import urlparse
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STANDARD_ROOT = REPO_ROOT / "docs/standards/developer-tooling"
-STANDARD_VERSION = "2026.08.2"
+STANDARD_VERSION = "2026.08.3"
 CONTRACT_VERSION = "golden-path/v1"
-EXPECTED_DECISIONS = {f"GP-{number:03d}" for number in range(6, 21)}
+EXPECTED_DECISIONS = {f"GP-{number:03d}" for number in range(6, 22)}
 FULL_DATE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 CALVER = re.compile(r"^(?P<year>[0-9]{4})\.(?P<month>0[1-9]|1[0-2])(?:\.(?P<ordinal>[1-9][0-9]*))?$")
 
@@ -28,6 +28,7 @@ REQUIRED_PATHS = [
     "docs/standards/developer-tooling/task-runner.md",
     "docs/standards/developer-tooling/toolchain-management.md",
     "docs/standards/developer-tooling/dependency-management.md",
+    "docs/standards/developer-tooling/dependency-operations.md",
     "docs/standards/developer-tooling/distribution.md",
     "docs/standards/developer-tooling/build-hygiene.md",
     "docs/standards/developer-tooling/runtime-support.md",
@@ -46,6 +47,11 @@ REQUIRED_PATHS = [
     "docs/standards/developer-tooling/schemas/README.md",
     "docs/standards/developer-tooling/schemas/golden-path-metadata-v1.schema.json",
     "docs/standards/developer-tooling/schemas/golden-path-native-roots-v1.schema.json",
+    "docs/standards/developer-tooling/schemas/golden-path-dependency-policy-v1.schema.json",
+    "docs/standards/developer-tooling/schemas/golden-path-dependency-defers-v1.schema.json",
+    "docs/standards/developer-tooling/schemas/golden-path-dependency-observation-v1.schema.json",
+    "docs/standards/developer-tooling/schemas/golden-path-dependency-candidate-v1.schema.json",
+    "docs/standards/developer-tooling/schemas/golden-path-dependency-report-v1.schema.json",
     "docs/standards/developer-tooling/schemas/golden-path-exceptions-v1.schema.json",
     "docs/standards/developer-tooling/schemas/golden-path-checker-output-v1.schema.json",
     "docs/standards/developer-tooling/schemas/golden-path-rule-catalog-v1.schema.json",
@@ -60,6 +66,7 @@ REQUIRED_PATHS = [
     "scripts/docs/fixtures/golden-path-adoption/existing-service.v1.json",
     "docs/decisions/0006-adopt-developer-tooling-golden-path.md",
     "docs/decisions/0008-separate-artifact-components-from-native-dependency-roots.md",
+    "docs/decisions/0021-adopt-dependency-policy-compiler.md",
 ]
 
 KNOWN_PROFILE_IDS = {
@@ -478,6 +485,11 @@ def validate_schema_sources() -> None:
     expected_versions = {
         "golden-path-metadata-v1.schema.json": "golden-path-metadata/v1",
         "golden-path-native-roots-v1.schema.json": "golden-path-native-roots/v1",
+        "golden-path-dependency-policy-v1.schema.json": "golden-path-dependency-policy/v1",
+        "golden-path-dependency-defers-v1.schema.json": "golden-path-dependency-defers/v1",
+        "golden-path-dependency-observation-v1.schema.json": "golden-path-dependency-observation/v1",
+        "golden-path-dependency-candidate-v1.schema.json": "golden-path-dependency-candidate/v1",
+        "golden-path-dependency-report-v1.schema.json": "golden-path-dependency-report/v1",
         "golden-path-exceptions-v1.schema.json": "golden-path-exceptions/v1",
         "golden-path-checker-output-v1.schema.json": "golden-path-checker-output/v1",
         "golden-path-rule-catalog-v1.schema.json": "golden-path-rule-catalog/v1",

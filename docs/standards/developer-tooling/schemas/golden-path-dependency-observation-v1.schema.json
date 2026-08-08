@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:5010-dev:golden-path:golden-path-dependency-observation:v1",
+  "title": "Golden Path live dependency observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "observedAt", "scope", "source", "pullRequests"],
+  "properties": {
+    "schemaVersion": {"const": "golden-path-dependency-observation/v1"},
+    "observedAt": {"type": "string", "format": "date-time"},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organization", "query"],
+      "properties": {
+        "organization": {"type": "string", "minLength": 1},
+        "query": {"type": "string", "minLength": 1},
+        "repositories": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "apiVersion", "identity", "sha256"],
+      "properties": {
+        "kind": {"const": "github-dependabot-api"},
+        "apiVersion": {"const": "2022-11-28"},
+        "identity": {"type": "string", "pattern": "^urn:sha256:[a-f0-9]{64}$"},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "pullRequests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["repository", "number", "url", "base", "head", "classification", "state"],
+        "properties": {
+          "repository": {"type": "string", "minLength": 1},
+          "number": {"type": "integer", "minimum": 1},
+          "url": {"type": "string", "format": "uri"},
+          "base": {"type": "string", "minLength": 1},
+          "head": {"type": "string", "minLength": 1},
+          "classification": {"type": "string", "enum": ["routine", "security-update", "security-remediation", "unknown"]},
+          "state": {"type": "string", "enum": ["open", "closed"]},
+          "rootId": {"type": "string", "minLength": 1},
+          "ownerRoute": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

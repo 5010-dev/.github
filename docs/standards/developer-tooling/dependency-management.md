@@ -1,7 +1,7 @@
 # Dependency management
 
 - Status: Accepted
-- Standard version: `2026.08.2`
+- Standard version: `2026.08.3`
 
 Each ecosystem's native manager owns dependency resolution. mise owns selected
 runtime and support-tool bootstrap; Just exposes stable commands. Neither
@@ -151,3 +151,7 @@ delivery or external consumer contract, the dependency update MUST regenerate
 and drift-check them in the same review.
 
 Rule IDs: `DT-DEP-*`.
+
+Dependency automation classification, root-to-release-unit references, PR
+budgets, security routing, deterministic preview, and live reporting are defined
+in [Dependency operations](./dependency-operations.md).

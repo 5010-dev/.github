@@ -128,7 +128,7 @@
           "properties": {
             "decision": {
               "type": "string",
-              "pattern": "^GP-(00[6-9]|01[0-9]|020)$"
+              "pattern": "^GP-(00[6-9]|01[0-9]|02[01])$"
             },
             "document": {
               "type": "string",

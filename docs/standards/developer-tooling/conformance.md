@@ -1,7 +1,7 @@
 # Golden Path conformance
 
 - Status: Accepted
-- Standard version: `2026.08.2`
+- Standard version: `2026.08.3`
 - Contract version: `golden-path/v1`
 
 Conformance is evaluated from repository-local declarations and checked-in
@@ -14,6 +14,9 @@ files. There is no central repository inventory or live conformance registry.
 | `.github/golden-path.yaml` | Selected standard, asset bundle, profiles, artifact types, capabilities, and applicability |
 | `.github/golden-path-native-roots.yaml` | Optional repository-owned override for actual native dependency roots when generated component paths are not the native authority |
 | `.github/golden-path-exceptions.yaml` | Approved, scoped, expiring MUST-rule exceptions |
+| `.github/golden-path-dependency-policy.yaml` | Optional repository-owned root binding, owner/release flow, gate, routine budget, and security fallback facts |
+| `.github/golden-path-dependency-defers.yaml` | Optional repository-owned manual-review records; live report input, not offline policy state |
+| `.github/release-units.json` | Existing repository-owned release-unit IDs referenced by dependency policy |
 | Native manifests and locks | Actual toolchain, dependency, build, and package semantics |
 | Bundled rule/runtime catalogs | Exact offline normative snapshot used by a checker release |
 
@@ -74,6 +77,15 @@ The shared checker:
 - MUST NOT modify or push repository files; and
 - MUST NOT reimplement format, lint, typecheck, test, or build behavior owned by
   `just ci`.
+
+Dependency semantic evaluation validates native-root and release-unit
+references, typed canonical-gate references, adapter ownership, routine budget,
+and security fallback without running the referenced gate. Schema-invalid or
+unresolvable references are configuration `error` with exit `2`; a valid
+repository configuration that bypasses a MUST policy is `fail` with exit `1`.
+Incomplete internal evaluation is exit `3`. SHOULD deviations warn with exit
+`0`. Live queue age, staleness, current budget pressure, and route reachability
+are outside the offline checker and remain report-only warnings.
 
 `just check` includes structural conformance in an adopted repository.
 `just conformance` MAY be provided as a diagnostic alias, but it is not an
