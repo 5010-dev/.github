@@ -4,7 +4,7 @@
   "title": "Golden Path dependency policy",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "releaseUnits", "defaults", "roots"],
+  "required": ["schemaVersion", "releaseUnits", "defaults", "rootBindings"],
   "properties": {
     "schemaVersion": {"const": "golden-path-dependency-policy/v1"},
     "releaseUnits": {
@@ -17,7 +17,7 @@
     },
     "adapter": {"type": "string", "enum": ["dependabot", "renovate"]},
     "defaults": {"$ref": "#/$defs/rootPolicy"},
-    "roots": {
+    "rootBindings": {
       "type": "array",
       "items": {"$ref": "#/$defs/rootBinding"}
     }
@@ -80,7 +80,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "prBudget": {"type": "integer", "minimum": 1},
+        "maxOpenPullRequests": {"type": "integer", "minimum": 1},
         "budgetOverride": {
           "type": "object",
           "additionalProperties": false,
@@ -122,24 +122,32 @@
     "invariant": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "releaseUnitId"],
+      "required": ["kind", "invariantReleaseUnitRef"],
       "properties": {
         "kind": {"type": "string", "enum": ["contract", "migration"]},
-        "releaseUnitId": {"$ref": "#/$defs/identifier"}
+        "invariantReleaseUnitRef": {"$ref": "#/$defs/identifier"}
+      }
+    },
+    "affectedArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["releaseUnitRef"],
+      "properties": {
+        "releaseUnitRef": {"$ref": "#/$defs/identifier"}
       }
     },
     "rootBinding": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["rootId", "classification"],
+      "required": ["nativeRootRef", "classificationState"],
       "properties": {
-        "rootId": {"$ref": "#/$defs/identifier"},
-        "classification": {"type": "string", "enum": ["classified", "pending-classification"]},
-        "affectedReleaseUnits": {
+        "nativeRootRef": {"$ref": "#/$defs/identifier"},
+        "classificationState": {"type": "string", "enum": ["classified", "pending-classification"]},
+        "affectedArtifacts": {
           "type": "array",
           "minItems": 1,
           "uniqueItems": true,
-          "items": {"$ref": "#/$defs/identifier"}
+          "items": {"$ref": "#/$defs/affectedArtifact"}
         },
         "validationOnly": {
           "type": "array",
@@ -156,11 +164,11 @@
       },
       "anyOf": [
         {
-          "properties": {"classification": {"const": "classified"}},
-          "required": ["affectedReleaseUnits"]
+          "properties": {"classificationState": {"const": "classified"}},
+          "required": ["affectedArtifacts"]
         },
         {
-          "properties": {"classification": {"const": "pending-classification"}},
+          "properties": {"classificationState": {"const": "pending-classification"}},
           "required": ["reason", "owner", "reviewAfter"]
         }
       ]

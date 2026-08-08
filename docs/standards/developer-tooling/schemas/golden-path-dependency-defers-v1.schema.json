@@ -12,20 +12,22 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["ecosystem", "rootId", "dependency", "currentVersion", "availableVersion", "riskClass", "reason", "owner", "observedAt", "lastReviewedAt", "nextReviewAt"],
+        "required": ["ecosystem", "nativeRootRef", "dependency", "versionRange", "currentVersion", "availableVersion", "riskClass", "reason", "owner", "observedAt", "reviewedAt", "reviewAfter"],
         "properties": {
           "ecosystem": {"type": "string", "minLength": 1},
-          "rootId": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
+          "nativeRootRef": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
           "dependency": {"type": "string", "minLength": 1},
+          "versionRange": {"type": "string", "minLength": 1},
           "currentVersion": {"type": "string", "minLength": 1},
           "availableVersion": {"type": "string", "minLength": 1},
           "riskClass": {"type": "string", "enum": ["major", "pre-1.0-minor", "other-manual"]},
           "reason": {"type": "string", "minLength": 1},
           "owner": {"type": "string", "minLength": 1},
           "observedAt": {"type": "string", "format": "date-time"},
-          "lastReviewedAt": {"type": "string", "format": "date"},
-          "nextReviewAt": {"type": "string", "format": "date"},
-          "source": {"type": "string", "format": "uri"}
+          "reviewedAt": {"type": "string", "format": "date"},
+          "reviewAfter": {"type": "string", "format": "date"},
+          "source": {"type": "string", "format": "uri"},
+          "workLink": {"type": "string", "format": "uri"}
         }
       }
     }

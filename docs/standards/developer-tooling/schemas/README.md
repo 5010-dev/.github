@@ -1,7 +1,7 @@
 # Developer tooling schemas
 
 These JSON Schemas are normative serialized-contract sources for standard
-`2026.08.3`.
+`2026.08.4`.
 
 | Schema | Contract |
 | --- | --- |
