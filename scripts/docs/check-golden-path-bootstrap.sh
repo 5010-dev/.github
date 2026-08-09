@@ -453,7 +453,7 @@ require(quality_workflow.count("run: just ci") == 1, "single repository quality 
 readme = (candidate / "README.md").read_text()
 for required_text in (
     "Work starts\nfrom `dev`",
-    "the repository quality workflow—are repository-owned scaffolding",
+    "generated files are repository-owned scaffolding",
 ):
     require(required_text in readme, f"bootstrap README {required_text}")
 
