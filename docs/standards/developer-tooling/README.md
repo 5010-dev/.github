@@ -1,7 +1,7 @@
 # Developer Tooling Standard
 
 - Status: Accepted
-- Standard version: `2026.08.4`
+- Standard version: `2026.08.5`
 - Contract version: `golden-path/v1`
 - Last reviewed: 2026-08-09
 
@@ -91,7 +91,7 @@ An applicable repository records at least:
 ```yaml
 schemaVersion: golden-path-metadata/v1
 contractVersion: golden-path/v1
-standardVersion: "2026.08.4"
+standardVersion: "2026.08.5"
 assetBundleVersion: "1.0.0"
 profiles:
   - node-typescript
@@ -186,6 +186,13 @@ New repositories use the latest preferred standard and stable asset bundle.
 Existing repositories adopt through repository-owned, reviewable work. The
 standard does not maintain repository migration schedules or conformance
 status.
+
+`2026.08.5` makes adapter availability explicit and preserves the root-total
+routine PR budget. An adapter may be selected only when the locator-selected
+immutable tooling release implements it, and one native root resolves to one
+adapter ecosystem; disjoint ecosystems at the same path use separate existing
+native-root IDs. The serialized contracts remain v1, and no compatibility
+reader or migration is introduced.
 
 `2026.08.4` completes the dependency evidence serialization accepted by
 GP-021. It adds repository/default-branch identity, PR node and ref SHAs, check

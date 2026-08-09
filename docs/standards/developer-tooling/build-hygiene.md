@@ -1,7 +1,7 @@
 # Dependency and build hygiene
 
 - Status: Accepted
-- Standard version: `2026.08.4`
+- Standard version: `2026.08.5`
 
 This cross-cutting profile separates three applicability layers:
 
@@ -54,8 +54,11 @@ Dependabot is the GitHub-native default.
   be included where supported.
 
 Renovate MAY replace Dependabot when a monorepo, central preset, advanced
-grouping, extracted versions, or a dependency dashboard requires it. Both tools
-MUST NOT manage the same dependency surface.
+grouping, extracted versions, or a dependency dashboard requires it, but only
+when the locator-selected immutable tooling release explicitly implements the
+Renovate adapter and the repository records that rationale. Selecting an
+unimplemented adapter is a configuration error. Both tools MUST NOT manage the
+same dependency surface.
 
 A self-hosted Renovate lock refresh can execute repository-defined manager or
 post-update behavior. It MUST use an explicit trusted-repository allowlist,
