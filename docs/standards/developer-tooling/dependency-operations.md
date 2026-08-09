@@ -1,7 +1,7 @@
 # Dependency operations
 
 - Status: Accepted
-- Standard version: `2026.08.4`
+- Standard version: `2026.08.5`
 - Contract version: `golden-path/v1`
 
 This profile binds repository-owned dependency facts to organization risk
@@ -83,6 +83,14 @@ An override MUST be a positive integer and MUST record reason, owner, and
 a valid configuration that bypasses the compiled budget is an unwaived MUST
 `fail` with exit `1`.
 
+The budget is total per classified native root. A root MUST resolve to exactly
+one adapter ecosystem so one budget cannot be multiplied across independently
+limited adapter blocks. Disjoint ecosystem roots MAY share the same
+repository-relative path, but they MUST use separate existing native-root IDs.
+A root that resolves to more than one adapter ecosystem is a configuration
+`error` with exit `2`; the compiler MUST NOT invent package-level mappings to
+disambiguate it.
+
 Routine changes MAY group only when ecosystem, native root, affected artifact
 release-unit set, validation boundary, and risk class are identical. Major and
 pre-1.0 minor changes are manual-review classes by default. Generated defers
@@ -91,9 +99,12 @@ review, and next review in
 `.github/golden-path-dependency-defers.yaml` using
 [`golden-path-dependency-defers/v1`](./schemas/golden-path-dependency-defers-v1.schema.json).
 
-Dependabot is the default adapter. Renovate MAY be selected only where a
-repository records why Dependabot cannot express its required policy. The same
-dependency surface MUST NOT be managed by both tools.
+Dependabot is the default adapter. A repository MAY select Renovate only when
+the locator-selected immutable tooling release explicitly implements the
+Renovate adapter and the repository records why Dependabot cannot express its
+required policy. Until such a release is selected, `adapter: renovate` is a
+configuration `error` with exit `2` and MUST NOT be interpreted as Dependabot.
+The same dependency surface MUST NOT be managed by both tools.
 
 ## Security route
 

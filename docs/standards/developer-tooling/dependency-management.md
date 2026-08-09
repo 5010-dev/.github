@@ -1,7 +1,7 @@
 # Dependency management
 
 - Status: Accepted
-- Standard version: `2026.08.4`
+- Standard version: `2026.08.5`
 
 Each ecosystem's native manager owns dependency resolution. mise owns selected
 runtime and support-tool bootstrap; Just exposes stable commands. Neither
@@ -33,7 +33,10 @@ component path. Several artifacts MAY share one native root, and one artifact
 MAY participate in more than one ecosystem root. Roots for disjoint profiles
 MAY use the same repository-relative path. Two roots for the same profile MUST
 NOT overlap because that would create competing authority for one dependency
-graph.
+graph. A native root MUST resolve to exactly one dependency-automation adapter
+ecosystem. When disjoint ecosystems use the same path, they remain separate
+native roots; this does not create package-level mapping or another release-unit
+model.
 
 A repository whose native roots differ from its generated component paths MUST
 declare `.github/golden-path-native-roots.yaml`. Each declared root selects the

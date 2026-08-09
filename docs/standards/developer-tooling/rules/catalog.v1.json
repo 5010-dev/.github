@@ -1,7 +1,7 @@
 {
   "schemaVersion": "golden-path-rule-catalog/v1",
   "contractVersion": "golden-path/v1",
-  "standardVersion": "2026.08.4",
+  "standardVersion": "2026.08.5",
   "rules": [
     {
       "id": "DT-DEP-005",
@@ -72,8 +72,8 @@
       "severity": "error",
       "waivable": false,
       "highRisk": false,
-      "assertion": "The selected adapter enforces the compiled positive-integer budget, default 3, while security updates remain excluded.",
-      "remediation": "Set the native adapter limit to the compiled budget or declare a reason, owner, and reviewAfter override.",
+      "assertion": "Each classified native root resolves to one implemented adapter ecosystem whose configuration enforces the compiled positive-integer budget, default 3, while security updates remain excluded.",
+      "remediation": "Split disjoint ecosystems into separate existing native roots, select an implemented adapter, and set its native limit to the compiled budget or declare a reason, owner, and reviewAfter override.",
       "introducedIn": "2026.08.3",
       "retiredIn": null,
       "replacement": null

@@ -1,7 +1,7 @@
 # Stable rule catalog
 
 [`catalog.v1.json`](./catalog.v1.json) is the normative machine-readable catalog
-for automatic and hybrid conformance rules in standard `2026.08.4`.
+for automatic and hybrid conformance rules in standard `2026.08.5`.
 
 ## Rule ID lifecycle
 
