@@ -91,15 +91,15 @@ jobs:
 
       - name: Set up verified Golden Path executable
         id: golden-path
-        uses: 5010-dev/engineering-tooling/actions/setup-golden-path@e9b6019e18167f23c8cb6d009fc6b5d12917a997
+        uses: 5010-dev/engineering-tooling/actions/setup-golden-path@993e749f91b9caa23a20a488ef8b74b005b4fafd
         with:
-          checker-version: '1.4.0'
-          source-commit: 'e9b6019e18167f23c8cb6d009fc6b5d12917a997'
+          checker-version: '1.5.0'
+          source-commit: '993e749f91b9caa23a20a488ef8b74b005b4fafd'
           github-cli-version: '2.97.0'
-          darwin-amd64-sha256: '8489a7bae584e96a36ef07db5fb9c9fe342e32fb51ce80b02254c5157536489b'
-          darwin-arm64-sha256: '5440c73406df550332bb3e0ef0c14212075705f6c7a67d6e83f97e3493943ea0'
-          linux-amd64-sha256: '01e8fbf6102ea68b5a933625b2864a5148f7b22f1bd658c8b4c774f499ce09a6'
-          linux-arm64-sha256: '51e7d422c93d59effea5c12d4ec21b729341a542ad32936f160ea8ed9f399bcf'
+          darwin-amd64-sha256: 'd2633d03ba6a96e87b3afda79cb7912511b4d8a77797687b0a241376c1097cfb'
+          darwin-arm64-sha256: '5a4528ed2f6bd16bc8ef0c3c875424217811e98e3f39fbbd1b045fce184143f5'
+          linux-amd64-sha256: '3a4151ed4bb51be6500ff06965031767939c0233efa587014e80d0cef7bf2b98'
+          linux-arm64-sha256: '55f2701c0f708fb37cb3a110f0af1a7d74119a417b875e29067e1f6563ff9272'
 
       - name: Exercise immutable bootstrap fixture
         env:
