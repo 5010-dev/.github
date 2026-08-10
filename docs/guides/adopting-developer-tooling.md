@@ -43,10 +43,10 @@ owner, and a removal condition.
 
 ## 5. Record exceptions deliberately
 
-Use canonical repository documentation or the
-[exception schema](../standards/developer-tooling/schemas/golden-path-exceptions-v1.schema.json)
-for a bounded, owned, approved, expiring deviation. The central repository does
-not maintain a consumer registry or exception queue.
+Use canonical repository documentation for a bounded, owned, approved,
+expiring deviation. Reference the exact normative document and section. The
+central repository does not maintain a machine rule catalog, consumer registry,
+or exception queue.
 
 ## Completion
 

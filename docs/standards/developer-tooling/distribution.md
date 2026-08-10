@@ -34,8 +34,8 @@ authorities above.
 
 ## Retained machine-readable contracts
 
-The active machine-readable sources are limited to the native-root, exception,
-and runtime-support contracts listed in
+The active machine-readable sources are limited to the native-root and
+runtime-support contracts listed in
 [the schema index](./schemas/README.md). Repositories MAY validate these explicit
 files with an off-the-shelf JSON Schema implementation. The organization does
 not require a shared custom validator.

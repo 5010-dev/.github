@@ -21,8 +21,8 @@ custom central executable.
 
 ## Decision
 
-1. Keep the Developer Tooling Standard and the retained native-root, exception,
-   and runtime-support schemas in `5010-dev/.github` as normative authority.
+1. Keep the Developer Tooling Standard and the retained native-root and
+   runtime-support schemas in `5010-dev/.github` as normative authority.
 2. Set the active central executable tooling identity to `none`.
 3. Remove the active locator, bootstrap workflow, workflow template, executable
    integration checks, generated metadata/checker/dependency schemas, and

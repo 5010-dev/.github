@@ -35,7 +35,6 @@ required_sources=(
     docs/standards/developer-tooling/rules/runtime-support.v1.json
     docs/standards/developer-tooling/schemas/README.md
     docs/standards/developer-tooling/schemas/golden-path-native-roots-v1.schema.json
-    docs/standards/developer-tooling/schemas/golden-path-exceptions-v1.schema.json
     docs/standards/developer-tooling/schemas/runtime-support-v1.schema.json
     docs/standards/engineering-documentation/README.md
     docs/standards/release-versioning/README.md
