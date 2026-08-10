@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "golden-path-dependency-observation/v2",
+  "observedAt": "2026-08-10T15:21:37Z",
+  "scope": {
+    "organization": "5010-dev",
+    "query": "repository=5010-dev/example; open Dependabot pull requests and alerts",
+    "repositories": ["5010-dev/example"]
+  },
+  "source": {
+    "kind": "github-dependabot-api",
+    "apiVersion": "2022-11-28",
+    "identity": "urn:sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "repositories": [
+    {
+      "repository": "5010-dev/example",
+      "repositoryNodeId": "R_example",
+      "defaultBranch": "main",
+      "defaultBranchSHA": "dddddddddddddddddddddddddddddddddddddddd"
+    }
+  ],
+  "pullRequests": [
+    {
+      "repository": "5010-dev/example",
+      "repositoryNodeId": "R_example",
+      "number": 17,
+      "nodeId": "PR_example",
+      "url": "https://github.com/5010-dev/example/pull/17",
+      "base": {
+        "ref": "dev",
+        "sha": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      },
+      "head": {
+        "ref": "dependabot/security-update",
+        "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "classification": "security-remediation",
+      "state": "open",
+      "createdAt": "2026-08-10T15:00:00Z",
+      "updatedAt": "2026-08-10T15:20:00Z",
+      "checkRollup": {
+        "status": "completed",
+        "conclusion": "success"
+      },
+      "securityClosureEvidence": [
+        {
+          "kind": "github-actions-job-run",
+          "workflow": ".github/workflows/security-remediation.yml",
+          "job": "closure",
+          "runId": 31402310024,
+          "runAttempt": 1,
+          "runUrl": "https://github.com/5010-dev/example/actions/runs/31402310024",
+          "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "completed",
+          "conclusion": "success",
+          "observedAt": "2026-08-10T15:21:37Z"
+        }
+      ]
+    }
+  ],
+  "alerts": [
+    {
+      "repository": "5010-dev/example",
+      "number": 213,
+      "advisoryIdentity": "GHSA-example",
+      "state": "open",
+      "severity": "high",
+      "ecosystem": "rust",
+      "dependency": "pyo3",
+      "relationship": "unknown",
+      "manifestPath": "Cargo.lock",
+      "securityUpdatePullRequest": "https://github.com/5010-dev/example/pull/17"
+    }
+  ]
+}

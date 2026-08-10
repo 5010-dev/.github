@@ -189,14 +189,15 @@ status.
 
 `2026.08.6` closes the security-remediation scope gap exposed by a pilot review.
 A remediation claim covers every open default-branch alert instance for its
-repository, advisory identity, and affected dependency; a repository-owned
-conditional gate proves the exact integration head, while central conformance
-only validates the typed workflow reference. Observation and report v2 retain
-direct/transitive relationship, advisory groups, and instance-level coverage.
-Unrelated advisories do not block the remediation, and the central tooling does
-not interpret native lock graphs or create an approval queue. Observation and
-report v1 remain immutable released contracts; no general compatibility
-framework is added.
+repository, advisory identity, and affected package ecosystem/name; a
+repository-owned conditional gate proves the exact integration head, while
+central conformance only validates the typed workflow reference and
+source-bound run evidence identity. Observation and report v2 retain
+direct/transitive/unknown relationship, advisory groups, exact-head closure
+evidence, and instance-level coverage. Unrelated advisories do not block the
+remediation, and the central tooling does not interpret native lock graphs or
+create an approval queue. Observation and report v1 remain immutable released
+contracts; no general compatibility framework is added.
 
 `2026.08.5` makes adapter availability explicit and preserves the root-total
 routine PR budget. An adapter may be selected only when the locator-selected

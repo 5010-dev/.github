@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "golden-path-dependency-report/v2",
+  "generatedAt": "2026-08-10T15:22:00Z",
+  "observedAt": "2026-08-10T15:21:37Z",
+  "observationIdentity": "urn:sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "scope": {
+    "organization": "5010-dev",
+    "query": "repository=5010-dev/example; open Dependabot pull requests and alerts"
+  },
+  "repositories": [
+    {
+      "repository": "5010-dev/example",
+      "defaultBranchSHA": "dddddddddddddddddddddddddddddddddddddddd",
+      "applicability": "applicable",
+      "classifiedRoots": 1,
+      "pendingRoots": 0,
+      "routineOpen": 0,
+      "securityOpen": 1,
+      "openAlerts": 1,
+      "openAdvisoryGroups": 1,
+      "partialSecurityAdvisories": 0,
+      "ownerRoutingCoverage": 1
+    }
+  ],
+  "securityAdvisories": [
+    {
+      "repository": "5010-dev/example",
+      "advisoryIdentity": "GHSA-example",
+      "ecosystem": "rust",
+      "dependency": "pyo3",
+      "remediationCoverage": "all-linked",
+      "openAlertInstances": [
+        {
+          "number": 213,
+          "severity": "high",
+          "relationship": "unknown",
+          "manifestPath": "Cargo.lock",
+          "securityUpdatePullRequest": "https://github.com/5010-dev/example/pull/17"
+        }
+      ],
+      "securityClosureEvidence": [
+        {
+          "kind": "github-actions-job-run",
+          "workflow": ".github/workflows/security-remediation.yml",
+          "job": "closure",
+          "runId": 31402310024,
+          "runAttempt": 1,
+          "runUrl": "https://github.com/5010-dev/example/actions/runs/31402310024",
+          "headSHA": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "completed",
+          "conclusion": "success",
+          "observedAt": "2026-08-10T15:21:37Z"
+        }
+      ]
+    }
+  ]
+}
