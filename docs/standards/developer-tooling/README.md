@@ -1,9 +1,9 @@
 # Developer Tooling Standard
 
 - Status: Accepted
-- Standard version: `2026.08.5`
+- Standard version: `2026.08.6`
 - Contract version: `golden-path/v1`
-- Last reviewed: 2026-08-09
+- Last reviewed: 2026-08-10
 
 This standard defines the organization Golden Path for developer tooling,
 repository-local build and quality commands, language and Infrastructure as Code
@@ -91,7 +91,7 @@ An applicable repository records at least:
 ```yaml
 schemaVersion: golden-path-metadata/v1
 contractVersion: golden-path/v1
-standardVersion: "2026.08.5"
+standardVersion: "2026.08.6"
 assetBundleVersion: "1.0.0"
 profiles:
   - node-typescript
@@ -186,6 +186,16 @@ New repositories use the latest preferred standard and stable asset bundle.
 Existing repositories adopt through repository-owned, reviewable work. The
 standard does not maintain repository migration schedules or conformance
 status.
+
+`2026.08.6` closes the security-remediation scope gap exposed by a pilot review.
+A remediation claim covers every open default-branch alert instance for its
+repository, advisory identity, and affected dependency; a repository-owned
+conditional gate proves the exact integration head, while central conformance
+only validates the typed workflow reference. The live report now emits
+`golden-path-dependency-report/v2` advisory groups and instance-level coverage.
+Unrelated advisories do not block the remediation, and the central tooling does
+not interpret native lock graphs or create an approval queue. Report v1 remains
+an immutable released contract; no general compatibility framework is added.
 
 `2026.08.5` makes adapter availability explicit and preserves the root-total
 routine PR budget. An adapter may be selected only when the locator-selected

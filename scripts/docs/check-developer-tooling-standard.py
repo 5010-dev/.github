@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STANDARD_ROOT = REPO_ROOT / "docs/standards/developer-tooling"
-STANDARD_VERSION = "2026.08.5"
+STANDARD_VERSION = "2026.08.6"
 CONTRACT_VERSION = "golden-path/v1"
 EXPECTED_DECISIONS = {f"GP-{number:03d}" for number in range(6, 22)}
 FULL_DATE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
@@ -52,6 +52,7 @@ REQUIRED_PATHS = [
     "docs/standards/developer-tooling/schemas/golden-path-dependency-observation-v1.schema.json",
     "docs/standards/developer-tooling/schemas/golden-path-dependency-candidate-v1.schema.json",
     "docs/standards/developer-tooling/schemas/golden-path-dependency-report-v1.schema.json",
+    "docs/standards/developer-tooling/schemas/golden-path-dependency-report-v2.schema.json",
     "docs/standards/developer-tooling/schemas/golden-path-exceptions-v1.schema.json",
     "docs/standards/developer-tooling/schemas/golden-path-checker-output-v1.schema.json",
     "docs/standards/developer-tooling/schemas/golden-path-rule-catalog-v1.schema.json",
@@ -490,13 +491,14 @@ def validate_schema_sources() -> None:
         "golden-path-dependency-observation-v1.schema.json": "golden-path-dependency-observation/v1",
         "golden-path-dependency-candidate-v1.schema.json": "golden-path-dependency-candidate/v1",
         "golden-path-dependency-report-v1.schema.json": "golden-path-dependency-report/v1",
+        "golden-path-dependency-report-v2.schema.json": "golden-path-dependency-report/v2",
         "golden-path-exceptions-v1.schema.json": "golden-path-exceptions/v1",
         "golden-path-checker-output-v1.schema.json": "golden-path-checker-output/v1",
         "golden-path-rule-catalog-v1.schema.json": "golden-path-rule-catalog/v1",
         "runtime-support-v1.schema.json": "runtime-support/v1",
     }
     if {path.name for path in schema_paths} != set(expected_versions):
-        report("schemas: source set does not match the required v1 contract")
+        report("schemas: source set does not match the required contract")
 
     for path in schema_paths:
         data = load_json(path)

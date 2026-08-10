@@ -3,7 +3,7 @@
 - Status: Accepted
 - Profile IDs: `infrastructure-aws-cdk`, `infrastructure-terraform`,
   `infrastructure-opentofu`, `infrastructure-pulumi`
-- Standard version: `2026.08.5`
+- Standard version: `2026.08.6`
 
 This profile owns IaC authoring, exact tool/dependency authority, static
 validation, and non-mutating commands. Deployment and Operations contracts own

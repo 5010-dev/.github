@@ -1,7 +1,7 @@
 # Developer tooling command contract
 
 - Status: Accepted
-- Standard version: `2026.08.5`
+- Standard version: `2026.08.6`
 - Contract version: `golden-path/v1`
 
 This contract defines the stable commands that developers and CI use. Native

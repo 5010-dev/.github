@@ -1,7 +1,7 @@
 {
   "schemaVersion": "golden-path-rule-catalog/v1",
   "contractVersion": "golden-path/v1",
-  "standardVersion": "2026.08.5",
+  "standardVersion": "2026.08.6",
   "rules": [
     {
       "id": "DT-DEP-005",
@@ -175,6 +175,31 @@
       "assertion": "Preview is deterministic and non-mutating, while live reports bind observation time, scope, query, source identity, digest, retention, and repository-owned defers.",
       "remediation": "Regenerate from immutable repository facts and a digest-bound live observation; keep synthetic fixtures separate from pilot evidence.",
       "introducedIn": "2026.08.3",
+      "retiredIn": null,
+      "replacement": null
+    },
+    {
+      "id": "DT-DEP-012",
+      "title": "Security remediation closes its declared advisory scope",
+      "level": "MUST",
+      "source": {
+        "decision": "GP-021",
+        "document": "dependency-operations.md",
+        "anchor": "security-remediation-closure"
+      },
+      "applicability": {
+        "profiles": ["*"],
+        "artifactTypes": [],
+        "capabilities": ["dependency-automation"],
+        "condition": "A dependency security remediation claims completion or promotion readiness."
+      },
+      "assessment": "hybrid",
+      "severity": "error",
+      "waivable": true,
+      "highRisk": true,
+      "assertion": "A fresh observation enumerates every same-repository, same-advisory, same-dependency alert instance; the repository-owned conditional gate proves the exact candidate head has no vulnerable native graph path; and the expected alerts are fixed after main promotion.",
+      "remediation": "Keep the remediation partial, cover the residual same-scope instances before promotion, or record a scoped expiring high-risk exception without blocking unrelated advisories or security visibility.",
+      "introducedIn": "2026.08.6",
       "retiredIn": null,
       "replacement": null
     },
