@@ -1,41 +1,26 @@
-# Developer tooling schemas
+# Developer Tooling schemas
 
-These JSON Schemas are normative serialized-contract sources for standard
-`2026.08.6`.
+- Status: Accepted
+- Standard version: `2026.08.7`
 
-| Schema | Contract |
+Only repository-owned facts that benefit from a stable source-controlled shape
+remain machine-readable:
+
+| Schema | Purpose |
 | --- | --- |
-| [`golden-path-metadata/v1`](./golden-path-metadata-v1.schema.json) | Repository-local profile, artifact, capability, and version declaration |
-| [`golden-path-native-roots/v1`](./golden-path-native-roots-v1.schema.json) | Optional repository-owned native dependency root declaration |
-| [`golden-path-dependency-policy/v1`](./golden-path-dependency-policy-v1.schema.json) | Root binding, owner/release flow, typed gate, routine budget, and security fallback facts |
-| [`golden-path-dependency-defers/v1`](./golden-path-dependency-defers-v1.schema.json) | Repository-owned major/pre-1.0/manual defer records |
-| [`golden-path-dependency-observation/v1`](./golden-path-dependency-observation-v1.schema.json) | Immutable legacy digest-bound GitHub dependency queue observation |
-| [`golden-path-dependency-observation/v2`](./golden-path-dependency-observation-v2.schema.json) | Digest-bound GitHub dependency queue observation with source relationship and exact-head closure-run evidence |
-| [`golden-path-dependency-candidate/v1`](./golden-path-dependency-candidate-v1.schema.json) | Deterministic non-mutating adoption preview |
-| [`golden-path-dependency-report/v1`](./golden-path-dependency-report-v1.schema.json) | Immutable legacy count-only dependency operations report |
-| [`golden-path-dependency-report/v2`](./golden-path-dependency-report-v2.schema.json) | Derived dependency operations report with ecosystem-qualified advisory groups, alert-instance coverage, and closure evidence |
-| [`golden-path-exceptions/v1`](./golden-path-exceptions-v1.schema.json) | Scoped, approved, expiring MUST-rule waivers |
-| [`golden-path-checker-output/v1`](./golden-path-checker-output-v1.schema.json) | Deterministic machine-readable checker result |
-| [`golden-path-rule-catalog/v1`](./golden-path-rule-catalog-v1.schema.json) | Stable machine rule catalog |
-| [`runtime-support/v1`](./runtime-support-v1.schema.json) | Versioned lifecycle/disposition catalog |
+| [`golden-path-native-roots/v1`](./golden-path-native-roots-v1.schema.json) | Stable native dependency root IDs, paths, and profiles |
+| [`golden-path-exceptions/v1`](./golden-path-exceptions-v1.schema.json) | Bounded repository-local exceptions |
+| [`runtime-support/v1`](./runtime-support-v1.schema.json) | Organization runtime-support catalog shape |
 
-Schemas use JSON Schema Draft 2020-12. YAML repository inputs MUST deserialize
-to the same data model before validation. YAML tags, duplicate keys, and
-implementation-specific object types are not part of the contract.
+The runtime-support data is
+[`rules/runtime-support.v1.json`](../rules/runtime-support.v1.json). Valid
+native-root and exception examples are under [`examples/`](./examples/).
 
-Examples:
+These are Draft 2020-12 JSON Schemas. A repository MAY validate an explicit JSON
+or YAML document with an off-the-shelf validator. The organization provides no
+active custom checker, generated metadata schema, checker output schema,
+dependency compiler schema, or rule-catalog schema.
 
-- [`golden-path-metadata/v1`](./examples/golden-path-metadata-v1.valid.json)
-- [`golden-path-native-roots/v1`](./examples/golden-path-native-roots-v1.valid.json)
-- [`golden-path-dependency-observation/v2`](./examples/golden-path-dependency-observation-v2.valid.json)
-- [`golden-path-dependency-report/v2`](./examples/golden-path-dependency-report-v2.valid.json)
-- [`golden-path-exceptions/v1`](./examples/golden-path-exceptions-v1.valid.json)
-- [`golden-path-checker-output/v1`](./examples/golden-path-checker-output-v1.valid.json)
-
-Schema IDs are stable compatibility identifiers. Published release manifests
-bind the exact file content by source ref and digest; consumers MUST NOT fetch a
-mutable default branch as a runtime dependency.
-
-Schema `$id` values use repository-independent `urn:5010-dev:golden-path:...`
-identifiers. Repository names and hosting paths are operational locators and do
-not change serialized contract identity.
+Schema compatibility is required only for a real released consumer or durable
+state. Otherwise, correct the source and its consumers together before the
+repository's release boundary.

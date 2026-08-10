@@ -1,8 +1,0 @@
-{
-  "name": "Golden Path quality",
-  "description": "Add the immutable, fail-closed FiftyTen Golden Path quality caller.",
-  "iconName": "octicon shield-check",
-  "categories": [
-    "Continuous integration"
-  ]
-}

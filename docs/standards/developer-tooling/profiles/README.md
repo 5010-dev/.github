@@ -1,7 +1,8 @@
 # Developer tooling profiles
 
 Profiles define language or IaC-specific native authorities and quality/build
-contracts. Artifact types and capabilities remain independent metadata axes.
+contracts. Artifact shape and implemented capabilities remain independent
+review dimensions; no central metadata file is required.
 
 ## Profile identifiers
 
@@ -60,7 +61,7 @@ The initial catalog supports:
 - `cache`
 - `devcontainer`
 
-A repository declares only capabilities it actually implements. A selected
+A repository implements only capabilities it actually has. An applicable
 profile may make a capability mandatory for an artifact type.
 
 ## Polyglot repositories
@@ -70,10 +71,9 @@ roots. Each toolchain and dependency graph retains one operational owner. Root
 Just commands orchestrate the selected profiles without copying native
 semantics into the central standard.
 
-Artifact components and native dependency roots are separate axes. A simple
-generated layout MAY infer one root per component. A layout with shared
-workspaces, cross-language artifacts, or several independent roots for one
-profile MUST declare its actual roots through
+Artifact components and native dependency roots are separate axes. A layout
+with shared workspaces, cross-language artifacts, or several independent roots
+for one profile MUST declare its actual roots through
 `.github/golden-path-native-roots.yaml`. Sharing a Git repository does not by
 itself require unrelated native dependency graphs to merge.
 

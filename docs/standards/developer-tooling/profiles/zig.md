@@ -2,14 +2,14 @@
 
 - Status: Accepted
 - Profile IDs: `zig`, `zig-toolchain`
-- Standard version: `2026.08.6`
+- Standard version: `2026.08.7`
 
 Zig is conditional. It is enabled only for an intentionally adopted Zig
 artifact with an owner, supported targets, and maintenance capacity.
 
 ## Lifecycle and upgrade
 
-The initial comparison baseline is exact Zig 0.16.0. A coordinated release
+The initial comparison baseline is exact Zig 0.16.0. The repository owner
 reconfirms the latest stable patch and matching ZLS artifact before pinning.
 
 Moving `master`, `nightly`, `latest`, and unbounded automatic minor upgrades are
@@ -24,7 +24,7 @@ prohibited. A compiler upgrade is a reviewed migration that checks:
 
 ## Authority
 
-1. `mise.toml`/release manifest select an exact verified Zig asset.
+1. `mise.toml` and its lock select an exact verified Zig asset.
 2. `build.zig.zon` owns package identity, minimum Zig, fingerprint,
    dependency URL/hash, and distributable paths.
 3. `build.zig` owns the build graph, target, optimization, artifacts, generated

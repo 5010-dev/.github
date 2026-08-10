@@ -1,7 +1,7 @@
 # Dependency and build hygiene
 
 - Status: Accepted
-- Standard version: `2026.08.6`
+- Standard version: `2026.08.7`
 
 This cross-cutting profile separates three applicability layers:
 
@@ -53,12 +53,9 @@ Dependabot is the GitHub-native default.
 - GitHub Actions, base images, package ecosystems, and IaC dependencies SHOULD
   be included where supported.
 
-Renovate MAY replace Dependabot when a monorepo, central preset, advanced
-grouping, extracted versions, or a dependency dashboard requires it, but only
-when the locator-selected immutable tooling release explicitly implements the
-Renovate adapter and the repository records that rationale. Selecting an
-unimplemented adapter is a configuration error. Both tools MUST NOT manage the
-same dependency surface.
+Renovate MAY replace Dependabot when a monorepo, advanced grouping, extracted
+versions, or a dependency dashboard requires it and the repository records that
+rationale. Both tools MUST NOT manage the same dependency surface.
 
 A self-hosted Renovate lock refresh can execute repository-defined manager or
 post-update behavior. It MUST use an explicit trusted-repository allowlist,
@@ -98,9 +95,9 @@ A newly introduced vulnerability over the approved threshold MUST be fixed or
 covered by an approved exception before merge or release. Scheduled SCA or a
 native full-graph audit is a SHOULD.
 
-Offline structural conformance and time-sensitive advisory verdicts are
-separate. The offline checker validates declarations and configuration; a
-security service or approved audit provides current advisory evidence.
+Source-controlled configuration review and time-sensitive advisory verdicts are
+separate. A security service or approved audit provides current advisory
+evidence; static configuration alone does not prove closure.
 
 ## License hygiene
 

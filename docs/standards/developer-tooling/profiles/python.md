@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Profile ID: `python`
-- Standard version: `2026.08.6`
+- Standard version: `2026.08.7`
 
 uv owns Python project setup, interpreter selection, environments, dependency
 resolution, locking, and tool execution. Packaging backends and native system
@@ -25,8 +25,8 @@ toolchains retain separate responsibilities.
   modified.
 - Named private or accelerator indexes use explicit package association and
   safe index priority. Credentials MUST NOT enter manifests or locks.
-- Exact uv and quality-tool versions are resolved through the repository lock
-  and release manifest.
+- Exact uv and quality-tool versions are resolved through repository-owned
+  manifests, locks, and toolchain selectors.
 - Build frontend/backend versions are bounded in `build-system` metadata and
   resolve exactly in CI. Pre-1.0 tools and tools with material minor-version
   behavior MUST NOT be followed through an unbounded major range.

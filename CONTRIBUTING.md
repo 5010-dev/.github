@@ -40,15 +40,16 @@ Do not bypass repository-managed hooks with `git commit --no-verify`.
 Active buildable repositories must follow the
 [Developer Tooling Standard](https://github.com/5010-dev/.github/blob/main/docs/standards/developer-tooling/README.md).
 It defines the root Just command contract, toolchain and native dependency
-authority, language and IaC profiles, immutable shared implementation,
-conformance, runtime support, and time-bounded exceptions. Repositories link to
-the central standard and keep their exact metadata, commands, manifests, locks,
-workflow implementation, migration status, and approved exceptions local.
-New repositories follow the
-[Golden Path bootstrap guide](https://github.com/5010-dev/.github/blob/main/docs/guides/bootstrap-new-repository.md)
+authority, language and IaC profiles, runtime support, repository-owned
+validation, and time-bounded exceptions. The active central executable tooling
+identity is `none`: repositories link to the contract and keep their exact
+commands, manifests, locks, native roots, release units, workflows, current
+evidence, and approved exceptions local. New repositories follow the
+[contract-only bootstrap guide](https://github.com/5010-dev/.github/blob/main/docs/guides/bootstrap-new-repository.md)
 and the
 [GitHub hosting capability profile](https://github.com/5010-dev/.github/blob/main/docs/guides/github-hosting-capabilities.md)
-before materializing repository-local tooling.
+without installing a central binary, locator-selected release, reusable
+conformance workflow, or managed asset bundle.
 
 Changes to shared platform boundaries, deployment workflows, or infrastructure
 integration must follow the relevant organization engineering contract. ECS

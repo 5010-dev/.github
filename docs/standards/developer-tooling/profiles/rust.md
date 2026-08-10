@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Profile ID: `rust`
-- Standard version: `2026.08.6`
+- Standard version: `2026.08.7`
 
 rustup and Cargo are the Rust operational owners. mise prepares Just and
 external support CLIs but MUST NOT repin Rust or Cargo dependencies.
@@ -28,8 +28,8 @@ Authority order is:
 2. `Cargo.toml` for edition, resolver, MSRV, features, and artifact metadata;
 3. root `Cargo.lock` for dependency resolution;
 4. root Just commands for composition; and
-5. Golden Path metadata/release manifest for conditional support CLIs and dated
-   nightly lanes.
+5. repository-owned exact pins and documented exceptions for conditional
+   support CLIs and dated nightly lanes.
 
 rust-analyzer is an optional editor capability, not a merge gate.
 `just init` and CI MUST verify the selected pin with

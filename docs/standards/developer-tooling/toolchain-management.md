@@ -1,7 +1,7 @@
 # Toolchain management
 
 - Status: Accepted
-- Standard version: `2026.08.6`
+- Standard version: `2026.08.7`
 
 The root `mise.toml` is a thin repository-local bootstrap and tool-selection
 entry point. It does not make mise the owner of every language runtime.

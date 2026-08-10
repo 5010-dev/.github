@@ -1,70 +1,61 @@
 # Developer Tooling Standard
 
 - Status: Accepted
-- Standard version: `2026.08.6`
+- Standard version: `2026.08.7`
 - Contract version: `golden-path/v1`
-- Last reviewed: 2026-08-10
+- Last reviewed: 2026-08-11
+- Owner: `5010-dev/.github` maintainers
 
-This standard defines the organization Golden Path for developer tooling,
-repository-local build and quality commands, language and Infrastructure as Code
-profiles, dependency hygiene, conformance, and time-bounded exceptions.
+This standard defines organization defaults for repository-owned developer
+tooling. It is a contract, not a central executable control plane.
 
-The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** in
-this standard are to be interpreted as described in
-[BCP 14](https://www.rfc-editor.org/info/bcp14) when, and only when, they appear
-in all capitals.
+The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** are
+interpreted as described in [BCP 14](https://www.rfc-editor.org/info/bcp14) when
+they appear in all capitals.
 
 ## Authority
 
-This directory is the normative authority for organization Developer Tooling
-rules and profiles. The machine-readable
-[rule catalog](./rules/catalog.v1.json) and [schemas](./schemas/README.md) are
-reviewed in the same change boundary as the human-readable rules.
+The normative source is this directory on `5010-dev/.github`, changed through
+a reviewed pull request under the organization contribution policy and this
+repository's documented main-only exception.
 
-The authority order is:
+Authority order:
 
-1. this standard and its versioned rule and schema sources;
-2. a released immutable snapshot of this standard consumed by shared tooling;
-3. repository-local Golden Path metadata, explicit native-root declarations,
-   and approved exceptions;
-4. repository-local native manifests, locks, toolchain selectors, commands, and
-   caller workflows as the executable As-built authority; and
-5. CI results and optional hosting-platform enforcement as current evidence.
+1. this human-readable standard and its retained schema/catalog sources;
+2. repository-local native-root declarations and accepted exceptions;
+3. repository-local manifests, locks, toolchain selectors, commands,
+   `release-units.json`, workflows, and release configuration as executable
+   As-built authority; and
+4. repository CI, releases, deployments, and GitHub security state as current
+   evidence.
 
-Templates, generators, checkers, reusable automation, issue descriptions, and
-repository implementations do not redefine this standard. A repository is an
-adoption and migration unit, not a reference implementation for organization
-rules.
+Issue descriptions, generators, checkers, templates, historical release
+artifacts, and another repository's implementation do not redefine this
+standard.
+
+## Active implementation boundary
+
+Active central executable tooling: **none**.
+
+The organization does not select or support a Golden Path binary, locator,
+generator, updater, shared conformance workflow, managed asset bundle, live
+report, or central dependency/security queue. Published
+`engineering-tooling` tags and releases are immutable audit history only.
+
+A future shared validator requires a separate accepted decision proving repeated
+errors, off-the-shelf insufficiency, lower net operating cost, explicit file
+inputs, a named owner, and a removal condition. Its maximum scope is
+stateless deterministic read-only schema and explicit cross-reference
+validation. It MUST NOT inspect live GitHub state, infer branch topology or
+dependency graphs, interpret release-unit impact, assess alert closure,
+orchestrate queues, or run repository CI.
 
 ## Applicability
 
-The base contract applies to active, buildable, organization-managed
-repositories, including applications, services, libraries, CLIs, buildable
-tooling, and IaC.
-
-An archived or generated-only mirror, asset-only repository, or documentation
-repository with no executable validation contract MAY declare
-`not-applicable`. A documentation repository with deterministic lint, link, or
-contract checks MAY adopt the `documentation` profile.
-
-A repository MUST NOT use successful no-op commands to appear conformant with
-an inapplicable language, artifact, or capability. Applicability is declared in
-`.github/golden-path.yaml` and checked against the repository's native files.
-
-## Contract composition
-
-Golden Path conformance is a composition of:
-
-- the organization base command, toolchain, dependency, distribution,
-  conformance, and exception contracts;
-- one or more [language or IaC profiles](./profiles/README.md);
-- one or more artifact types such as `service`, `library`, `cli`,
-  `infrastructure`, or `documentation`; and
-- declared capabilities such as format, lint, typecheck, test, build, package,
-  publish, coverage, fuzz, cache, or released-artifact handling.
-
-Profiles and artifact types are separate axes. Identifiers such as
-`node-typescript/service` MUST NOT be invented for every combination.
+The base contract applies to active, buildable organization-managed
+repositories. Read only the language or IaC profiles that match actual source,
+manifests, and infrastructure. Do not create metadata or no-op commands to claim
+unused capabilities.
 
 ## Standard map
 
@@ -72,174 +63,54 @@ Profiles and artifact types are separate axes. Identifiers such as
 | --- | --- |
 | [Command contract](./command-contract.md) | Root `just` façade and local/CI semantics |
 | [Task runner](./task-runner.md) | Just import, module, script, and namespace boundaries |
-| [Toolchain management](./toolchain-management.md) | `mise`, native runtime owners, exact pins, and EOL |
+| [Toolchain management](./toolchain-management.md) | Runtime owners, exact pins, and lifecycle |
 | [Dependency management](./dependency-management.md) | Native managers, manifests, locks, and frozen CI |
-| [Dependency operations](./dependency-operations.md) | Root binding, owner/release routing, PR budget, security route, preview, and live report contracts |
-| [Distribution](./distribution.md) | Materialization, immutable references, shared implementation, and release identity |
-| [Build hygiene](./build-hygiene.md) | Dependency automation, vulnerability, cache, SBOM, provenance, platform, and Dev Container rules |
-| [Runtime support](./runtime-support.md) | Lifecycle, organization disposition, migration, and initial support catalog |
-| [Conformance](./conformance.md) | Metadata, rule evaluation, output, exit codes, and enforcement states |
+| [Distribution](./distribution.md) | Contract-only source, repository ownership, and retired release meaning |
+| [Build hygiene](./build-hygiene.md) | Dependency automation, vulnerability, cache, SBOM, provenance, and platform rules |
+| [Runtime support](./runtime-support.md) | Runtime lifecycle and organization disposition |
+| [Conformance](./conformance.md) | Repository self-validation and evidence boundaries |
 | [Exceptions](./exceptions.md) | Scoped, approved, expiring deviations |
-| [Profiles](./profiles/README.md) | Node.js/TypeScript, Python, Go, Rust, Zig, and IaC contracts |
-| [Rules](./rules/README.md) | Stable rule ID lifecycle and machine catalog |
-| [Schemas](./schemas/README.md) | Versioned metadata, exception, output, catalog, and runtime-support schemas |
+| [Profiles](./profiles/README.md) | Language and IaC contracts |
+| [Schemas](./schemas/README.md) | Repository-owned native-root, exception, and runtime-support data |
 
-## Repository-local contract
+## Repository-owned contract
 
-An applicable repository records at least:
+An applicable repository MUST:
 
-```yaml
-schemaVersion: golden-path-metadata/v1
-contractVersion: golden-path/v1
-standardVersion: "2026.08.6"
-assetBundleVersion: "1.0.0"
-profiles:
-  - node-typescript
-artifactTypes:
-  - service
-capabilities:
-  - format
-  - lint
-  - typecheck
-  - test
-  - build
-```
+- expose truthful root `just init`, `just check`, and `just ci` commands;
+- use one native authority for each toolchain and dependency surface;
+- commit required manifests, locks or integrity records, and exact selectors;
+- keep canonical CI, release/deployment workflows, security state, and
+  automation configuration local; and
+- link to this standard instead of copying a generated central footprint.
 
-This example shows the current normative contract shape, not the version
-implemented by every released checker. During a bounded publication lag, a
-repository MUST keep the `standardVersion` implemented by the locator-selected
-tooling release and MUST NOT hand-copy a newer value from this example. See
-[version axes](./distribution.md#version-axes) for the ordered publication
-rules.
-
-The schema does not store repository names, teams, current commits, pull
-requests, migration state, or a central conformance registry.
-
-Artifact components describe what a repository builds or releases. Native
-dependency roots describe where ecosystem managers own manifests, locks, and
-locked preparation. A simple repository infers roots from its generated
-components. A repository whose native roots do not match those component paths
-MUST additionally declare
-`.github/golden-path-native-roots.yaml` using
-[`golden-path-native-roots/v1`](./schemas/golden-path-native-roots-v1.schema.json).
-Each entry records only a stable root ID, repository-relative path, and native
-profiles. That file is repository-owned As-built configuration and MUST NOT be
-inserted into or replace whole-file generated metadata.
+A repository with ambiguous native roots additionally records
+`.github/golden-path-native-roots.yaml` using the
+[native-root schema](./schemas/golden-path-native-roots-v1.schema.json). The
+file records only stable root IDs, repository-relative paths, and native
+profiles. Existing repository-owned native-root files remain valid after the
+central executable retirement.
 
 ## Ownership planes
 
 | Plane | Owns | Does not own |
 | --- | --- | --- |
-| Policy and discovery | This standard, rule/schema source, guides, ADRs, workflow-template discovery | Shared executable implementation or repository status |
-| Shared implementation | Checker, generator/upgrader, template bundle, reusable action/workflow, fixtures, immutable releases | Normative rule meaning |
-| Repository execution | Metadata, exceptions, materialized config, native manifests/locks, commands, caller workflows, current migration state | Organization policy |
+| Organization policy | This standard, retained schemas, guides, and ADRs | Repository commands, status, or executable orchestration |
+| Repository execution | Native manifests/locks, roots, Just graph, CI, release units, release/deployment workflows, dependency automation, security routing | Organization policy |
+| Current evidence | Repository CI, releases, deployments, alerts, and pull requests | Permanent policy meaning |
 
-The shared implementation's repository name and visibility are operational
-locators, not normative identities. Generic tooling that passes disclosure
-review SHOULD be public when that improves access from private consumers;
-private or restricted distribution remains conformant when its trust boundary
-requires it.
+## Adoption and change
 
-## GitHub Free private baseline
+New repositories follow the
+[contract-only bootstrap guide](../../guides/bootstrap-new-repository.md).
+Existing repositories follow the
+[retirement migration guide](../../guides/migrating-developer-tooling.md).
+No central registry tracks adoption.
 
-The standard MUST be fully usable by private repositories in a GitHub Free
-organization.
-
-- GitHub Actions, repository or organization secrets, OIDC, dependency graph,
-  and Dependabot capabilities MAY be used where available.
-- Protected branches, rulesets, required status checks, GitHub Environments and
-  required reviewers, Dependency Review, and GitHub-native private artifact
-  attestations MUST NOT be assumed to exist.
-- A checker or CI job can fail a policy gate without proving that the hosting
-  platform technically blocks a merge.
-- Cloud IAM, exact OIDC trust, separated operator roles, bounded manual
-  workflows, or external approval evidence MAY provide equivalent controls.
-- Paid-plan features MAY strengthen an existing outcome, but MUST NOT become
-  the normative authority or the only conforming implementation.
-
-## Decision traceability
-
-| Decision | Final authority |
-| --- | --- |
-| GP-006 | [Command contract](./command-contract.md) and [task runner](./task-runner.md) |
-| GP-007 | [Toolchain management](./toolchain-management.md) |
-| GP-008 | [Dependency management](./dependency-management.md) and profile documents |
-| GP-009 | [Distribution](./distribution.md) |
-| GP-010 | [Conformance](./conformance.md), [exceptions](./exceptions.md), rules, and schemas |
-| GP-011 | Ownership planes and [distribution](./distribution.md) |
-| GP-012 | [Runtime support](./runtime-support.md) |
-| GP-013 | [Node.js and TypeScript](./profiles/node-typescript.md) |
-| GP-014 | [Python](./profiles/python.md) |
-| GP-015 | [Go](./profiles/go.md) |
-| GP-016 | [Rust](./profiles/rust.md) |
-| GP-017 | [Zig](./profiles/zig.md) |
-| GP-018 | [Infrastructure as Code](./profiles/infrastructure.md) |
-| GP-019 | [Build hygiene](./build-hygiene.md) |
-| GP-020 | Versioning in this document, [distribution](./distribution.md), and [conformance](./conformance.md) |
-| GP-021 | [Dependency operations](./dependency-operations.md) and dependency schemas |
+`2026.08.7` retires the active executable Golden Path control plane and
+removes dependency compiler, live report, generated metadata, locator, and
+shared conformance contracts from the active standard. Historical standard
+commits and published releases remain available as audit history and are not a
+compatibility commitment.
 
 Product, service, library, and API release versioning is outside this standard.
-
-## Adoption and migration
-
-New repositories use the latest preferred standard and stable asset bundle.
-Existing repositories adopt through repository-owned, reviewable work. The
-standard does not maintain repository migration schedules or conformance
-status.
-
-`2026.08.6` closes the security-remediation scope gap exposed by a pilot review.
-A remediation claim covers every open default-branch alert instance for its
-repository, advisory identity, and affected package ecosystem/name; a
-repository-owned conditional gate proves the exact integration head, while
-central conformance only validates the typed workflow reference and
-source-bound run evidence identity. Observation and report v2 retain
-direct/transitive/unknown relationship, advisory groups, exact-head closure
-evidence, and instance-level coverage. Unrelated advisories do not block the
-remediation, and the central tooling does not interpret native lock graphs or
-create an approval queue. Observation and report v1 remain immutable released
-contracts; no general compatibility framework is added.
-
-`2026.08.5` makes adapter availability explicit and preserves the root-total
-routine PR budget. An adapter may be selected only when the locator-selected
-immutable tooling release implements it, and one native root resolves to one
-adapter ecosystem; disjoint ecosystems at the same path use separate existing
-native-root IDs. The serialized contracts remain v1, and no compatibility
-reader or migration is introduced.
-
-`2026.08.4` completes the dependency evidence serialization accepted by
-GP-021. It adds repository/default-branch identity, PR node and ref SHAs, check
-rollups, alert identities, exact defer review fields, and source-bound report
-identity that were incomplete in `2026.08.3`. The serialized contract remains
-v1; no consumer had an immutable tooling release for the incomplete source.
-
-`2026.08.3` adds the repository-owned dependency policy compiler contract. It
-references existing native roots and release units, preserves repository-owned
-canonical CI, keeps security routing independent from routine queue limits, and
-keeps live queue state outside offline conformance. It does not create a second
-release-unit system or a central approval queue.
-
-`2026.08.2` completes the new-repository bootstrap ownership boundary. Only
-the canonical request, metadata, managed inventory, bootstrap script, and
-structural-conformance caller remain generator-managed. Source, onboarding,
-native manifests and locks, mise/Just files, dependency automation, and the
-repository quality workflow are repository-owned scaffold. Bootstrap quality
-CI runs `just ci` once; independent conformance remains checker-only and
-report-only. This is a compatible `golden-path/v1` correction and does not
-require existing consumers to upgrade on locator movement alone.
-
-`2026.08.1` narrows the caller-workflow contract so quality CI owns
-repository execution through `just ci`, while structural conformance runs the
-checker without repeating the quality graph. It also makes the shared tooling
-support cadence and ECS checklist trigger explicit. These are compatible
-corrections to `golden-path/v1`; they do not invalidate repositories or tooling
-releases that implement `2026.08`.
-
-`DT-CMD-005` and `DT-ASSET-007` retain their original meanings and retire in
-`2026.08.1` without replacement. The quality/conformance execution split is a
-workflow implementation contract, not a new consumer conformance rule.
-
-- [Adopting the Developer Tooling Standard](../../guides/adopting-developer-tooling.md)
-- [Bootstrapping a new repository](../../guides/bootstrap-new-repository.md)
-- [GitHub hosting capability profile](../../guides/github-hosting-capabilities.md)
-- [Migrating existing developer tooling](../../guides/migrating-developer-tooling.md)
-- [ADR-0006: Adopt the organization Developer Tooling Golden Path](../../decisions/0006-adopt-developer-tooling-golden-path.md)

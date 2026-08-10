@@ -1,7 +1,7 @@
 # Golden Path exceptions
 
 - Status: Accepted
-- Standard version: `2026.08.6`
+- Standard version: `2026.08.7`
 - Schema: [`golden-path-exceptions/v1`](./schemas/golden-path-exceptions-v1.schema.json)
 
 An exception is a repository-local, reviewable, time-bounded waiver for one or
@@ -24,8 +24,8 @@ Every exception MUST include:
 A finding evaluated at an explicit native dependency root is identified by its
 native profile and repository-relative finding path. An exception for such a
 finding MUST use profile and/or path scope; artifact-type or capability scope
-does not identify a dependency root because those axes remain component or
-aggregate metadata.
+does not identify a dependency root because those dimensions describe
+repository behavior rather than native dependency authority.
 
 An exception MUST NOT:
 
@@ -36,23 +36,16 @@ An exception MUST NOT:
 - hide its original finding from output; or
 - contain secrets, personal contact data, or sensitive operational details.
 
-A valid, unexpired exception changes an applicable finding to `waived`. A
-schema-valid but expired exception leaves the violation failing. A structurally
-or semantically invalid exception is a configuration error. Approaching expiry
-produces a warning.
-
-Time-sensitive evaluation uses the explicit UTC evaluation time supplied to the
-checker and recorded in its output. Tests and offline runs may pin that input;
-the checker MUST NOT read an implicit wall clock for a reproducible result. A
-schema-valid, otherwise eligible exception that is past `expiresAt` leaves the
-rule failing with exit code `1`. A malformed exception document, unknown rule,
-non-waivable rule, or invalid approval contract is a configuration error with
-exit code `2`.
+A valid, unexpired exception makes the bounded requirement waived for its
+declared scope. An expired, structurally invalid, semantically invalid, unknown,
+or non-waivable reference is not an accepted exception. Evaluation uses an
+explicit review or CI timestamp; do not hide expiry behind an implicit local
+clock or a permanently passing check.
 
 ## High-risk exceptions
 
-An exception is high risk when it affects security, deployment, supply chain, a
-destructive/state-repair operation, or a catalog rule marked `highRisk: true`.
+An exception is high risk when it affects security, deployment, supply chain,
+or a destructive/state-repair operation.
 It additionally MUST include:
 
 - a current risk statement;
@@ -63,10 +56,10 @@ It additionally MUST include:
 The requester and two-person approvers MUST be meaningfully independent where
 the underlying rule requires two-person control.
 
-The checker MUST cross-check every waived rule against the bundled catalog.
-When any referenced rule has `highRisk: true`, `riskClass` MUST be `high` and
-all high-risk fields and approvals MUST be present; repository self-
-classification cannot lower the catalog classification.
+Repository review MUST apply the high-risk classification from the affected
+human-readable rule and domain boundary. Repository self-classification cannot
+lower an applicable security, deployment, supply-chain, or destructive-state
+risk.
 
 A general tooling exception needs a tracking issue only when actual remediation
 work is planned. A bounded, accepted variation SHOULD NOT create a ceremonial
