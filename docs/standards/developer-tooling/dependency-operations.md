@@ -133,6 +133,10 @@ associations. An `unknown` relationship remains visible and MUST NOT be guessed;
 it increases the repository-owned graph proof needed for closure but does not
 invalidate or suppress the observation.
 
+The observation projects the GitHub API `auto_dismissed` alert state as
+`auto-dismissed`. It remains distinct from `fixed` and therefore cannot satisfy
+post-promotion fixed verification.
+
 For a security route with a `canonicalGate`, its typed `ciEvidence` MUST
 identify the repository-owned conditional workflow job that proves the exact
 integration head no longer resolves a vulnerable version through any native
@@ -205,7 +209,11 @@ distinguish the declared closure job on the exact candidate head from an
 aggregate green CI rollup. Its
 `remediationCoverage` value is `none`, `partial`, or `all-linked` and describes
 pull-request association only. `all-linked` does not prove native graph closure;
-the repository-owned conditional gate remains authoritative. The published
+the repository-owned conditional gate remains authoritative. At repository
+summary level, `openAdvisoryGroups` counts the open groups present in
+`securityAdvisories`, while `partiallyLinkedAdvisoryGroups` counts groups whose
+`remediationCoverage` is `partial`. Both are association-reporting counters and
+MUST NOT be interpreted as native graph closure verdicts. The published
 observation v1 and report v1 schemas remain immutable and are not rewritten.
 
 Per-repository report artifacts are owned by repository maintainers and retained

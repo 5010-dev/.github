@@ -86,7 +86,7 @@
           "repository": {"type": "string", "minLength": 1},
           "number": {"type": "integer", "minimum": 1},
           "advisoryIdentity": {"type": "string", "minLength": 1},
-          "state": {"type": "string", "enum": ["open", "dismissed", "fixed"]},
+          "state": {"type": "string", "enum": ["open", "dismissed", "auto-dismissed", "fixed"]},
           "severity": {"type": "string", "enum": ["critical", "high", "medium", "low"]},
           "ecosystem": {"type": "string", "minLength": 1},
           "dependency": {"type": "string", "minLength": 1},
@@ -137,7 +137,7 @@
         "runUrl": {"type": "string", "format": "uri"},
         "headSHA": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
         "status": {"type": "string", "enum": ["queued", "in-progress", "completed"]},
-        "conclusion": {"type": "string", "enum": ["success", "failure", "cancelled", "skipped", "neutral", "timed-out", "action-required", "none"]},
+        "conclusion": {"type": "string", "enum": ["success", "failure", "cancelled", "skipped", "neutral", "timed-out", "action-required", "stale", "none"]},
         "observedAt": {"type": "string", "format": "date-time"}
       }
     },
@@ -147,7 +147,7 @@
       "required": ["status", "conclusion"],
       "properties": {
         "status": {"type": "string", "enum": ["queued", "in-progress", "completed", "none"]},
-        "conclusion": {"type": "string", "enum": ["success", "failure", "cancelled", "skipped", "neutral", "timed-out", "action-required", "none"]}
+        "conclusion": {"type": "string", "enum": ["success", "failure", "cancelled", "skipped", "neutral", "timed-out", "action-required", "stale", "none"]}
       }
     }
   }
