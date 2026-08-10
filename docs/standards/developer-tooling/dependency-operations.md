@@ -1,7 +1,7 @@
 # Dependency operations
 
 - Status: Accepted
-- Standard version: `2026.08.5`
+- Standard version: `2026.08.6`
 - Contract version: `golden-path/v1`
 
 This profile binds repository-owned dependency facts to organization risk
@@ -120,6 +120,44 @@ integration branch when the repository has an explicit integration/release
 flow. It MUST preserve security alerts, must not close or discard the security
 change, and must not run for unrelated actors or fork heads.
 
+### Security remediation closure
+
+The completion unit for a dependency security remediation is every open
+default-branch alert instance with the same repository, advisory identity, and
+affected dependency. A bot pull request, a direct manifest edit, or one alert
+link is an input to that scope; it MUST NOT redefine the scope. Before review,
+the digest-bound observation MUST enumerate the matching alert numbers,
+manifest or lock paths when available, and security pull-request associations.
+
+For a security route with a `canonicalGate`, its typed `ciEvidence` MUST
+identify the repository-owned conditional workflow job that proves the exact
+integration head no longer resolves a vulnerable version through any native
+dependency path in scope. The repository owns the ecosystem-native graph
+command and result. Central conformance validates only that the declared
+workflow and job exist; it MUST NOT parse every ecosystem lock, execute the
+job, or rerun `just ci`. A manual-remediation route MUST retain equivalent
+durable evidence and independent review.
+
+Any residual same-scope alert instance or vulnerable native graph path makes
+the remediation `partial`. A partial remediation MUST NOT be reported as
+security-complete or promotion-ready even when ordinary CI is green. A
+deliberately retained instance remains visibly partial and can proceed only
+under a scoped, expiring high-risk exception with its owner, affected alert
+numbers, exit condition, and independent approvals. Routine defer records do
+not authorize a security residual.
+
+This gate is conditional on the advisory being remediated. Unrelated
+advisories, routine queue pressure, pending root classification, or a different
+dependency MUST NOT block that remediation. Immediately before integration,
+the repository MUST repeat the proof against the exact candidate head. After
+promotion to `main`, the owner MUST verify that every expected alert number is
+`fixed`; a green development check does not close a default-branch alert.
+
+A repository publishes a consumer artifact only when its existing
+repository-owned release-unit authority says the remediation changed that
+artifact. Security closure MUST NOT manufacture package releases or a serial
+follow-up release chain.
+
 ## Deterministic compiler and preview
 
 The compiler combines only the immutable policy bundle and checked-in
@@ -140,13 +178,23 @@ query, API version, observation time, collection scope, source identity, and
 SHA-256 digest, plus repository-owned defer files. The observation uses
 [`golden-path-dependency-observation/v1`](./schemas/golden-path-dependency-observation-v1.schema.json)
 and the derived report uses
-[`golden-path-dependency-report/v1`](./schemas/golden-path-dependency-report-v1.schema.json).
+[`golden-path-dependency-report/v2`](./schemas/golden-path-dependency-report-v2.schema.json).
+
+Report v2 retains open alerts as deterministic groups keyed by repository,
+advisory identity, and dependency, with each alert number, severity, manifest
+path, fixed version, and linked security pull request when observed. Its
+`remediationCoverage` value is `none`, `partial`, or `all-linked` and describes
+pull-request association only. `all-linked` does not prove native graph closure;
+the repository-owned conditional gate remains authoritative. The published
+report v1 schema remains immutable and is not rewritten.
 
 Per-repository report artifacts are owned by repository maintainers and retained
 for 90 days. Incident pre/post snapshots are also attached to the planning
 record that owns the bounded remediation. Live staleness, budget pressure,
 owner reachability, queue age, and security action time remain report-only
 findings: they warn with exit `0` and do not make the offline checker depend on
-GitHub or a central registry.
+GitHub or a central registry. The report MUST NOT become a global zero-alert
+gate, central approval queue, cross-ecosystem dependency resolver, or substitute
+for repository-owned native manifests, locks, and canonical CI.
 
-Rule IDs: `DT-DEP-005` through `DT-DEP-011`.
+Rule IDs: `DT-DEP-005` through `DT-DEP-012`.

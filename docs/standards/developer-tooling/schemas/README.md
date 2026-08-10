@@ -1,7 +1,7 @@
 # Developer tooling schemas
 
 These JSON Schemas are normative serialized-contract sources for standard
-`2026.08.5`.
+`2026.08.6`.
 
 | Schema | Contract |
 | --- | --- |
@@ -11,7 +11,8 @@ These JSON Schemas are normative serialized-contract sources for standard
 | [`golden-path-dependency-defers/v1`](./golden-path-dependency-defers-v1.schema.json) | Repository-owned major/pre-1.0/manual defer records |
 | [`golden-path-dependency-observation/v1`](./golden-path-dependency-observation-v1.schema.json) | Digest-bound GitHub dependency queue observation |
 | [`golden-path-dependency-candidate/v1`](./golden-path-dependency-candidate-v1.schema.json) | Deterministic non-mutating adoption preview |
-| [`golden-path-dependency-report/v1`](./golden-path-dependency-report-v1.schema.json) | Derived organization dependency operations report |
+| [`golden-path-dependency-report/v1`](./golden-path-dependency-report-v1.schema.json) | Immutable legacy count-only dependency operations report |
+| [`golden-path-dependency-report/v2`](./golden-path-dependency-report-v2.schema.json) | Derived dependency operations report with advisory groups and alert-instance coverage |
 | [`golden-path-exceptions/v1`](./golden-path-exceptions-v1.schema.json) | Scoped, approved, expiring MUST-rule waivers |
 | [`golden-path-checker-output/v1`](./golden-path-checker-output-v1.schema.json) | Deterministic machine-readable checker result |
 | [`golden-path-rule-catalog/v1`](./golden-path-rule-catalog-v1.schema.json) | Stable machine rule catalog |

@@ -1,7 +1,7 @@
 # Golden Path conformance
 
 - Status: Accepted
-- Standard version: `2026.08.5`
+- Standard version: `2026.08.6`
 - Contract version: `golden-path/v1`
 
 Conformance is evaluated from repository-local declarations and checked-in

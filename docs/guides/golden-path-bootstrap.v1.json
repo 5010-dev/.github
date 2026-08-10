@@ -2,13 +2,13 @@
   "schemaVersion": "golden-path-bootstrap/v1",
   "baseline": "github-free-private",
   "standard": {
-    "version": "2026.08.5",
+    "version": "2026.08.6",
     "contractVersion": "golden-path/v1",
     "repository": "https://github.com/5010-dev/.github",
     "snapshotPath": "docs/standards/developer-tooling",
     "entrypoint": "docs/standards/developer-tooling/README.md",
     "ruleCatalog": "docs/standards/developer-tooling/rules/catalog.v1.json",
-    "catalogDigest": "sha256:9e37b6c777206dc8a021102b9ff461eca55763d1c9f9b829a60c11e10091f55e",
+    "catalogDigest": "sha256:e1dadf8ecb1367bf0b1e85c12600dd4c9dc702c651286ea0d0a678cb5dd802f1",
     "metadataSchema": "docs/standards/developer-tooling/schemas/golden-path-metadata-v1.schema.json",
     "nativeRootsSchema": "docs/standards/developer-tooling/schemas/golden-path-native-roots-v1.schema.json",
     "exceptionSchema": "docs/standards/developer-tooling/schemas/golden-path-exceptions-v1.schema.json"
