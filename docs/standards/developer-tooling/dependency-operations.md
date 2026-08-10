@@ -176,17 +176,18 @@ fixtures.
 The live report is generated from a canonical GitHub observation using exact
 query, API version, observation time, collection scope, source identity, and
 SHA-256 digest, plus repository-owned defer files. The observation uses
-[`golden-path-dependency-observation/v1`](./schemas/golden-path-dependency-observation-v1.schema.json)
+[`golden-path-dependency-observation/v2`](./schemas/golden-path-dependency-observation-v2.schema.json)
 and the derived report uses
 [`golden-path-dependency-report/v2`](./schemas/golden-path-dependency-report-v2.schema.json).
 
 Report v2 retains open alerts as deterministic groups keyed by repository,
 advisory identity, and dependency, with each alert number, severity, manifest
-path, fixed version, and linked security pull request when observed. Its
+path, direct or transitive relationship, fixed version, and linked security
+pull request when observed. Its
 `remediationCoverage` value is `none`, `partial`, or `all-linked` and describes
 pull-request association only. `all-linked` does not prove native graph closure;
 the repository-owned conditional gate remains authoritative. The published
-report v1 schema remains immutable and is not rewritten.
+observation v1 and report v1 schemas remain immutable and are not rewritten.
 
 Per-repository report artifacts are owned by repository maintainers and retained
 for 90 days. Incident pre/post snapshots are also attached to the planning

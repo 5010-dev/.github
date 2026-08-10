@@ -9,7 +9,8 @@ These JSON Schemas are normative serialized-contract sources for standard
 | [`golden-path-native-roots/v1`](./golden-path-native-roots-v1.schema.json) | Optional repository-owned native dependency root declaration |
 | [`golden-path-dependency-policy/v1`](./golden-path-dependency-policy-v1.schema.json) | Root binding, owner/release flow, typed gate, routine budget, and security fallback facts |
 | [`golden-path-dependency-defers/v1`](./golden-path-dependency-defers-v1.schema.json) | Repository-owned major/pre-1.0/manual defer records |
-| [`golden-path-dependency-observation/v1`](./golden-path-dependency-observation-v1.schema.json) | Digest-bound GitHub dependency queue observation |
+| [`golden-path-dependency-observation/v1`](./golden-path-dependency-observation-v1.schema.json) | Immutable legacy digest-bound GitHub dependency queue observation |
+| [`golden-path-dependency-observation/v2`](./golden-path-dependency-observation-v2.schema.json) | Digest-bound GitHub dependency queue observation with direct/transitive relationship evidence |
 | [`golden-path-dependency-candidate/v1`](./golden-path-dependency-candidate-v1.schema.json) | Deterministic non-mutating adoption preview |
 | [`golden-path-dependency-report/v1`](./golden-path-dependency-report-v1.schema.json) | Immutable legacy count-only dependency operations report |
 | [`golden-path-dependency-report/v2`](./golden-path-dependency-report-v2.schema.json) | Derived dependency operations report with advisory groups and alert-instance coverage |

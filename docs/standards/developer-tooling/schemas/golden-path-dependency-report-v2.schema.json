@@ -60,10 +60,11 @@
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["number", "severity"],
+              "required": ["number", "severity", "relationship"],
               "properties": {
                 "number": {"type": "integer", "minimum": 1},
                 "severity": {"type": "string", "enum": ["critical", "high", "medium", "low"]},
+                "relationship": {"type": "string", "enum": ["direct", "transitive"]},
                 "manifestPath": {"type": "string", "minLength": 1},
                 "fixedIn": {"type": "string", "minLength": 1},
                 "securityUpdatePullRequest": {"type": "string", "format": "uri"}
