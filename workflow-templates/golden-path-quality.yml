@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   conformance:
-    uses: 5010-dev/engineering-tooling/.github/workflows/golden-path-quality.yml@294855aa255255b0e40f879cd9b1b492cf3ea8b1
+    uses: 5010-dev/engineering-tooling/.github/workflows/golden-path-quality.yml@cce2535d531c70a286bbaf97245453eb3ea7081e
     with:
       runner: ubuntu-24.04
       working-directory: .
