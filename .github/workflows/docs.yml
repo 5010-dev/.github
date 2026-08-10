@@ -6,26 +6,18 @@ on:
       - main
     paths:
       - "**/*.md"
-      - "docs/guides/golden-path-bootstrap.v1.json"
-      - "docs/guides/schemas/**"
-      - "docs/standards/developer-tooling/**"
-      - "docs/standards/release-versioning/**"
+      - "**/*.json"
       - "scripts/docs/**"
-      - "workflow-templates/**"
-      - ".github/workflows/golden-path-bootstrap.yml"
+      - "templates/engineering-documentation/**"
       - ".github/workflows/docs.yml"
   push:
     branches:
       - main
     paths:
       - "**/*.md"
-      - "docs/guides/golden-path-bootstrap.v1.json"
-      - "docs/guides/schemas/**"
-      - "docs/standards/developer-tooling/**"
-      - "docs/standards/release-versioning/**"
+      - "**/*.json"
       - "scripts/docs/**"
-      - "workflow-templates/**"
-      - ".github/workflows/golden-path-bootstrap.yml"
+      - "templates/engineering-documentation/**"
       - ".github/workflows/docs.yml"
 
 permissions: {}

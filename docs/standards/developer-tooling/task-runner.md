@@ -1,7 +1,7 @@
 # Just task-runner contract
 
 - Status: Accepted
-- Standard version: `2026.08.6`
+- Standard version: `2026.08.7`
 
 Just is the organization command façade. It does not replace native manifests,
 locks, package scripts, build systems, test tools, repository-local programs, or

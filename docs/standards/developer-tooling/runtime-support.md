@@ -1,7 +1,7 @@
 # Runtime support and lifecycle
 
 - Status: Accepted
-- Standard version: `2026.08.6`
+- Standard version: `2026.08.7`
 - Runtime catalog: [`runtime-support.v1.json`](./rules/runtime-support.v1.json)
 
 Runtime policy uses three independent axes. It does not collapse upstream
@@ -82,12 +82,10 @@ official lifecycle rather than assuming that every future annual major becomes
 an organization LTS. A framework or AWS CDK host-runtime compatibility statement
 does not extend Node support after upstream EOL.
 
-The current exact release patch is selected at a coordinated Golden Path release
-cutoff and recorded in the release manifest, not in the runtime policy catalog.
-The catalog uses typed line, range, relative, or channel selectors whose grammar
-is defined by its schema. A repository pin is matched through the release
-manifest before applying the catalog disposition. The table is not permission
-to use a moving channel.
+The current exact release patch remains repository-owned and is recorded in its
+native manifest, lock, or toolchain selector. The catalog uses typed line,
+range, relative, or channel selectors whose grammar is defined by its schema.
+The table is not permission to use a moving channel.
 
 IaC tools combine native constraints with exact CLI, SDK, and provider pins.
 Changing cloud provider or IaC engine is an architecture/state migration, not a
@@ -113,16 +111,15 @@ impact, migration issue and target, accountable owner, review date, and expiry.
 
 Rust's N-1/N-2 supported grace is a maximum 90-day cadence buffer, not an
 upstream LTS claim. The catalog records the stable-release anchor and exact
-grace end date so an offline checker can evaluate it without a live clock or
-release query. It does not require a repository exception during the grace.
+grace end date for deterministic review. It does not require a repository
+exception during the grace.
 
-## Catalog and checker
+## Catalog
 
-The runtime catalog records official source metadata, check date, typed selector,
-normalized lifecycle, organization disposition, policy deadlines, and
-compatibility.
-The shared checker embeds an immutable compatible snapshot and MUST NOT query
-live release pages while evaluating a repository.
+The runtime catalog records official source metadata, check date, typed
+selector, normalized lifecycle, organization disposition, policy deadlines,
+and compatibility. Review the source links before changing it; consumer CI does
+not query live release pages to reinterpret a committed pin.
 
 Updates to runtime lines and IaC tooling arrive through reviewable compatibility
 changes. Automation SHOULD open reviewable pull requests for supported patch

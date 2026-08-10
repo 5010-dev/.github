@@ -1,167 +1,26 @@
-# Bootstrap a new repository with the Golden Path
+# Bootstrap a new repository
 
-This guide creates a reviewable repository-local Developer Tooling contract
-from the immutable shared implementation. It is informative; the
-[Developer Tooling Standard](../standards/developer-tooling/README.md), stable
-rule catalog, and schemas remain normative.
+Bootstrap is a repository-owned implementation of the
+[Developer Tooling Standard](../standards/developer-tooling/README.md). There is
+no active Golden Path locator, binary, generator, reusable conformance workflow,
+or organization workflow template.
 
-The machine-readable
-[bootstrap locator](./golden-path-bootstrap.v1.json) binds this procedure to an
-exact release, source commit, archive checksums, verifier version, and reusable
-automation commit. It is an operational locator, not a second policy source.
-It separately records the current accepted standard and the standard actually
-implemented by the selected release. When those versions temporarily differ
-during a coordinated publication, bootstrap uses and reports the release's
-implemented version; the newer normative behavior becomes available only
-after the locator selects a matching immutable release.
+1. Start from the repository's actual language, infrastructure, artifact, and
+   release needs.
+2. Add native manifests, locks or integrity records, and exact toolchain
+   selectors.
+3. Add a root Justfile with truthful `init`, `check`, and `ci` recipes.
+4. Add one repository-owned canonical CI workflow that runs `just ci` once.
+5. Add repository-owned release and deployment workflows only when the
+   repository has those boundaries.
+6. Enable GitHub-native dependency and security features appropriate to the
+   repository. Keep security visibility and routing independent from routine
+   update budgets.
+7. Add `.github/golden-path-native-roots.yaml` only when native dependency
+   roots are otherwise ambiguous.
+8. Run the repository's documented initialization and canonical CI locally,
+   then review the change through its normal contribution flow.
 
-## Before generating files
-
-1. Classify the repository using the standard's independent profile, artifact,
-   and capability axes. Do not infer policy from an existing repository.
-2. Inventory each selected native profile's operational project or workspace
-   roots separately from artifact components. Plan a repository-owned
-   `.github/golden-path-native-roots.yaml` only when those boundaries differ;
-   do not add artifact types or capabilities to that sidecar.
-3. Use `applicability.status: applicable` for a buildable repository. Use
-   `not-applicable` only for the bounded archived, generated-only, asset-only,
-   or non-buildable cases allowed by the
-   [conformance contract](../standards/developer-tooling/conformance.md#applicability).
-4. Select the latest preferred runtime lines from the
-   [runtime support catalog](../standards/developer-tooling/runtime-support.md)
-   unless compatibility requirements justify a supported line.
-5. Identify any required deviation before generation. Exceptions are recorded
-   in `.github/golden-path-exceptions.yaml` and must satisfy the
-   [exception contract](../standards/developer-tooling/exceptions.md); a local
-   override or disabled check is not an exception.
-6. Confirm the hosting baseline and optional adapters in the
-   [GitHub capability matrix](./github-hosting-capabilities.md).
-
-## Obtain the exact implementation
-
-Use the release identity in the bootstrap locator. Download the archive for the
-operator's OS and architecture and `release-manifest.json` from the exact tag.
-The policy repository separately verifies the release's
-`standard-snapshot-manifest.json` against its machine-readable rule, runtime,
-schema, and example sources. Before execution:
-
-- compare each downloaded file with the locator's SHA-256;
-- run `gh attestation verify` with the exact GitHub CLI version, repository,
-  signer workflow, source and signer digest, and tag ref declared by the
-  locator; and
-- confirm that the executable reports the exact release version declared by
-  the locator.
-
-Do not execute a moving tag, default-branch checkout, redirecting raw file, or
-network-to-interpreter pipeline. A later release is adopted by reviewing an
-updated central locator and generated diff, not by changing a local download to
-`latest`.
-
-## Preview and materialize
-
-Download the
-[documentation fixture](../../scripts/docs/fixtures/golden-path-bootstrap/documentation.yaml)
-to an operator-owned path such as `/path/to/golden-path-request.yaml`, or create
-an equivalent request there that reflects the real classification. Do not rely
-on a repository-relative path into a checkout of this policy repository. The
-fixture is intentionally small and exists to exercise the bootstrap path; it is
-not the organization default profile.
-
-With `GOLDEN_PATH_BIN` pointing to the verified executable and
-`RELEASE_MANIFEST` pointing to the verified release manifest, preview without
-writing:
-
-```bash
-"$GOLDEN_PATH_BIN" generate \
-  --request /path/to/golden-path-request.yaml \
-  --release-manifest "$RELEASE_MANIFEST"
-```
-
-Review the complete plan emitted on standard output and retain it outside the
-candidate only when the repository's evidence policy requires it. Then
-materialize into a separate empty candidate directory, never directly over an
-existing repository:
-
-```bash
-"$GOLDEN_PATH_BIN" generate \
-  --request /path/to/golden-path-request.yaml \
-  --release-manifest "$RELEASE_MANIFEST" \
-  --write \
-  --output /path/to/empty-candidate
-```
-
-The candidate does not contain `golden-path-plan.json`. Golden Path upgrades
-continue to manage only the request, metadata, asset inventory, conformance
-caller, and bootstrap script. The generated README, source, native manifests
-and locks, Just and toolchain files, exceptions, dependency automation, and
-repository quality workflow are one-time repository-owned scaffold. Inspect
-all generated files as repository code, set the conformance caller's exact
-profile array, customize only repository-owned behavior, and commit the
-reviewed files through that repository's normal contribution flow.
-
-If the inventoried native roots differ from the generated component paths, add
-the schema-valid native-root sidecar as repository-owned configuration after
-materialization. It is not a generated asset and must not change the generated
-metadata or asset digest.
-
-## Enable repository-local validation
-
-The generated `.github/workflows/quality.yml` is the repository-owned general
-CI path: it installs the pinned toolchain, runs `just init`, and executes
-`just ci` once on the organization `dev` branch flow. The generated
-`.github/workflows/developer-tooling.yml` is the separate structural
-conformance caller and does not repeat the repository quality gate.
-
-The preferred conformance path is the caller generated with the release. The
-organization [workflow template](../../workflow-templates/golden-path-quality.yml)
-is a discovery starter for a repository that already has materialized Golden
-Path files. It intentionally contains the invalid JSON sentinel
-`profiles: 'REPLACE_WITH_EXACT_PROFILES'`. The reusable workflow propagates the
-resulting checker usage error, so the job fails closed until the repository
-replaces that value with the exact profile array from `.github/golden-path.yaml`.
-
-Keep the caller's triggers, default-branch choice, path filters, concurrency,
-permissions, runner, working directory, profile input, environment adapter, and
-named secret forwarding repository-local. Keep the reusable workflow and any
-directly invoked setup action on their full source commit. The reusable workflow
-owns release identity, checksum, and attestation verification, so generated
-callers must not repeat those inputs. A repository that invokes the setup action
-directly must keep its explicit release identity and checksum inputs exact.
-
-Run the following before merging the repository's adoption change:
-
-```bash
-just init
-just ci
-
-"$GOLDEN_PATH_BIN" check \
-  --root . \
-  --evaluated-at 2026-08-01T00:00:00Z \
-  --expected-profiles '["documentation"]'
-```
-
-Replace the example timestamp and profile array with the evaluation time and
-actual declared profiles. A stable lifecycle does not by itself make
-conformance platform-enforced. Under report-only enforcement, evidence is
-visible without claiming that the hosting platform blocks merge. Repository
-owners separately decide when their adoption becomes policy-required or uses a
-paid platform-enforcement adapter.
-
-## Existing repositories
-
-Do not run new-repository `bootstrap` generation over an existing tree. Follow
-[Migrating existing developer tooling](./migrating-developer-tooling.md). A
-repository without a generated asset inventory uses the selected immutable
-release's explicit `materializationMode: adoption` path and the validated
-[existing-service adoption fixture](../../scripts/docs/fixtures/golden-path-adoption/existing-service.v1.json)
-to create a fixed control-plane baseline in a separate empty candidate. A
-repository that already has a committed generated asset inventory uses
-`upgrade` instead.
-
-If the release selected by the bootstrap locator does not yet declare
-`adoption` in `explicitMaterializationModes`, do not substitute an unreleased
-default-branch binary or hand-build metadata and asset inventory.
-Repository-local migration preparation may continue until the locator selects
-a compatible stable release. Migration scope, scheduling, exceptions, and
-current conformance remain owned by that repository and are not tracked by
-this central repository.
+Do not add a dummy manifest, central command registry, package-by-package manual
+mapping, central approval queue, or generated control-plane metadata. A new
+repository links to organization contracts and owns its executable As-built.

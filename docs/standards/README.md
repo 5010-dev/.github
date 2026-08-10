@@ -1,23 +1,17 @@
 # Organization engineering standards
 
-Organization standards define reusable requirements that apply across
-`5010-dev` repositories and engineering-system boundaries.
+Organization standards define reusable requirements across `5010-dev`
+repositories and engineering-system boundaries.
 
-## Standards
-
-- [Developer Tooling](./developer-tooling/README.md) — define the versioned
-  Golden Path for root commands, toolchain and dependency authority, immutable
-  distribution, language and IaC profiles, conformance, runtime support, build
-  hygiene, and exceptions.
-- [Release and Versioning](./release-versioning/README.md) — define software,
-  native-client, and research-artifact profiles, release and record identity,
-  compatibility and research-record lifecycle, evidence, automation boundaries,
+- [Developer Tooling](./developer-tooling/README.md) defines repository-owned
+  command, toolchain, dependency, profile, runtime-support, build-hygiene, and
+  exception contracts. It has no central executable control plane.
+- [Release and Versioning](./release-versioning/README.md) defines release and
+  record identity, compatibility lifecycle, evidence, automation boundaries,
   and exceptions.
-- [Engineering documentation](./engineering-documentation/README.md) — apply the
-  organization arc42 profile as the canonical documentation system for
-  engineering repositories and independently governed engineering layers.
+- [Engineering documentation](./engineering-documentation/README.md) defines
+  the organization arc42 documentation system.
 
 Platform-specific requirements remain under the
-[platform contract index](../platform/README.md). Standards and platform
-contracts are normative within their declared scope; adoption guides and
-templates are supporting material.
+[platform contract index](../platform/README.md). Guides and templates are
+supporting material, not normative authority.

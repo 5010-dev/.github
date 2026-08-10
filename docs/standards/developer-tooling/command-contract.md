@@ -1,7 +1,7 @@
 # Developer tooling command contract
 
 - Status: Accepted
-- Standard version: `2026.08.6`
+- Standard version: `2026.08.7`
 - Contract version: `golden-path/v1`
 
 This contract defines the stable commands that developers and CI use. Native
@@ -51,9 +51,6 @@ not implement.
 - Every required quality caller workflow MUST invoke root `just ci` or the
   exact same repository-owned implementation path. Running unrelated steps is
   not evidence that `just ci` ran.
-- A structural conformance caller MUST run the compatible checker and MUST NOT
-  invoke `just ci` a second time. It is independent evidence about checked-in
-  contract structure, not another execution owner for repository quality.
 - External, credentialed, long-running, or destructive suites MUST use
   separately named commands such as `test-e2e` or a namespaced command.
 
@@ -85,9 +82,9 @@ An IaC-native `validate` operation belongs inside the selected profile's
 `check`/`ci` implementation unless the repository exposes an additional
 diagnostic alias; `just validate` is not a universal façade command.
 
-## Conformance
+## Review expectations
 
-The conformance checker evaluates at least:
+Repository review and canonical CI verify:
 
 - the root Justfile and base recipe presence;
 - profile-required command presence without successful no-ops;
@@ -95,8 +92,7 @@ The conformance checker evaluates at least:
 - `ci` composition through `check`;
 - separation of deployment/release mutation;
 - deterministic repository-local imports, modules, and scripts;
-- quality caller workflows' use of `just ci`; and
-- structural conformance callers' use of the checker without replaying the
-  repository quality graph.
+- quality caller workflows' use of `just ci` without a second central quality
+  execution.
 
 Rule IDs: `DT-CMD-*`.

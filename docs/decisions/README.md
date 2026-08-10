@@ -12,10 +12,11 @@ index.
 | [ADR-0003](./0003-adopt-current-state-ecs-bootstrap-classification.md) | Accepted               | Adopt current-state ECS bootstrap classification              |
 | [ADR-0004](./0004-adopt-arc42-engineering-documentation-system.md)     | Accepted               | Adopt arc42 as the canonical engineering documentation system |
 | [ADR-0005](./0005-adopt-ecs-service-delivery-workflow-envelope.md)     | Accepted               | Adopt an ECS service delivery workflow envelope               |
-| [ADR-0006](./0006-adopt-developer-tooling-golden-path.md)              | Accepted               | Adopt the organization Developer Tooling Golden Path          |
+| [ADR-0006](./0006-adopt-developer-tooling-golden-path.md)              | Superseded in part by ADR-0022 | Adopt the organization Developer Tooling Golden Path |
 | [ADR-0007](./0007-adopt-release-and-versioning-standard.md)             | Accepted               | Adopt the organization Release and Versioning Standard        |
-| [ADR-0008](./0008-separate-artifact-components-from-native-dependency-roots.md) | Accepted | Separate artifact components from native dependency roots |
-| [ADR-0021](./0021-adopt-dependency-policy-compiler.md) | Accepted; current normative correction 2026.08.6 | Adopt the dependency policy compiler contract |
+| [ADR-0008](./0008-separate-artifact-components-from-native-dependency-roots.md) | Superseded in part by ADR-0022 | Separate artifact components from native dependency roots |
+| [ADR-0021](./0021-adopt-dependency-policy-compiler.md) | Superseded by ADR-0022 | Adopt the dependency policy compiler contract |
+| [ADR-0022](./0022-retire-golden-path-executable-tooling.md) | Accepted | Retire Golden Path executable tooling and operate contract-only |
 
 Organization standards and platform contracts hold the current normative view.
 ADRs explain why those views were accepted.

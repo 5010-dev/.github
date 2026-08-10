@@ -1,6 +1,6 @@
 {
   "schemaVersion": "runtime-support/v1",
-  "standardVersion": "2026.08.6",
+  "standardVersion": "2026.08.7",
   "asOf": "2026-07-30",
   "profiles": {
     "node": {
@@ -152,7 +152,7 @@
             "kind": "channel",
             "value": "preferred-stable"
           },
-          "label": "Latest stable selected by the coordinated release manifest",
+          "label": "Latest stable selected by repository-owned exact pin",
           "upstreamLifecycle": "active",
           "organizationDisposition": "preferred"
         },
@@ -201,7 +201,7 @@
             "kind": "channel",
             "value": "latest-tagged-stable"
           },
-          "label": "Latest tagged stable selected by the coordinated release manifest",
+          "label": "Latest tagged stable selected by repository-owned exact pin",
           "upstreamLifecycle": "active",
           "organizationDisposition": "preferred"
         },

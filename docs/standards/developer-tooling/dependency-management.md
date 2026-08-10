@@ -1,7 +1,7 @@
 # Dependency management
 
 - Status: Accepted
-- Standard version: `2026.08.6`
+- Standard version: `2026.08.7`
 
 Each ecosystem's native manager owns dependency resolution. mise owns selected
 runtime and support-tool bootstrap; Just exposes stable commands. Neither
@@ -38,15 +38,12 @@ ecosystem. When disjoint ecosystems use the same path, they remain separate
 native roots; this does not create package-level mapping or another release-unit
 model.
 
-A repository whose native roots differ from its generated component paths MUST
-declare `.github/golden-path-native-roots.yaml`. Each declared root selects the
-native profiles evaluated at that path, and each selected profile MUST also
-appear in the aggregate declaration in `.github/golden-path.yaml`. Every
-selected native profile MUST be covered by at least one root. Artifact types
-and capabilities remain component or aggregate metadata; they MUST NOT be
-duplicated onto dependency roots. The native-root file is repository-owned and
-MUST preserve the generated ownership and digest of
-`.github/golden-path.yaml`.
+A repository whose native workspace boundaries are not unambiguous from native
+manifests MUST declare `.github/golden-path-native-roots.yaml`. Each declared
+root selects only the native profiles evaluated at that path. Every applicable
+native profile MUST be covered by at least one root. Artifact and capability
+descriptions MUST NOT be duplicated onto dependency roots. The native-root file
+is repository-owned and independent from retired generated metadata.
 
 Dependency groups SHOULD separate runtime, development, test, and optional
 surfaces. Caches MAY accelerate installation, but cache hits MUST NOT be
@@ -120,7 +117,7 @@ against, its native manifest and resolution record.
 
 ## Rust
 
-- `Cargo.toml` is the manifest authority and every Golden Path Rust project
+- `Cargo.toml` is the manifest authority and every applicable Rust project
   commits root `Cargo.lock`.
 - Workspaces use one root lock.
 - Fetch, check, test, lint, build, and package commands use `--locked`.
@@ -155,6 +152,6 @@ and drift-check them in the same review.
 
 Rule IDs: `DT-DEP-*`.
 
-Dependency automation classification, root-to-release-unit references, PR
-budgets, security routing, deterministic preview, and live reporting are defined
-in [Dependency operations](./dependency-operations.md).
+Dependency automation, routine update grouping and security routing are owned by
+the repository. This standard does not define a central root-to-release-unit
+compiler, pull-request budget, live report, or approval queue.
