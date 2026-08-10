@@ -622,6 +622,34 @@ def validate_schema_validator_self_tests() -> None:
         "artifact classification in a native-root declaration",
     )
 
+    dependency_observation = load_json(
+        STANDARD_ROOT
+        / "schemas/examples/golden-path-dependency-observation-v2.valid.json"
+    )
+    invalid_dependency_relationship = copy.deepcopy(dependency_observation)
+    invalid_dependency_relationship["alerts"][0]["relationship"] = "inferred"
+    require_schema_rejection(
+        invalid_dependency_relationship,
+        STANDARD_ROOT
+        / "schemas/golden-path-dependency-observation-v2.schema.json",
+        "dependency relationship provenance",
+    )
+
+    dependency_report = load_json(
+        STANDARD_ROOT
+        / "schemas/examples/golden-path-dependency-report-v2.valid.json"
+    )
+    unbound_security_evidence = copy.deepcopy(dependency_report)
+    del unbound_security_evidence["securityAdvisories"][0][
+        "securityClosureEvidence"
+    ][0]["headSHA"]
+    require_schema_rejection(
+        unbound_security_evidence,
+        STANDARD_ROOT
+        / "schemas/golden-path-dependency-report-v2.schema.json",
+        "security closure evidence without an exact head SHA",
+    )
+
     exceptions = load_json(
         STANDARD_ROOT
         / "schemas/examples/golden-path-exceptions-v1.valid.json"
