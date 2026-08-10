@@ -22,6 +22,11 @@ When present, remove:
 - dependency policy, defer, observation, report, or security-closure files that
   exist only for the retired compiler.
 
+An empty generated `.github/golden-path-exceptions.yaml` is also removable. If
+it contains a real approved exception, preserve the exact requirement, scope,
+owner, approval, expiry, and risk record in repository canonical documentation
+before removing the generated schema-bound file.
+
 Do not remove a similarly named repository-owned workflow merely because its
 name contains `developer-tooling`. Inspect whether it calls
 `5010-dev/engineering-tooling` or only the repository's own canonical CI.

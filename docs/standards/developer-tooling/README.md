@@ -22,7 +22,7 @@ repository's documented main-only exception.
 Authority order:
 
 1. this human-readable standard and its retained schema/catalog sources;
-2. repository-local native-root declarations and accepted exceptions;
+2. repository-local native-root declarations and documented exceptions;
 3. repository-local manifests, locks, toolchain selectors, commands,
    `release-units.json`, workflows, and release configuration as executable
    As-built authority; and
@@ -71,7 +71,7 @@ unused capabilities.
 | [Conformance](./conformance.md) | Repository self-validation and evidence boundaries |
 | [Exceptions](./exceptions.md) | Scoped, approved, expiring deviations |
 | [Profiles](./profiles/README.md) | Language and IaC contracts |
-| [Schemas](./schemas/README.md) | Repository-owned native-root, exception, and runtime-support data |
+| [Schemas](./schemas/README.md) | Repository-owned native-root and runtime-support data |
 
 ## Repository-owned contract
 
