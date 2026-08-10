@@ -124,10 +124,14 @@ change, and must not run for unrelated actors or fork heads.
 
 The completion unit for a dependency security remediation is every open
 default-branch alert instance with the same repository, advisory identity, and
-affected dependency. A bot pull request, a direct manifest edit, or one alert
-link is an input to that scope; it MUST NOT redefine the scope. Before review,
-the digest-bound observation MUST enumerate the matching alert numbers,
-manifest or lock paths when available, and security pull-request associations.
+affected package ecosystem and name. A bot pull request, a direct manifest
+edit, or one alert link is an input to that scope; it MUST NOT redefine the
+scope. Before review, the digest-bound observation MUST enumerate the matching
+alert numbers, manifest or lock paths when available, the source-provided
+`direct`, `transitive`, or `unknown` relationship, and security pull-request
+associations. An `unknown` relationship remains visible and MUST NOT be guessed;
+it increases the repository-owned graph proof needed for closure but does not
+invalidate or suppress the observation.
 
 For a security route with a `canonicalGate`, its typed `ciEvidence` MUST
 identify the repository-owned conditional workflow job that proves the exact
@@ -138,13 +142,25 @@ workflow and job exist; it MUST NOT parse every ecosystem lock, execute the
 job, or rerun `just ci`. A manual-remediation route MUST retain equivalent
 durable evidence and independent review.
 
-Any residual same-scope alert instance or vulnerable native graph path makes
-the remediation `partial`. A partial remediation MUST NOT be reported as
-security-complete or promotion-ready even when ordinary CI is green. A
-deliberately retained instance remains visibly partial and can proceed only
-under a scoped, expiring high-risk exception with its owner, affected alert
-numbers, exit condition, and independent approvals. Routine defer records do
-not authorize a security residual.
+The live observation MUST preserve each executed conditional proof as
+`securityClosureEvidence` with its workflow path, stable job ID, run ID and URL,
+exact head SHA, status, conclusion, and observation time. A proof counts toward
+closure only when its workflow and job match the declared `ciEvidence`, its
+head SHA equals the exact candidate head, and it completed successfully. This
+source-bound evidence identity does not make the central tooling the job runner
+or approval authority.
+
+Any same-scope instance not covered by the candidate-head proof, or any
+vulnerable native graph path that remains on that head, makes the remediation
+`partial`. The fact that the default-branch alert is still `open` before
+promotion does not by itself make a clean candidate partial; GitHub can mark
+that alert `fixed` only after the corrected graph reaches the default branch. A
+partial remediation MUST NOT be reported as security-complete or
+promotion-ready even when ordinary CI is green. A deliberately retained
+instance remains visibly partial and can proceed only under a scoped, expiring
+high-risk exception with its owner, affected alert numbers, exit condition, and
+independent approvals. Routine defer records do not authorize a security
+residual.
 
 This gate is conditional on the advisory being remediated. Unrelated
 advisories, routine queue pressure, pending root classification, or a different
@@ -181,9 +197,12 @@ and the derived report uses
 [`golden-path-dependency-report/v2`](./schemas/golden-path-dependency-report-v2.schema.json).
 
 Report v2 retains open alerts as deterministic groups keyed by repository,
-advisory identity, and dependency, with each alert number, severity, manifest
-path, direct or transitive relationship, fixed version, and linked security
-pull request when observed. Its
+advisory identity, package ecosystem, and package name, with each alert number,
+severity, manifest path, source-provided direct, transitive, or unknown
+relationship, fixed version, and linked security pull request when observed.
+It also preserves source-bound `securityClosureEvidence` so a reviewer can
+distinguish the declared closure job on the exact candidate head from an
+aggregate green CI rollup. Its
 `remediationCoverage` value is `none`, `partial`, or `all-linked` and describes
 pull-request association only. `all-linked` does not prove native graph closure;
 the repository-owned conditional gate remains authoritative. The published

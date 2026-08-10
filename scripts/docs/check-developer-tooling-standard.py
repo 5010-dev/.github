@@ -60,6 +60,8 @@ REQUIRED_PATHS = [
     "docs/standards/developer-tooling/schemas/runtime-support-v1.schema.json",
     "docs/standards/developer-tooling/schemas/examples/golden-path-metadata-v1.valid.json",
     "docs/standards/developer-tooling/schemas/examples/golden-path-native-roots-v1.valid.json",
+    "docs/standards/developer-tooling/schemas/examples/golden-path-dependency-observation-v2.valid.json",
+    "docs/standards/developer-tooling/schemas/examples/golden-path-dependency-report-v2.valid.json",
     "docs/standards/developer-tooling/schemas/examples/golden-path-exceptions-v1.valid.json",
     "docs/standards/developer-tooling/schemas/examples/golden-path-checker-output-v1.valid.json",
     "docs/guides/adopting-developer-tooling.md",
@@ -541,6 +543,18 @@ def validate_contract_instances() -> None:
             STANDARD_ROOT
             / "schemas/examples/golden-path-native-roots-v1.valid.json",
             STANDARD_ROOT / "schemas/golden-path-native-roots-v1.schema.json",
+        ),
+        (
+            STANDARD_ROOT
+            / "schemas/examples/golden-path-dependency-observation-v2.valid.json",
+            STANDARD_ROOT
+            / "schemas/golden-path-dependency-observation-v2.schema.json",
+        ),
+        (
+            STANDARD_ROOT
+            / "schemas/examples/golden-path-dependency-report-v2.valid.json",
+            STANDARD_ROOT
+            / "schemas/golden-path-dependency-report-v2.schema.json",
         ),
         (
             STANDARD_ROOT

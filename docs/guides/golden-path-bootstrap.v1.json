@@ -8,7 +8,7 @@
     "snapshotPath": "docs/standards/developer-tooling",
     "entrypoint": "docs/standards/developer-tooling/README.md",
     "ruleCatalog": "docs/standards/developer-tooling/rules/catalog.v1.json",
-    "catalogDigest": "sha256:e1dadf8ecb1367bf0b1e85c12600dd4c9dc702c651286ea0d0a678cb5dd802f1",
+    "catalogDigest": "sha256:8e9910e19b2582f884af6170d70759dc23ac98d9c2d1bb3e2759d29495291355",
     "metadataSchema": "docs/standards/developer-tooling/schemas/golden-path-metadata-v1.schema.json",
     "nativeRootsSchema": "docs/standards/developer-tooling/schemas/golden-path-native-roots-v1.schema.json",
     "exceptionSchema": "docs/standards/developer-tooling/schemas/golden-path-exceptions-v1.schema.json"

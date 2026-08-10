@@ -10,10 +10,10 @@ These JSON Schemas are normative serialized-contract sources for standard
 | [`golden-path-dependency-policy/v1`](./golden-path-dependency-policy-v1.schema.json) | Root binding, owner/release flow, typed gate, routine budget, and security fallback facts |
 | [`golden-path-dependency-defers/v1`](./golden-path-dependency-defers-v1.schema.json) | Repository-owned major/pre-1.0/manual defer records |
 | [`golden-path-dependency-observation/v1`](./golden-path-dependency-observation-v1.schema.json) | Immutable legacy digest-bound GitHub dependency queue observation |
-| [`golden-path-dependency-observation/v2`](./golden-path-dependency-observation-v2.schema.json) | Digest-bound GitHub dependency queue observation with direct/transitive relationship evidence |
+| [`golden-path-dependency-observation/v2`](./golden-path-dependency-observation-v2.schema.json) | Digest-bound GitHub dependency queue observation with source relationship and exact-head closure-run evidence |
 | [`golden-path-dependency-candidate/v1`](./golden-path-dependency-candidate-v1.schema.json) | Deterministic non-mutating adoption preview |
 | [`golden-path-dependency-report/v1`](./golden-path-dependency-report-v1.schema.json) | Immutable legacy count-only dependency operations report |
-| [`golden-path-dependency-report/v2`](./golden-path-dependency-report-v2.schema.json) | Derived dependency operations report with advisory groups and alert-instance coverage |
+| [`golden-path-dependency-report/v2`](./golden-path-dependency-report-v2.schema.json) | Derived dependency operations report with ecosystem-qualified advisory groups, alert-instance coverage, and closure evidence |
 | [`golden-path-exceptions/v1`](./golden-path-exceptions-v1.schema.json) | Scoped, approved, expiring MUST-rule waivers |
 | [`golden-path-checker-output/v1`](./golden-path-checker-output-v1.schema.json) | Deterministic machine-readable checker result |
 | [`golden-path-rule-catalog/v1`](./golden-path-rule-catalog-v1.schema.json) | Stable machine rule catalog |
@@ -27,6 +27,8 @@ Examples:
 
 - [`golden-path-metadata/v1`](./examples/golden-path-metadata-v1.valid.json)
 - [`golden-path-native-roots/v1`](./examples/golden-path-native-roots-v1.valid.json)
+- [`golden-path-dependency-observation/v2`](./examples/golden-path-dependency-observation-v2.valid.json)
+- [`golden-path-dependency-report/v2`](./examples/golden-path-dependency-report-v2.valid.json)
 - [`golden-path-exceptions/v1`](./examples/golden-path-exceptions-v1.valid.json)
 - [`golden-path-checker-output/v1`](./examples/golden-path-checker-output-v1.valid.json)
 
