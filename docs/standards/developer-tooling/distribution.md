@@ -10,6 +10,11 @@ The active Developer Tooling contract is distributed as reviewed source in
 link to the applicable documents and implement them with repository-owned native
 files and workflows.
 
+The [Developer Tooling Golden Path](../../golden-path/README.md) is the supported
+documentation-led adoption route for this contract. Its examples are copied
+once and become repository-owned; they are not a distribution channel or a
+managed update surface.
+
 There is no active machine locator, executable implementation release, asset
 bundle, generator, updater, reusable conformance workflow, or managed file set.
 A repository MUST NOT fetch and execute mutable central content from routine

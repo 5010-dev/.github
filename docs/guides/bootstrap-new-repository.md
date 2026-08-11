@@ -1,9 +1,17 @@
 # Bootstrap a new repository
 
-Bootstrap is a repository-owned implementation of the
-[Developer Tooling Standard](../standards/developer-tooling/README.md). There is
-no active Golden Path locator, binary, generator, reusable conformance workflow,
-or organization workflow template.
+Bootstrap is the new-repository journey of the
+[Developer Tooling Golden Path](../golden-path/README.md). It applies the
+[Developer Tooling Standard](../standards/developer-tooling/README.md) through
+repository-owned files. There is no active locator, binary, generator, reusable
+conformance workflow, or organization workflow template.
+
+Before editing files, choose the closest supported stack from the
+[stack defaults](../golden-path/stack-defaults.md) and read only its applicable
+normative profiles. Use the
+[copy-once reference examples](../golden-path/reference-examples.md) as a
+starting point; after copying, the repository owns every byte and future
+change.
 
 1. Start from the repository's actual language, infrastructure, artifact, and
    release needs.
@@ -18,8 +26,11 @@ or organization workflow template.
    update budgets.
 7. Add `.github/golden-path-native-roots.yaml` only when native dependency
    roots are otherwise ambiguous.
-8. Run the repository's documented initialization and canonical CI locally,
-   then review the change through its normal contribution flow.
+8. Run the repository's documented initialization and canonical CI locally.
+9. Complete the
+   [release-readiness checklist](../golden-path/release-readiness.md) for the
+   boundaries the repository actually has, then review the change through its
+   normal contribution flow.
 
 Do not add a dummy manifest, central command registry, package-by-package manual
 mapping, central approval queue, or generated control-plane metadata. A new

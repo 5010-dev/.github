@@ -1,6 +1,7 @@
 # Adopting the Developer Tooling Standard
 
-Adoption means implementing the
+Adoption is the existing-repository journey of the
+[Developer Tooling Golden Path](../golden-path/README.md). It means implementing the
 [Developer Tooling Standard](../standards/developer-tooling/README.md) through
 repository-owned native files and workflows. It does not install or follow a
 central executable, release, locator, template, or approval queue.
@@ -10,6 +11,11 @@ central executable, release, locator, template, or approval queue.
 Read the base standard and only the language or IaC profiles that match actual
 source and manifests. Do not create metadata to claim unused profiles,
 artifacts, or capabilities.
+
+Use the [stack defaults](../golden-path/stack-defaults.md) to choose the closest
+supported starting point. Inventory the current repository before copying an
+example; adoption preserves working native authorities instead of replacing
+them with a uniform central layout.
 
 ## 2. Preserve native authorities
 
@@ -53,4 +59,7 @@ or exception queue.
 Adoption is complete when native manifests and locks, toolchain ownership,
 truthful commands, canonical CI, required release behavior, and any accepted
 exceptions are reviewable in the owning repository. Link to the central
-standard; do not copy or materialize a managed central footprint.
+standard; do not copy or materialize a managed central footprint. Apply the
+[release-readiness checklist](../golden-path/release-readiness.md) only to real
+repository boundaries, and keep its evidence in the repository's normal pull
+request, release, and deployment records.

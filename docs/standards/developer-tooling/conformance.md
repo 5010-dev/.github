@@ -25,7 +25,10 @@ hosting enforcement, vulnerability closure, or runtime behavior.
 
 Repositories SHOULD use ecosystem-native and off-the-shelf checks in their
 canonical CI. The central governance repository validates only its own
-documentation and retained JSON sources; it does not run consumer CI.
+documentation, Golden Path example links, and retained JSON sources; it does
+not run consumer CI. Validation of a documentation example proves only that the
+central reference is internally coherent, not that a consumer repository has
+adopted or passed it.
 
 There is no organization reusable conformance workflow, checker output schema,
 rule catalog, live GitHub report, or central status registry. A repository MUST

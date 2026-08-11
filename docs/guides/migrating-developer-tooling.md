@@ -1,7 +1,9 @@
 # Migrating existing developer tooling
 
 This guide removes the retired central Golden Path executable footprint while
-preserving repository-owned behavior.
+preserving repository-owned behavior. It is a bounded retirement journey inside
+the [Developer Tooling Golden Path](../golden-path/README.md), not the removal of
+the Golden Path itself.
 
 ## Boundary classification
 
@@ -46,4 +48,7 @@ routine regrouping.
 Run only the owning repository's canonical CI after the removal. Confirm that no
 remaining workflow or script installs, downloads, calls, or selects
 `engineering-tooling`. Do not add a compatibility wrapper or issue a new
-central tooling release to perform the removal.
+central tooling release to perform the removal. Re-enter the
+[adoption journey](./adopting-developer-tooling.md) only for a concrete gap in
+the repository-owned implementation; retirement alone does not require a
+general rewrite.

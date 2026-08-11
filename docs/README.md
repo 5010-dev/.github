@@ -27,6 +27,7 @@ organization contracts are interpreted as described in
 
 ## Guides
 
+- [Developer Tooling Golden Path](./golden-path/README.md)
 - [Organization guides](./guides/README.md)
 - [Adopting the Developer Tooling Standard](./guides/adopting-developer-tooling.md)
 - [Bootstrapping a new repository](./guides/bootstrap-new-repository.md)

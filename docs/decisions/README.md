@@ -16,7 +16,7 @@ index.
 | [ADR-0007](./0007-adopt-release-and-versioning-standard.md)             | Accepted               | Adopt the organization Release and Versioning Standard        |
 | [ADR-0008](./0008-separate-artifact-components-from-native-dependency-roots.md) | Superseded in part by ADR-0022 | Separate artifact components from native dependency roots |
 | [ADR-0021](./0021-adopt-dependency-policy-compiler.md) | Superseded by ADR-0022 | Adopt the dependency policy compiler contract |
-| [ADR-0022](./0022-retire-golden-path-executable-tooling.md) | Accepted | Retire Golden Path executable tooling and operate contract-only |
+| [ADR-0022](./0022-retire-golden-path-executable-tooling.md) | Accepted | Retire executable control plane and retain a repository-owned Golden Path |
 
 Organization standards and platform contracts hold the current normative view.
 ADRs explain why those views were accepted.

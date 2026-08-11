@@ -14,36 +14,42 @@ Pilot work showed that keeping those layers aligned cost more review and release
 coordination than the risks they reduced. Repeated follow-up releases also made
 repository-owned changes appear dependent on a central tooling cadence.
 
-The durable value is the shared contract: truthful commands, native toolchain and
-dependency authority, repository-owned CI and release flows, security visibility,
-bounded exceptions, and explicit native roots. Those invariants do not require a
-custom central executable.
+The durable value is both the shared contract and a supported path for applying
+it: truthful commands, native toolchain and dependency authority,
+repository-owned CI and release flows, security visibility, bounded exceptions,
+explicit native roots, stack defaults, examples, and end-to-end checklists.
+Those outcomes do not require a custom central executable.
 
 ## Decision
 
 1. Keep the Developer Tooling Standard and the retained native-root and
    runtime-support schemas in `5010-dev/.github` as normative authority.
-2. Set the active central executable tooling identity to `none`.
-3. Remove the active locator, bootstrap workflow, workflow template, executable
+2. Re-establish Golden Path as a contract-backed, repository-owned supported
+   journey with bootstrap, adoption, stack defaults, copy-once examples,
+   release-readiness guidance, a named owner, review date, and support channel.
+3. Set the active central executable tooling identity to `none`.
+4. Remove the active locator, bootstrap workflow, workflow template, executable
    integration checks, generated metadata/checker/dependency schemas, and
    consumer managed footprints.
-4. Preserve repository-owned native manifests and locks, native roots,
+5. Preserve repository-owned native manifests and locks, native roots,
    `release-units.json`, Just graphs, canonical CI, release/deployment workflows,
    and GitHub-native security visibility and routing.
-5. Keep published `engineering-tooling` tags, releases, checksums, attestations,
+6. Keep published `engineering-tooling` tags, releases, checksums, attestations,
    and snapshots immutable as audit history. They are not active, preferred,
    supported, or compatibility commitments.
-6. Publish no retirement compatibility release. After all active consumers and
+7. Publish no retirement compatibility release. After all active consumers and
    locators are removed and verified, archive the implementation repository.
-7. Permit a future thin validator only through a separate accepted decision with
+8. Permit a future thin validator only through a separate accepted decision with
    repeated-error evidence, off-the-shelf insufficiency, lower net operating
    cost, explicit source-controlled inputs, a named owner, and a removal
    condition.
 
 ## Consequences
 
-- New repositories implement the contract directly with repository-owned native
-  files and workflows.
+- New repositories and adopters have an opinionated supported journey without
+  acquiring a central runtime or upgrade dependency.
+- Copied examples become repository-owned immediately; central changes do not
+  generate or require consumer update pull requests.
 - Existing consumers remove only the retired managed footprint and validate with
   their own canonical CI.
 - There is no central adoption registry, organization PR queue, live report, or
@@ -61,4 +67,4 @@ ADR-0021. Their historical files remain unchanged.
 
 Boundary classification: mixed — published tooling releases remain immutable
 audit history; unreleased development intermediates and active repository source
-are corrected directly to the contract-only target.
+are corrected directly to the contract-backed, repository-owned target.

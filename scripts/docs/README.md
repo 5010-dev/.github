@@ -11,10 +11,11 @@ Run:
 scripts/docs/check-repository.sh
 ```
 
-The gate checks required sources, local Markdown links, trailing whitespace,
-shell syntax, JSON syntax, and the engineering-documentation scaffold. It does
-not install or execute a Golden Path binary, validate consumer repositories,
-call live GitHub APIs, or replay another repository's `just ci`.
+The gate checks required sources, including the Golden Path journeys and
+reference examples, local Markdown links, trailing whitespace, shell syntax,
+JSON syntax, and the engineering-documentation scaffold. It does not install or
+execute a Golden Path binary, validate consumer repositories, call live GitHub
+APIs, or replay another repository's `just ci`.
 
 The [documentation governance workflow](../../.github/workflows/docs.yml) runs
 this gate for pull requests and pushes to `main`.
