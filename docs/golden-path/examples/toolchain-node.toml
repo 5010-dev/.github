@@ -1,0 +1,8 @@
+min_version = "<EXACT_SUPPORTED_MISE_VERSION>"
+
+[tools]
+just = "<EXACT_JUST_VERSION>"
+node = "<EXACT_SUPPORTED_NODE_PATCH>"
+
+[settings]
+lockfile = true

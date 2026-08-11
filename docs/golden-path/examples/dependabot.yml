@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: dev
+    open-pull-requests-limit: 3
+    schedule:
+      interval: weekly
+    groups:
+      development-toolchain:
+        dependency-type: development

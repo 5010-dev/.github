@@ -1,0 +1,10 @@
+schemaVersion: golden-path-native-roots/v1
+roots:
+  - id: python-workspace
+    path: .
+    profiles:
+      - python
+  - id: web-app
+    path: apps/web
+    profiles:
+      - node-typescript
