@@ -1,24 +1,19 @@
 # Golden Path reference examples
 
-These snippets are deliberately small. Copy only the applicable part, replace
-the named choices, and commit the result as repository-owned source. They are
-not generated assets and are not updated by a central release.
+These examples are deliberately small. Copy only the applicable file or part,
+replace the named choices, and commit the result as repository-owned source.
+They are not generated assets and are not updated by a central release. The
+governance repository parses the linked YAML and TOML files with standard
+language parsers and the Just files with Just itself; it does not execute their
+recipes or validate a consumer repository.
 
 ## Exact toolchain selector
 
 Choose exact versions from the applicable profile and runtime-support catalog.
 Do not paste the angle-bracket tokens unchanged.
 
-```toml
-min_version = "<EXACT_SUPPORTED_MISE_VERSION>"
-
-[tools]
-just = "<EXACT_JUST_VERSION>"
-node = "<EXACT_SUPPORTED_NODE_PATCH>"
-
-[settings]
-lockfile = true
-```
+Start from the syntax-checked
+[Node toolchain selector](./examples/toolchain-node.toml).
 
 Replace `node` with or add `go`, `uv`, Rust support tools, IaC CLIs, and workflow
 linters only when the repository uses them. The native runtime declaration must
@@ -29,71 +24,13 @@ agree with this selector.
 Use native commands rather than copying their semantics into a central wrapper.
 These compact examples show the command shape, not a universal build graph.
 
-Node.js/TypeScript:
-
-```just
-set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
-pnpm := "./scripts/pnpm"
-
-init:
-    mise install --locked
-    {{pnpm}} install --frozen-lockfile
-
-check:
-    {{pnpm}} format:check
-    {{pnpm}} lint
-    {{pnpm}} typecheck
-    {{pnpm}} test
-
-ci: check
-    {{pnpm}} build
-```
+Start from the syntax-checked [Node.js/TypeScript](./examples/node.just),
+[Go](./examples/go.just), or [Python](./examples/python.just) Just example.
 
 Here `scripts/pnpm` is a repository-owned, reviewed userland bootstrap that
 derives the exact pnpm version from `package.json#packageManager` and verifies
 what it executes. Keep an equivalent mechanism if the repository uses another
 path; do not assume bundled Corepack or add pnpm as an independent mise pin.
-
-Go:
-
-```just
-set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
-export GOTOOLCHAIN := "local"
-
-init:
-    mise install --locked
-    go mod download
-
-check:
-    go mod tidy -diff
-    go mod verify
-    go vet ./...
-    golangci-lint run
-    go test -mod=readonly ./...
-
-ci: check
-    go build ./...
-```
-
-Python:
-
-```just
-set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
-
-init:
-    mise install --locked
-    uv sync --locked
-
-check:
-    uv lock --check
-    uv run --locked ruff format --check .
-    uv run --locked ruff check .
-    uv run --locked mypy src
-    uv run --locked pytest
-
-ci: check
-    uv build
-```
 
 Adjust source paths, artifact builds, supported-runtime matrices, race or native
 extension lanes, and credentialed tests to the real repository. Never represent
@@ -109,36 +46,8 @@ Pin reviewed actions to immutable commit SHAs. This example runs the canonical
 gate exactly once; add repository-specific permissions, auth, service, matrix,
 and release steps only when required.
 
-```yaml
-name: CI
-
-on:
-  pull_request:
-
-permissions:
-  contents: read
-
-jobs:
-  check:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Install pinned toolchain
-        uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
-        with:
-          install: true
-          cache: true
-
-      - name: Install locked dependencies
-        run: just init
-
-      - name: Run canonical CI
-        run: just ci
-```
+Start from the syntax-checked
+[repository-owned canonical CI example](./examples/canonical-ci.yml).
 
 Review action pins at adoption time. A central conformance workflow must not
 call this workflow or run `just ci` again.
@@ -151,19 +60,7 @@ starting budget for each configured ecosystem entry, not an organization-wide
 queue or a per-repository guarantee. The repository may change it based on its
 review capacity.
 
-```yaml
-version: 2
-updates:
-  - package-ecosystem: npm
-    directory: /
-    target-branch: dev
-    open-pull-requests-limit: 3
-    schedule:
-      interval: weekly
-    groups:
-      development-toolchain:
-        dependency-type: development
-```
+Start from the syntax-checked [Dependabot example](./examples/dependabot.yml).
 
 Replace `npm` and `/` with the actual ecosystem and native root. Use one
 operational bot owner per dependency surface. Renovate may replace Dependabot
@@ -182,18 +79,8 @@ default branch. Security work never waits for routine grouping.
 Use this file only when manifests and native workspace files do not make the
 roots unambiguous:
 
-```yaml
-schemaVersion: golden-path-native-roots/v1
-roots:
-  - id: python-workspace
-    path: .
-    profiles:
-      - python
-  - id: web-app
-    path: apps/web
-    profiles:
-      - node-typescript
-```
+Start from the syntax-checked
+[ambiguous native-roots example](./examples/native-roots.yml).
 
 Validate the owned copy against the
 [native-root schema](../standards/developer-tooling/schemas/golden-path-native-roots-v1.schema.json).

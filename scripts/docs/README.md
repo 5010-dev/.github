@@ -12,10 +12,15 @@ scripts/docs/check-repository.sh
 ```
 
 The gate checks required sources, including the Golden Path journeys and
-reference examples, local Markdown links, trailing whitespace, shell syntax,
-JSON syntax, and the engineering-documentation scaffold. It does not install or
-execute a Golden Path binary, validate consumer repositories, call live GitHub
-APIs, or replay another repository's `just ci`.
+reference examples, local Markdown links, trailing whitespace, JSON syntax,
+YAML syntax through Ruby's standard parser, TOML syntax through Python
+`tomllib`, Just example syntax through Just itself, shell syntax, and the
+engineering-documentation scaffold. The workflow pins Just `1.57.0`; local
+validation requires compatible `python3`, `ruby`, and `just` commands.
+
+The gate does not execute a Golden Path binary or any reference-example recipe,
+validate consumer repositories, call live GitHub APIs, or replay another
+repository's `just ci`.
 
 The [documentation governance workflow](../../.github/workflows/docs.yml) runs
 this gate for pull requests and pushes to `main`.
