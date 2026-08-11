@@ -13,6 +13,7 @@ explicitly; GitHub does not copy them into consumer repositories.
 - [Pull request template](./pull_request_template.md)
 - [Engineering documentation index](./docs/README.md)
 - [Developer Tooling Standard](./docs/standards/developer-tooling/README.md)
+- [Developer Tooling Golden Path](./docs/golden-path/README.md)
 - [Release and Versioning Standard](./docs/standards/release-versioning/README.md)
 - [Developer Tooling adoption guide](./docs/guides/adopting-developer-tooling.md)
 - [Engineering documentation standard](./docs/standards/engineering-documentation/README.md)

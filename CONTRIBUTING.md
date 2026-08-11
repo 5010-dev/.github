@@ -44,8 +44,12 @@ authority, language and IaC profiles, runtime support, repository-owned
 validation, and time-bounded exceptions. The active central executable tooling
 identity is `none`: repositories link to the contract and keep their exact
 commands, manifests, locks, native roots, release units, workflows, current
-evidence, and approved exceptions local. New repositories follow the
-[contract-only bootstrap guide](https://github.com/5010-dev/.github/blob/main/docs/guides/bootstrap-new-repository.md)
+evidence, and approved exceptions local. The
+[contract-backed, repository-owned Golden Path](https://github.com/5010-dev/.github/blob/main/docs/golden-path/README.md)
+provides the supported bootstrap and adoption journeys, stack defaults,
+copy-once examples, and release-readiness checklist. New repositories follow
+its
+[bootstrap journey](https://github.com/5010-dev/.github/blob/main/docs/guides/bootstrap-new-repository.md)
 and the
 [GitHub hosting capability profile](https://github.com/5010-dev/.github/blob/main/docs/guides/github-hosting-capabilities.md)
 without installing a central binary, locator-selected release, reusable

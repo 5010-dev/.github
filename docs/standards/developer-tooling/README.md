@@ -7,7 +7,9 @@
 - Owner: `5010-dev/.github` maintainers
 
 This standard defines organization defaults for repository-owned developer
-tooling. It is a contract, not a central executable control plane.
+tooling. It is the normative contract behind the
+[repository-owned Golden Path](../../golden-path/README.md), not a central
+executable control plane.
 
 The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** are
 interpreted as described in [BCP 14](https://www.rfc-editor.org/info/bcp14) when
@@ -96,15 +98,18 @@ central executable retirement.
 | Plane | Owns | Does not own |
 | --- | --- | --- |
 | Organization policy | This standard, retained schemas, guides, and ADRs | Repository commands, status, or executable orchestration |
+| Golden Path guidance | Supported journeys, stack defaults, copy-once examples, and checklists | Normative policy or repository execution |
 | Repository execution | Native manifests/locks, roots, Just graph, CI, release units, release/deployment workflows, dependency automation, security routing | Organization policy |
 | Current evidence | Repository CI, releases, deployments, alerts, and pull requests | Permanent policy meaning |
 
 ## Adoption and change
 
 New repositories follow the
-[contract-only bootstrap guide](../../guides/bootstrap-new-repository.md).
+[Golden Path bootstrap journey](../../guides/bootstrap-new-repository.md).
 Existing repositories follow the
-[retirement migration guide](../../guides/migrating-developer-tooling.md).
+[Golden Path adoption journey](../../guides/adopting-developer-tooling.md), or
+the [retirement journey](../../guides/migrating-developer-tooling.md) when they
+still contain the executable control-plane footprint.
 No central registry tracks adoption.
 
 `2026.08.7` retires the active executable Golden Path control plane and

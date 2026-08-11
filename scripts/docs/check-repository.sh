@@ -19,6 +19,10 @@ required_sources=(
     docs/README.md
     docs/decisions/README.md
     docs/decisions/0022-retire-golden-path-executable-tooling.md
+    docs/golden-path/README.md
+    docs/golden-path/stack-defaults.md
+    docs/golden-path/reference-examples.md
+    docs/golden-path/release-readiness.md
     docs/platform/README.md
     docs/standards/README.md
     docs/standards/developer-tooling/README.md
