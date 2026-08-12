@@ -81,6 +81,11 @@ versions live in native manifests and individual reviewed intents. The
 organization standard does not select a package name, version, tag pattern,
 trigger path, credential, or current release state for a repository.
 
+Contract path patterns are segment-aware. `*`, `?`, and bracket expressions
+match characters within one path segment and never match `/`. A `**` segment
+matches zero or more complete path segments. Repositories MUST use `**` when a
+declared closure or mutation boundary intentionally includes arbitrary depth.
+
 ## Release intent and exact merge-diff admission
 
 A release-preparation pull request MUST add one immutable intent conforming to
@@ -89,6 +94,12 @@ The intent contains only the release-unit ID, channel, exact version, and source
 boundary needed for admission. Its `source.baseCommit` is the full commit SHA on
 which the reviewed release-preparation diff is based; its `source.ref` is
 `refs/heads/dev`.
+
+The intent directory is an append-only protocol directory. Every entry MUST use
+an unambiguous UTF-8 repository path and be a regular UTF-8 JSON file conforming
+to `package-release-intent/v1`; placeholder, README, symlink, mixed-version, and
+unrelated files are forbidden. Historical intents remain present so a later
+admission can detect duplicate release-unit and version identity.
 
 The admission workflow MUST take `before`, `after`, and ref from the protected
 merge event. It MUST derive release unit, channel, version, and tag from the
@@ -105,14 +116,15 @@ Admission succeeds only when all of the following are true:
    delete another intent.
 4. The added intent is the only repository intent for the same release-unit and
    version identity.
-5. The declared JSON or TOML native manifest exists at both commits, its package
-   identity equals the contract at both commits, and exactly one semantic
-   manifest value changes: the configured version field.
-6. The intent version equals the materialized `after` version, differs from the
-   `before` version, and matches the requested channel.
+5. The declared JSON or TOML native manifest is a regular file at both commits,
+   its package identity equals the contract at both commits, and exactly one
+   semantic manifest value changes: the configured version field.
+6. The intent version equals the materialized `after` version, has strictly
+   greater SemVer precedence than the `before` version, and matches the requested
+   channel. Build metadata alone does not increase precedence.
 7. Every diff entry adds or modifies an allowed release-preparation path. A
-   deletion, rename, copy, type change, or sibling mutation fails closed even
-   when its path otherwise matches an allowed pattern.
+   deletion, rename, exact-content copy, type change, non-regular file, or sibling
+   mutation fails closed even when its path otherwise matches an allowed pattern.
 8. The derived tag, native manifest, intent, source, channel, and registry state
    are unambiguous and mutually consistent.
 
@@ -124,10 +136,10 @@ closure, and evidence checks also pass.
 
 The dependency-free reference checker
 [`check-protected-package-tag-admission.py`](../../../scripts/docs/check-protected-package-tag-admission.py)
-implements the local Git, JSON, and TOML admission rules. It does not publish, inspect
-rulesets or pull-request approvals, query a registry, or replace repository-owned
-workflow checks. Repositories own a pinned invocation or an equivalent tested
-implementation.
+implements the local Git, JSON, and TOML admission rules. It does not publish,
+inspect rulesets or pull-request approvals, query a registry, or replace
+repository-owned workflow checks. Repositories own a pinned invocation or an
+equivalent tested implementation.
 
 ## Development prerelease
 

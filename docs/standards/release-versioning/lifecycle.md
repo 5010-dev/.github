@@ -34,7 +34,9 @@ Under the protected package-tag profile, a `dev` prerelease MUST use the same
 package identity as the final package, a native SemVer prerelease, and a
 repository-declared non-`latest` channel. Consumers MUST pin the exact version;
 the mutable channel is discovery only. Final publication MUST use a new final
-SemVer version and `latest`, and MUST NOT relabel prerelease bytes as final.
+SemVer version with greater precedence than the materialized predecessor and
+`latest`, and MUST NOT relabel prerelease bytes as final. Build metadata alone
+does not establish a new release precedence.
 
 ## Research record status
 

@@ -40,10 +40,12 @@ publication workflow or current-version service.
    from the protected `dev` merge event and reviewed repository state rather than
    arbitrary workflow inputs.
 5. Bind contract package identity and version to one JSON or TOML native
-   manifest. Admit only one exact intent and one version-field change in the
-   merge diff. Reject stale, modified, renamed, duplicate, conflicting, or
-   mismatched intent, destructive release-preparation entries, and every
-   declared sibling release-unit mutation.
+   manifest. Require each admitted version to have greater SemVer precedence
+   than its materialized predecessor. Admit only one exact intent and one
+   version-field change in the merge diff. Use segment-aware path patterns and
+   reject stale, modified, renamed, duplicate, conflicting, or mismatched intent,
+   destructive or non-regular release-preparation entries, and every declared
+   sibling release-unit mutation.
 6. Use the same package identity for prerelease and final publication. A
    prerelease uses native SemVer and a non-`latest` channel; a final release uses
    a new final SemVer and `latest`. Consumers pin exact versions.

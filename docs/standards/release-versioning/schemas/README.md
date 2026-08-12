@@ -20,6 +20,11 @@ repository selects either JSON Pointer selectors for a JSON manifest or dotted
 bare-key selectors for a TOML manifest. The native manifest remains the version
 authority; the contract only tells admission where to read it.
 
+Path patterns are segment-aware: `*`, `?`, and bracket expressions match within
+one segment and never match `/`; a complete `**` segment matches zero or more
+segments. Plain paths forbid glob syntax, Git pathspec magic, traversal,
+backslashes, and control characters.
+
 The dependency-free reference checker requires Python 3.11 or newer and
 validates the contract and the exact Git merge diff:
 
@@ -37,6 +42,12 @@ release unit, channel, version, and tag from repository state. It does not accep
 those identities as command inputs. A repository MAY use a different canonical
 contract path through `--contract`, but the workflow must keep that path fixed
 rather than expose it as an untrusted dispatch input.
+
+Schemas validate serialized structure and directly express channel/version
+shape where possible. Admission remains the narrower normative acceptor for
+cross-field inequalities, unique sibling IDs, native-manifest equivalence,
+repository file modes, exact Git history, and diff-derived constraints that JSON
+Schema cannot establish alone.
 
 Schema and checker compatibility is `v1`. Correct them in place before a real
 released consumer depends on their current shape. Once a repository pins a
