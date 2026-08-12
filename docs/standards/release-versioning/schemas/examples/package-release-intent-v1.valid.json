@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "package-release-intent/v1",
+  "releaseUnit": "example-browser-package",
+  "channel": "prerelease",
+  "version": "1.4.0-next.2",
+  "source": {
+    "ref": "refs/heads/dev",
+    "baseCommit": "1111111111111111111111111111111111111111"
+  }
+}

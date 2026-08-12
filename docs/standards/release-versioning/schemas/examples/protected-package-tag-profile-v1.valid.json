@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "protected-package-tag-profile/v1",
+  "profile": "protected-package-tag",
+  "source": {
+    "branch": "dev",
+    "ref": "refs/heads/dev",
+    "admissionEvent": "push"
+  },
+  "intentDirectory": ".github/release-intents",
+  "releaseUnit": {
+    "id": "example-browser-package",
+    "artifactProfile": "registry-package",
+    "packageName": "@example/browser-package",
+    "registry": "https://packages.example.invalid",
+    "compatibilityContract": "docs/browser-package.md",
+    "buildClosure": [
+      "packages/browser/**",
+      "crates/shared/**"
+    ],
+    "versionSource": {
+      "type": "json-pointer",
+      "path": "packages/browser/package.json",
+      "versionPointer": "/version",
+      "packageNamePointer": "/name"
+    },
+    "changelog": "packages/browser/CHANGELOG.md",
+    "tagPattern": "browser-package-v{version}",
+    "validationWorkflow": ".github/workflows/validate-browser-package.yml",
+    "publicationWorkflow": ".github/workflows/publish-browser-package.yml",
+    "releasePreparationPaths": [
+      ".github/release-intents/*.json",
+      "packages/browser/package.json",
+      "packages/browser/CHANGELOG.md",
+      "docs/release-support/**"
+    ]
+  },
+  "siblingReleaseUnits": [
+    {
+      "id": "example-calculator-service",
+      "kind": "service",
+      "mutationPaths": [
+        "services/calculator/**",
+        ".github/workflows/deploy-calculator.yml"
+      ]
+    }
+  ],
+  "channels": {
+    "prerelease": {
+      "distTag": "next"
+    },
+    "final": {
+      "distTag": "latest"
+    }
+  },
+  "minimumPermissions": {
+    "validation": [
+      "contents: read"
+    ],
+    "consumption": [
+      "packages: read"
+    ],
+    "publication": [
+      "packages: write"
+    ]
+  },
+  "publicationEffects": {
+    "allowed": [
+      "package-tag-creation",
+      "registry-package-publication"
+    ],
+    "forbidden": [
+      "branch-push",
+      "source-commit",
+      "service-deployment",
+      "application-deployment",
+      "oci-publication",
+      "object-storage-publication",
+      "sibling-release-unit-mutation"
+    ]
+  },
+  "serialization": {
+    "scope": "release-unit-version",
+    "cancelInProgress": false
+  },
+  "owners": {
+    "release": "example-release-maintainers",
+    "credentials": "example-security-maintainers",
+    "recovery": "example-release-maintainers"
+  }
+}

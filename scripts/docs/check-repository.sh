@@ -27,6 +27,7 @@ required_sources=(
     docs/decisions/0008-separate-artifact-components-from-native-dependency-roots.md
     docs/decisions/README.md
     docs/decisions/0022-retire-golden-path-executable-tooling.md
+    docs/decisions/0023-adopt-protected-package-tag-publication-profile.md
     docs/golden-path/README.md
     docs/golden-path/stack-defaults.md
     docs/golden-path/reference-examples.md
@@ -65,10 +66,17 @@ required_sources=(
     docs/standards/engineering-documentation/lifecycle-and-validation.md
     docs/standards/release-versioning/README.md
     docs/standards/release-versioning/profiles.md
+    docs/standards/release-versioning/protected-package-tag.md
     docs/standards/release-versioning/lifecycle.md
     docs/standards/release-versioning/release-evidence.md
     docs/standards/release-versioning/automation.md
     docs/standards/release-versioning/exceptions.md
+    docs/standards/release-versioning/schemas/README.md
+    docs/standards/release-versioning/schemas/protected-package-tag-profile-v1.schema.json
+    docs/standards/release-versioning/schemas/package-release-intent-v1.schema.json
+    docs/standards/release-versioning/schemas/examples/protected-package-tag-profile-v1.valid.json
+    docs/standards/release-versioning/schemas/examples/package-release-intent-v1.valid.json
+    docs/standards/release-versioning/validation/2026-08-12-protected-package-tag-profile.md
     docs/guides/README.md
     docs/guides/adopting-developer-tooling.md
     docs/guides/bootstrap-new-repository.md
@@ -83,6 +91,8 @@ required_sources=(
     templates/engineering-documentation/repository/docs/decisions/0001-adopt-organization-arc42-profile.md
     templates/engineering-documentation/subsystem/README.md
     scripts/docs/README.md
+    scripts/docs/check-protected-package-tag-admission.py
+    scripts/docs/test-protected-package-tag-admission.py
     scripts/docs/scaffold-arc42.sh
     scripts/docs/check-contract.sh
     scripts/docs/check-repository.sh
@@ -198,6 +208,10 @@ if command -v just >/dev/null 2>&1; then
     done
 else
     report "Just is required to validate Golden Path reference examples"
+fi
+
+if ! python3 "$script_dir/test-protected-package-tag-admission.py"; then
+    report "protected package-tag admission tests failed"
 fi
 
 for shell_script in \

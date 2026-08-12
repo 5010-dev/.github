@@ -1,8 +1,8 @@
 # Release and Versioning Standard
 
 - Status: Accepted
-- Standard version: `2026.08.1`
-- Last reviewed: 2026-08-03
+- Standard version: `2026.08.2`
+- Last reviewed: 2026-08-12
 
 This standard defines how the `5010-dev` organization versions, identifies,
 publishes, evolves, and retires software, Infrastructure as Code, native client,
@@ -100,7 +100,10 @@ They MUST NOT be presented through a stable or preferred channel.
 
 A governed publication MUST:
 
-1. originate from validated `main` under the organization contribution policy;
+1. originate from validated `main` under the organization contribution policy,
+   unless an independently released registry package has explicitly selected
+   the [protected package-tag profile](./protected-package-tag.md) and its exact
+   source commit was admitted under that profile;
 2. identify its release unit and repository-native version, release identifier,
    or research-record identifier;
 3. record the immutable source revision;
@@ -152,6 +155,7 @@ validity.
 | Document | Normative responsibility |
 | --- | --- |
 | [Artifact and version profiles](./profiles.md) | Version and ordering schemes, exact release or research-record identities, compatibility or scientific-scope surfaces, and monorepo release units |
+| [Protected package-tag publication](./protected-package-tag.md) | Narrow opt-in authority, intent, exact merge-diff admission, package-only effects, permissions, and recovery for mixed package/service monorepos |
 | [Compatibility lifecycle](./lifecycle.md) | Maturity, support, research-record status, correction, deprecation, EOL, bad releases, and emergency changes |
 | [Release records and evidence](./release-evidence.md) | Authority of manifests, tags, registries, archives, changelogs, release and revision notes, checksums, SBOMs, provenance, and attestations |
 | [Release automation](./automation.md) | Repository ownership, shared automation criteria, publication and finalization sequencing, permissions, and recovery |
@@ -209,16 +213,20 @@ part of this standard.
 | RV-008 | [Compatibility lifecycle](./lifecycle.md) |
 | RV-009 | [Release records and evidence](./release-evidence.md) |
 | RV-010 | [Release automation](./automation.md) |
+| RV-011 | [Protected package-tag publication](./protected-package-tag.md) |
 
 ## Standard revision history
 
 | Version | Normative change |
 | --- | --- |
+| `2026.08.2` | Preserve validated-`main` as the default and add the opt-in protected package-tag profile for independently released packages in mixed package/service monorepos |
 | `2026.08.1` | Add native client application and research artifact profiles, product and research release-note surfaces, and profile-specific lifecycle and automation boundaries |
 | `2026.08` | Establish the RV-001 through RV-010 authority, identity, profile, lifecycle, evidence, automation, adoption, and exception contract |
 
 The governing decision is
 [ADR-0007: Adopt the organization Release and Versioning Standard](../../decisions/0007-adopt-release-and-versioning-standard.md).
+The protected package-tag opt-in is introduced by
+[ADR-0023: Adopt protected package-tag publication profile](../../decisions/0023-adopt-protected-package-tag-publication-profile.md).
 
 ## Adoption
 

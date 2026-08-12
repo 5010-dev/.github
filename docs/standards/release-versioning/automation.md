@@ -28,7 +28,8 @@ equivalent fail-closed order:
 
 1. Resolve the release unit, profile, version or research-record source,
    requested identifier, and applicable channel or record status.
-2. Verify validated `main` for a governed publication, or the exact immutable
+2. Verify validated `main` for a governed publication, the exact admitted source
+   commit selected by the protected package-tag profile, or the exact immutable
    source boundary selected by the owning research contract for internal record
    finalization, plus required source or manifest state.
 3. Verify applicable version, research identifier, tag or ref, registry, channel,
@@ -54,6 +55,13 @@ MUST NOT use concurrency cancellation that can interrupt an older run after
 irreversible publication or finalization begins. Every remote mutation and
 verification loop MUST be bounded and report an unambiguous failure when its
 result cannot be established.
+
+For the protected package-tag profile, tag creation and registry publication
+MUST occur in the same serialized state machine after exact merge-diff admission.
+The workflow MUST derive release unit, channel, version, source, and tag from the
+reviewed repository state; it MUST NOT accept them as arbitrary dispatch inputs,
+create a version or changelog commit, push a branch, invoke a sibling deployment,
+or cancel an older run after tag creation or publication begins.
 
 ## Native client distribution
 
@@ -133,6 +141,10 @@ deterministic release logic remains locally or independently executable.
 ## Permissions and credentials
 
 - Caller permissions MUST be explicit and least privilege.
+- A protected package-tag workflow additionally follows its profile-specific
+  split: validation uses `contents: read`, private-package consumption uses
+  `packages: read`, and `packages: write` exists only in the package publication
+  job. Validation and consumer jobs MUST NOT receive package write access.
 - Secrets MUST be forwarded by name. `secrets: inherit` MUST NOT be the default.
 - OIDC or repository-scoped `GITHUB_TOKEN` SHOULD replace long-lived publication
   credentials when the registry or cloud supports it.

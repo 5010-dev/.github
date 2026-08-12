@@ -9,6 +9,8 @@ repositories and engineering-system boundaries.
 - [Release and Versioning](./release-versioning/README.md) defines release and
   record identity, compatibility lifecycle, evidence, automation boundaries,
   and exceptions.
+- [Protected package-tag publication](./release-versioning/protected-package-tag.md)
+  defines the opt-in package-only authority for mixed package/service monorepos.
 - [Engineering documentation](./engineering-documentation/README.md) defines
   the organization arc42 documentation system.
 

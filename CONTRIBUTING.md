@@ -204,9 +204,20 @@ explicit maintainer direction.
 
 ## Releases and versioning
 
-Release only from validated `main`. Once a release tag, registry version, or
-artifact is published, treat it as immutable; publish a correction version and
-use an ecosystem-native deprecate, yank, or retract operation when appropriate.
+Validated-`main` publication is the organization default. Once a release tag,
+registry version, or artifact is published, treat it as immutable; publish a
+correction version and use an ecosystem-native deprecate, yank, or retract
+operation when appropriate.
+
+A monorepo that independently releases a registry package and a service or
+application MAY opt in to the narrowly scoped
+[protected package-tag publication profile](https://github.com/5010-dev/.github/blob/main/docs/standards/release-versioning/protected-package-tag.md).
+The opt-in is valid only for the declared package release unit and does not make
+`dev` a deployment target, change `main` as the production source for sibling
+services or applications, or alter repositories that omit the profile contract.
+The repository must materialize reviewed release intent and satisfy the
+profile's exact merge-diff, protected-tag, immutability, isolation, evidence,
+and least-privilege requirements before publication.
 
 Organization release units must follow the
 [Release and Versioning Standard](https://github.com/5010-dev/.github/blob/main/docs/standards/release-versioning/README.md).

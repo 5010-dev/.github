@@ -110,6 +110,12 @@ record. Neither replaces registry publication state. If the workflow uses a tag
 as its release boundary, the tag MUST identify the same source and version and
 MUST be immutable after publication.
 
+Validated `main` remains the default publication source. A package in a monorepo
+that also contains independently released services or applications MAY instead
+select the [protected package-tag publication profile](./protected-package-tag.md).
+That profile is an explicit package release-unit opt-in, not a repository-wide
+branch-model change or authority for sibling deployment.
+
 ## CLI and distributed executable profile
 
 A distributed executable MUST record its version, source revision, applicable
@@ -302,6 +308,13 @@ Lineage, correction, and supersession relationships between research units MUST
 be represented through their owning manifests or revision records. Tooling
 convenience MUST NOT silently turn unrelated packages or research artifacts into
 one compatibility or scientific-scope promise.
+
+An independently versioned package MUST NOT mutate, version, publish, or deploy
+a sibling release unit as a side effect of its release. If a package requires a
+source boundary before repository-wide `main` promotion, it MUST retain
+validated `main` as the default and explicitly satisfy the protected package-tag
+profile rather than treating every `dev` commit or a mutable branch as release
+authority.
 
 ## Relevant upstream specifications
 
