@@ -215,9 +215,10 @@ application MAY opt in to the narrowly scoped
 The opt-in is valid only for the declared package release unit and does not make
 `dev` a deployment target, change `main` as the production source for sibling
 services or applications, or alter repositories that omit the profile contract.
-The repository must materialize reviewed release intent and satisfy the
-profile's exact merge-diff, protected-tag, immutability, isolation, evidence,
-and least-privilege requirements before publication.
+The repository must materialize a PR-based release intent through a protected,
+explicit merge and satisfy the profile's exact merge-diff, protected-tag,
+immutability, isolation, evidence, and least-privilege requirements before
+publication.
 
 Organization release units must follow the
 [Release and Versioning Standard](https://github.com/5010-dev/.github/blob/main/docs/standards/release-versioning/README.md).

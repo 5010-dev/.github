@@ -1,8 +1,8 @@
 # Release and Versioning Standard
 
 - Status: Accepted
-- Standard version: `2026.08.2`
-- Last reviewed: 2026-08-12
+- Standard version: `2026.08.3`
+- Last reviewed: 2026-08-13
 
 This standard defines how the `5010-dev` organization versions, identifies,
 publishes, evolves, and retires software, Infrastructure as Code, native client,
@@ -219,6 +219,7 @@ part of this standard.
 
 | Version | Normative change |
 | --- | --- |
+| `2026.08.3` | Clarify that the protected package-tag profile requires PR-mediated maintainer merge authorization, not an organization-wide independent approval |
 | `2026.08.2` | Preserve validated-`main` as the default and add the opt-in protected package-tag profile for independently released packages in mixed package/service monorepos |
 | `2026.08.1` | Add native client application and research artifact profiles, product and research release-note surfaces, and profile-specific lifecycle and automation boundaries |
 | `2026.08` | Establish the RV-001 through RV-010 authority, identity, profile, lifecycle, evidence, automation, adoption, and exception contract |

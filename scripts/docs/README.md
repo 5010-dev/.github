@@ -47,8 +47,13 @@ identity mismatch; non-increasing SemVer precedence; non-version manifest
 mutation; deletion, rename, exact-content copy, type change, non-regular files;
 paths outside release preparation; and sibling release-unit mutation. JSON input
 must be strict UTF-8 without duplicate keys or non-standard numeric constants.
-The checker does not publish or query remote tag, registry, ruleset, permission,
-or approval state.
+The checker intentionally does not publish, query remote tag or registry state,
+inspect hosting rulesets or permissions, or inspect pull-request approvals. The
+hosting layer owns the PR-only protected merge boundary. The repository
+publication workflow must pass the exact merge `before` and `after` commits to
+this checker and revalidate rulesets, required checks, tag and registry state,
+package closure, permissions, and every other publication prerequisite before
+mutation.
 
 The invocation requires the exact base and head commit objects plus their
 ancestry. An adopting checkout MUST fetch sufficient history, normally with

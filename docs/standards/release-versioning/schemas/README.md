@@ -1,7 +1,7 @@
 # Release and Versioning schemas
 
 - Status: Accepted
-- Standard version: `2026.08.2`
+- Standard version: `2026.08.3`
 
 These Draft 2020-12 JSON Schemas support the opt-in
 [protected package-tag publication profile](../protected-package-tag.md):
@@ -9,7 +9,7 @@ These Draft 2020-12 JSON Schemas support the opt-in
 | Schema | Purpose |
 | --- | --- |
 | [`protected-package-tag-profile/v1`](./protected-package-tag-profile-v1.schema.json) | Repository-owned package release-unit, source, closure, tag, channel, isolation, permission, and ownership contract |
-| [`package-release-intent/v1`](./package-release-intent-v1.schema.json) | Immutable reviewed release-unit, channel, exact version, and source-boundary intent |
+| [`package-release-intent/v1`](./package-release-intent-v1.schema.json) | Immutable PR-based release-unit, channel, exact version, and source-boundary intent |
 
 Valid illustrative documents are under [`examples/`](./examples/). They use
 reserved example identities and do not select a package name, initial version,
@@ -57,4 +57,7 @@ schema/checker major or a coordinated update before its publication boundary.
 These schemas and the checker do not form a release queue or current-version
 registry. They do not publish, inspect GitHub rulesets or pull-request approvals,
 query a package registry, or prove workflow side effects. Those checks and all
-credentials remain repository-owned.
+credentials remain repository-owned. They intentionally encode no reviewer,
+approval-state, or reviewer-count field: the hosting layer owns the PR-only merge
+boundary, and an independent approval is an optional repository control rather
+than schema input.
