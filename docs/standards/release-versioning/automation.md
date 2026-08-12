@@ -59,9 +59,13 @@ result cannot be established.
 For the protected package-tag profile, tag creation and registry publication
 MUST occur in the same serialized state machine after exact merge-diff admission.
 The workflow MUST derive release unit, channel, version, source, and tag from the
-reviewed repository state; it MUST NOT accept them as arbitrary dispatch inputs,
-create a version or changelog commit, push a branch, invoke a sibling deployment,
-or cancel an older run after tag creation or publication begins.
+PR-merged repository state admitted by the exact `before..after` diff; it MUST
+NOT accept them as arbitrary dispatch inputs, create a version or changelog
+commit, push a branch, invoke a sibling deployment, or cancel an older run after
+tag creation or publication begins. The hosting layer owns the PR-only merge
+boundary. The publication workflow revalidates the exact diff and every
+publication prerequisite before mutation; it does not infer or validate an
+independent human approval.
 
 ## Native client distribution
 

@@ -21,7 +21,7 @@ A repository MAY select this profile only when all of the following are true:
   publication cadence, correction boundary, and production effect;
 - repository-wide `main` promotion would couple package publication to an
   unrelated service or application production effect;
-- reviewed package prereleases provide a real package-delivery validation
+- PR-mediated package prereleases provide a real package-delivery validation
   boundary before final publication; and
 - the repository owns the contract, workflows, rulesets, credentials, evidence,
   and recovery described below.
@@ -39,8 +39,9 @@ paths or workflows could create another production effect.
 
 For the declared package:
 
-- a reviewed release-preparation change is admitted from the exact `dev`
-  `before..after` merge diff;
+- a release-preparation pull request reaches `dev` through a protected, explicit
+  maintainer merge after repository-required checks pass;
+- that PR-merged change is admitted from the exact `dev` `before..after` diff;
 - the admitted `after` commit is the immutable publication source;
 - the workflow derives an immutable package tag from the declared tag pattern
   and exact manifest version; and
@@ -77,7 +78,7 @@ and declare:
 - release, credential, and recovery owners.
 
 The contract contains no current version or pending-release queue. Exact
-versions live in native manifests and individual reviewed intents. The
+versions live in native manifests and individual PR-merged intents. The
 organization standard does not select a package name, version, tag pattern,
 trigger path, credential, or current release state for a repository.
 
@@ -86,13 +87,50 @@ match characters within one path segment and never match `/`. A `**` segment
 matches zero or more complete path segments. Repositories MUST use `**` when a
 declared closure or mutation boundary intentionally includes arbitrary depth.
 
+## Protected PR merge boundary
+
+A selecting repository MUST require pull requests for the declared `dev` source
+ref and MUST prevent a direct push or bypass from creating an admitted
+release-intent update. The repository's required validation checks MUST remain
+enforced before merge. An authorized maintainer's explicit merge after those
+checks pass is sufficient release authorization. The pull-request author and
+the maintainer performing the merge MAY be the same GitHub identity.
+
+Independent approval is not part of the minimum organization contract. A
+GitHub ruleset with `required_approving_review_count: 0` and
+`require_last_push_approval: false` is conformant when it still requires pull
+requests for `dev`, admits no direct-push bypass for the publication path, and
+preserves repository-required checks. This profile-local restriction does not
+change the organization allowance for direct `dev` development in repositories
+that do not select the profile.
+
+A repository MAY strengthen this boundary with one or more independent
+approvals when it has a qualified reviewer and a real two-person operating
+model, or when concrete risk, regulatory, audit, or contractual evidence
+requires separation. It MUST NOT impose a distinct reviewer merely as a generic
+supply-chain convention. An uninformed or rubber-stamp approval is not a
+meaningful control.
+
+These terms are distinct in this profile:
+
+- **reviewable** means a PR exposes the diff, CI, and evidence;
+- **PR-mediated** means the change can reach `dev` only through that protected
+  pull-request path;
+- **authorized** means an authorized maintainer explicitly merges the PR after
+  required checks pass; and
+- **independently approved** means a distinct qualified person approves it.
+
+Reviewability, PR mediation, and explicit merge authorization are mandatory.
+Independent approval is repository-owned and optional unless a concrete
+requirement makes it mandatory.
+
 ## Release intent and exact merge-diff admission
 
 A release-preparation pull request MUST add one immutable intent conforming to
 [`package-release-intent/v1`](./schemas/package-release-intent-v1.schema.json).
 The intent contains only the release-unit ID, channel, exact version, and source
 boundary needed for admission. Its `source.baseCommit` is the full commit SHA on
-which the reviewed release-preparation diff is based; its `source.ref` is
+which the pull-request release-preparation diff is based; its `source.ref` is
 `refs/heads/dev`.
 
 The intent directory is an append-only protocol directory. Every entry MUST use
@@ -111,7 +149,7 @@ Admission succeeds only when all of the following are true:
 1. `before` and `after` are exact full commits, `before` is an ancestor of
    `after`, and the event ref and intent ref are the contract's `dev` ref.
 2. The intent's base commit equals `before`. A rebase or intervening merge makes
-   the intent stale until the reviewed intent is refreshed.
+   the intent stale until the pull-request intent is refreshed.
 3. The exact `before..after` diff adds one intent and does not modify, rename, or
    delete another intent.
 4. The added intent is the only repository intent for the same release-unit and
@@ -131,14 +169,17 @@ Admission succeeds only when all of the following are true:
 Missing, previously present, modified, stale, duplicate, or conflicting intent
 fails closed. Multiple release units or versions in one admission diff fail
 closed. A structurally valid intent is not publication permission unless the
-exact diff, protected review boundary, remote tag and registry state, package
-closure, and evidence checks also pass.
+protected PR merge boundary, repository-required checks, exact diff, remote tag
+and registry state, package closure, and evidence checks also pass.
 
 The dependency-free reference checker
 [`check-protected-package-tag-admission.py`](../../../scripts/docs/check-protected-package-tag-admission.py)
 implements the local Git, JSON, and TOML admission rules. It does not publish,
 inspect rulesets or pull-request approvals, query a registry, or replace
-repository-owned workflow checks. Repositories own a pinned invocation or an
+repository-owned workflow checks. This is intentional: the hosting layer owns
+the PR-only merge boundary, while the publication workflow passes the protected
+update's exact `before` and `after` commits to the checker and revalidates every
+remaining publication prerequisite. Repositories own a pinned invocation or an
 equivalent tested implementation.
 
 ## Development prerelease
@@ -224,8 +265,11 @@ preparation, `dev` to `main` promotion, and `main` package publication contract
 remain unchanged. This profile MUST NOT change its tag format, workflow trigger,
 Changesets behavior, package version, or release permissions.
 
-The time-bounded exact-ref observation and central executable regression are in
-the [2026-08-12 validation record](./validation/2026-08-12-protected-package-tag-profile.md).
+The original time-bounded exact-ref observation and central executable
+regression remain in the
+[2026-08-12 validation record](./validation/2026-08-12-protected-package-tag-profile.md).
+The authorization-semantics correction is recorded separately in the
+[2026-08-13 validation record](./validation/2026-08-13-protected-package-tag-authorization.md).
 
 ## Out of scope
 

@@ -3,7 +3,8 @@
 
 The checker is intentionally dependency-free. It validates one repository-local
 profile contract and derives publication identity from an exact Git diff. It
-does not publish, inspect hosting rulesets, or query a package registry.
+does not publish, inspect hosting rulesets or pull-request approvals, or query a
+package registry.
 """
 
 from __future__ import annotations
@@ -559,9 +560,9 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
     changed_paths = {path for entry in entries for path in entry.paths}
     for path in changed_paths:
         validate_relative(path, "changed path", allow_glob=True)
-    require(contract_path not in changed_paths, "profile contract must be reviewed separately from release preparation")
-    require(unit["validationWorkflow"] not in changed_paths, "validation workflow must be reviewed separately from release preparation")
-    require(unit["publicationWorkflow"] not in changed_paths, "publication workflow must be reviewed separately from release preparation")
+    require(contract_path not in changed_paths, "profile contract must be established separately from release preparation")
+    require(unit["validationWorkflow"] not in changed_paths, "validation workflow must be established separately from release preparation")
+    require(unit["publicationWorkflow"] not in changed_paths, "publication workflow must be established separately from release preparation")
 
     for entry in entries:
         require(
