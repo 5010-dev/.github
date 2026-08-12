@@ -3,7 +3,6 @@
 - Status: Accepted
 - Date: 2026-08-12
 - Owners: `5010-dev/.github` maintainers and selecting repository maintainers
-- Planning authority: [ENG-226](https://linear.app/5010-tech/issue/ENG-226)
 
 ## Context
 

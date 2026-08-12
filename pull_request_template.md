@@ -70,8 +70,8 @@ Keep the PR focused; a reviewer should grasp it in a few minutes. Delete any sec
 - [ ] ECS delivery-boundary changes (task definition, image identity, deployment semantics, target/approval boundary, rollback, or health/readiness) complete the [organization workflow checklist](https://github.com/5010-dev/.github/blob/main/docs/platform/ecs-service-delivery-workflow-standard.md#pull-request-conformance-checklist) or link an accepted exception; pin/dependency/tool-only updates with unchanged delivery semantics are N/A
 - [ ] Branch is current with the base; commits are independently understandable and ready for rebase + fast-forward
 
-## Related (optional)
+## Repository authority and history (optional)
 
-<!-- Linear issues (`Closes ENG-123` to auto-close), ADRs (e.g. ADR-019), GitHub issues (`Closes #12`), prior PRs. -->
+<!-- Link repository-owned contracts, ADRs, evidence, and relevant prior PRs. External planning systems are coordination context, not authority or evidence. -->
 
 -

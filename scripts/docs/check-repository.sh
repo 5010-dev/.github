@@ -28,6 +28,7 @@ required_sources=(
     docs/decisions/README.md
     docs/decisions/0022-retire-golden-path-executable-tooling.md
     docs/decisions/0023-adopt-protected-package-tag-publication-profile.md
+    docs/decisions/0024-separate-dependency-risk-from-routine-automation.md
     docs/golden-path/README.md
     docs/golden-path/stack-defaults.md
     docs/golden-path/reference-examples.md
