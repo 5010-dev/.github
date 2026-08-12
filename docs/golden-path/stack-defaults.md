@@ -14,7 +14,8 @@ Every active buildable repository starts with:
 3. truthful root `just init`, `just check`, and `just ci` recipes;
 4. one repository-owned canonical CI workflow that prepares locked
    dependencies and runs `just ci` once;
-5. repository-owned dependency automation and security visibility; and
+5. repository-owned security visibility and remediation, plus optional
+   repository-owned routine dependency automation; and
 6. release or deployment automation only for boundaries the repository
    actually owns.
 

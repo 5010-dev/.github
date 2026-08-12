@@ -1,9 +1,9 @@
 # Developer Tooling Standard
 
 - Status: Accepted
-- Standard version: `2026.08.7`
+- Standard version: `2026.08.8`
 - Contract version: `golden-path/v1`
-- Last reviewed: 2026-08-11
+- Last reviewed: 2026-08-13
 - Owner: `5010-dev/.github` maintainers
 
 This standard defines organization defaults for repository-owned developer
@@ -111,6 +111,12 @@ Existing repositories follow the
 the [retirement journey](../../guides/migrating-developer-tooling.md) when they
 still contain the executable control-plane footprint.
 No central registry tracks adoption.
+
+`2026.08.8` separates dependency-risk outcomes from routine-update machinery.
+Active buildable repositories retain vulnerability and lifecycle obligations,
+while routine version-update pull requests are repository opt-in. The standard
+no longer prescribes a weekly routine cadence or a universal numeric queue
+budget.
 
 `2026.08.7` retires the active executable Golden Path control plane and
 removes dependency compiler, live report, generated metadata, locator, and

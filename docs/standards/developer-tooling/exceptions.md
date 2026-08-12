@@ -1,7 +1,7 @@
 # Golden Path exceptions
 
 - Status: Accepted
-- Standard version: `2026.08.7`
+- Standard version: `2026.08.8`
 
 An exception is a repository-local, reviewable, time-bounded waiver for one or
 more waivable MUST rules. It does not change the rule, runtime lifecycle,

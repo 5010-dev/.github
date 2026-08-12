@@ -2,10 +2,10 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: /
-    target-branch: dev
-    open-pull-requests-limit: 3
+    # Security-only starting point. Security updates remain independent from
+    # the routine version-update pull-request limit.
+    open-pull-requests-limit: 0
+    # Dependabot requires a schedule even when version updates are disabled.
+    # Choose a repository-specific cadence before opting into routine updates.
     schedule:
-      interval: weekly
-    groups:
-      development-toolchain:
-        dependency-type: development
+      interval: monthly

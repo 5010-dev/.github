@@ -21,9 +21,11 @@ change.
 4. Add one repository-owned canonical CI workflow that runs `just ci` once.
 5. Add repository-owned release and deployment workflows only when the
    repository has those boundaries.
-6. Enable GitHub-native dependency and security features appropriate to the
-   repository. Keep security visibility and routing independent from routine
-   update budgets.
+6. Enable supported GitHub-native vulnerability visibility and a usable
+   security remediation path. Routine version-update automation is optional;
+   if adopted, choose its roots, cadence, grouping, owner, target branch, and
+   queue limits from the repository's actual review and release capacity. Keep
+   security visibility and routing independent from routine update budgets.
 7. Add `.github/golden-path-native-roots.yaml` only when native dependency
    roots are otherwise ambiguous.
 8. Run the repository's documented initialization and canonical CI locally.

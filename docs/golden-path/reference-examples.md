@@ -54,11 +54,12 @@ call this workflow or run `just ci` again.
 
 ## Dependabot starting point
 
-Dependabot is the default adapter. Enumerate actual native roots and ecosystems;
-do not add entries for absent manifests. The `3` below is a non-normative
-starting budget for each configured ecosystem entry, not an organization-wide
-queue or a per-repository guarantee. The repository may change it based on its
-review capacity.
+Dependabot is the default adapter when a repository chooses an automated
+dependency adapter. Enumerate actual native roots and ecosystems; do not add
+entries for absent manifests. The example disables routine version-update pull
+requests with `open-pull-requests-limit: 0` while preserving Dependabot security
+updates. Its required `schedule` field is not an organization routine cadence
+because the example has no positive routine pull-request budget.
 
 Start from the syntax-checked [Dependabot example](./examples/dependabot.yml).
 
@@ -66,13 +67,23 @@ Replace `npm` and `/` with the actual ecosystem and native root. Use one
 operational bot owner per dependency surface. Renovate may replace Dependabot
 for a documented need; it must not duplicate the same surface.
 
+Automated routine version-update pull requests are a repository opt-in. To
+enable them, deliberately choose a positive per-entry limit and a cadence that
+fits repository activity, release and deployment effects, test confidence, and
+review capacity, then add the repository's routine target branch. Define
+compatible groups where they reduce review load, and keep runtime, major,
+pre-1.0, base-image, IaC, and release-impacting changes reviewable. The Golden
+Path does not prescribe a weekly cadence or numeric budget.
+
 Dependabot security-update pull requests are based on the repository's default
-branch. Preserve alerts and security updates even when routine updates target
-`dev`. If the repository's accepted branch model requires retargeting a
-security pull request to `dev`, keep that workflow repository-owned, give it
-only `pull-requests: write`, authenticate the Dependabot head repository and
-branch, and verify final alert closure only after the fixed lock reaches the
-default branch. Security work never waits for routine grouping.
+branch. The security-only example therefore omits `target-branch`; GitHub states
+that an entry with a non-default `target-branch` applies only to version updates.
+Preserve alerts and security updates even when routine updates target `dev`. If
+the repository's accepted branch model requires retargeting a security pull
+request to `dev`, keep that workflow repository-owned, give it only
+`pull-requests: write`, authenticate the Dependabot head repository and branch,
+and verify final alert closure only after the fixed lock reaches the default
+branch. Security work never waits for routine grouping.
 
 ## Ambiguous native roots
 
