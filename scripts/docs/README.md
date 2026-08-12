@@ -43,10 +43,19 @@ python3 scripts/docs/check-protected-package-tag-admission.py \
 The checker derives package identity from the repository contract, newly added
 intent, JSON or TOML native manifest, and exact Git diff. It rejects stale,
 multiple, changed, duplicate, or conflicting intent; contract/native package
-identity mismatch; non-version manifest mutation; deletion, rename, copy, or
-type change; paths outside release preparation; and sibling release-unit
-mutation. It does not publish or query remote tag, registry, ruleset,
-permission, or approval state.
+identity mismatch; non-increasing SemVer precedence; non-version manifest
+mutation; deletion, rename, exact-content copy, type change, non-regular files;
+paths outside release preparation; and sibling release-unit mutation. JSON input
+must be strict UTF-8 without duplicate keys or non-standard numeric constants.
+The checker does not publish or query remote tag, registry, ruleset, permission,
+or approval state.
+
+The invocation requires the exact base and head commit objects plus their
+ancestry. An adopting checkout MUST fetch sufficient history, normally with
+`fetch-depth: 0`; a shallow checkout that cannot resolve or relate both commits
+fails closed. Contract patterns are segment-aware: `*`, `?`, and bracket
+expressions stay within one segment, while a complete `**` segment crosses zero
+or more segments.
 
 Run its repository-owned tests directly with:
 

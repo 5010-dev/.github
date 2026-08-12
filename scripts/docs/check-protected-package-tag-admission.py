@@ -17,6 +17,7 @@ import subprocess
 import sys
 import tomllib
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from typing import Any, NoReturn
 
@@ -25,6 +26,7 @@ DEFAULT_CONTRACT = ".github/release-policy/protected-package-tag.v1.json"
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 ID_RE = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 TOML_DOTTED_KEY_RE = re.compile(r"^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*$")
+WORKFLOW_RE = re.compile(r"^\.github/workflows/[^/]+\.ya?ml$")
 SEMVER_RE = re.compile(
     r"^(0|[1-9][0-9]*)\."
     r"(0|[1-9][0-9]*)\."
@@ -54,6 +56,7 @@ EXPECTED_EFFECTS = {
         "sibling-release-unit-mutation",
     ],
 }
+REGULAR_FILE_MODES = {"100644", "100755"}
 
 
 class AdmissionError(Exception):
@@ -104,6 +107,11 @@ def validate_id(value: Any, label: str) -> str:
 def validate_relative(value: Any, label: str, *, allow_glob: bool = False) -> str:
     text = require_string(value, label)
     require(len(text) <= 300, f"{label} is too long")
+    require(not text.startswith(":"), f"{label} must not use Git pathspec magic")
+    require(
+        not any(ord(character) < 32 or ord(character) == 127 for character in text),
+        f"{label} must not contain control characters",
+    )
     require("\\" not in text, f"{label} must use POSIX separators")
     path = PurePosixPath(text)
     require(not path.is_absolute(), f"{label} must be repository-relative")
@@ -122,11 +130,7 @@ def validate_patterns(value: Any, label: str) -> list[str]:
 
 def validate_workflow(value: Any, label: str) -> str:
     path = validate_relative(value, label)
-    require(
-        path.startswith(".github/workflows/") and path.endswith((".yml", ".yaml")),
-        f"{label} must name a repository workflow",
-    )
-    require(PurePosixPath(path).parent == PurePosixPath(".github/workflows"), f"{label} must name a top-level workflow file")
+    require(WORKFLOW_RE.fullmatch(path) is not None, f"{label} must name a top-level repository workflow")
     return path
 
 
@@ -300,15 +304,67 @@ def validate_intent(document: Any, label: str = "release intent") -> dict[str, A
     return intent
 
 
+def compare_semver_precedence(left: str, right: str) -> int:
+    left_match = SEMVER_RE.fullmatch(left)
+    right_match = SEMVER_RE.fullmatch(right)
+    require(left_match is not None and right_match is not None, "cannot compare invalid SemVer")
+
+    left_core = tuple(int(left_match.group(index)) for index in range(1, 4))
+    right_core = tuple(int(right_match.group(index)) for index in range(1, 4))
+    if left_core != right_core:
+        return -1 if left_core < right_core else 1
+
+    left_prerelease = left_match.group(4)
+    right_prerelease = right_match.group(4)
+    if left_prerelease is None or right_prerelease is None:
+        if left_prerelease == right_prerelease:
+            return 0
+        return 1 if left_prerelease is None else -1
+
+    left_identifiers = left_prerelease.split(".")
+    right_identifiers = right_prerelease.split(".")
+    for left_identifier, right_identifier in zip(left_identifiers, right_identifiers):
+        if left_identifier == right_identifier:
+            continue
+        left_numeric = left_identifier.isdigit()
+        right_numeric = right_identifier.isdigit()
+        if left_numeric and right_numeric:
+            return -1 if int(left_identifier) < int(right_identifier) else 1
+        if left_numeric != right_numeric:
+            return -1 if left_numeric else 1
+        return -1 if left_identifier < right_identifier else 1
+    if len(left_identifiers) == len(right_identifiers):
+        return 0
+    return -1 if len(left_identifiers) < len(right_identifiers) else 1
+
+
 def path_matches(path: str, pattern: str) -> bool:
-    return fnmatch.fnmatchcase(path, pattern)
+    path_parts = PurePosixPath(path).parts
+    pattern_parts = PurePosixPath(pattern).parts
+
+    @lru_cache(maxsize=None)
+    def match(path_index: int, pattern_index: int) -> bool:
+        if pattern_index == len(pattern_parts):
+            return path_index == len(path_parts)
+        segment = pattern_parts[pattern_index]
+        if segment == "**":
+            return match(path_index, pattern_index + 1) or (
+                path_index < len(path_parts) and match(path_index + 1, pattern_index)
+            )
+        return (
+            path_index < len(path_parts)
+            and fnmatch.fnmatchcase(path_parts[path_index], segment)
+            and match(path_index + 1, pattern_index + 1)
+        )
+
+    return match(0, 0)
 
 
 def is_below(path: str, directory: str) -> bool:
     return path.startswith(f"{directory}/")
 
 
-def git(repo: Path, *args: str, binary: bool = False, allow_failure: bool = False) -> bytes | str:
+def git(repo: Path, *args: str, binary: bool = False) -> bytes | str:
     result = subprocess.run(
         ["git", *args],
         cwd=repo,
@@ -316,11 +372,9 @@ def git(repo: Path, *args: str, binary: bool = False, allow_failure: bool = Fals
         stderr=subprocess.PIPE,
         check=False,
     )
-    if result.returncode != 0 and not allow_failure:
+    if result.returncode != 0:
         detail = result.stderr.decode("utf-8", errors="replace").strip()
         reject(f"git {' '.join(args)} failed: {detail}")
-    if allow_failure:
-        return str(result.returncode)
     if binary:
         return result.stdout
     return result.stdout.decode("utf-8")
@@ -328,9 +382,22 @@ def git(repo: Path, *args: str, binary: bool = False, allow_failure: bool = Fals
 
 def git_json(repo: Path, revision: str, path: str, label: str) -> Any:
     raw = git(repo, "show", f"{revision}:{path}", binary=True)
+
+    def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        document: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in document:
+                raise ValueError(f"duplicate object key: {key}")
+            document[key] = value
+        return document
+
+    def reject_constant(value: str) -> NoReturn:
+        raise ValueError(f"non-standard numeric constant: {value}")
+
     try:
-        return json.loads(raw)
-    except (json.JSONDecodeError, UnicodeDecodeError) as error:
+        text = raw.decode("utf-8")
+        return json.loads(text, object_pairs_hook=unique_object, parse_constant=reject_constant)
+    except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as error:
         reject(f"{label} is not valid UTF-8 JSON: {error}")
 
 
@@ -342,15 +409,24 @@ def git_toml(repo: Path, revision: str, path: str, label: str) -> Any:
         reject(f"{label} is not valid UTF-8 TOML: {error}")
 
 
-def git_path_exists(repo: Path, revision: str, path: str) -> bool:
-    result = subprocess.run(
-        ["git", "cat-file", "-e", f"{revision}:{path}"],
-        cwd=repo,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
-    return result.returncode == 0
+def git_file_mode(repo: Path, revision: str, path: str, label: str) -> str:
+    raw = git(repo, "ls-tree", "-z", revision, "--", f":(literal){path}", binary=True)
+    records = [record for record in raw.split(b"\0") if record]
+    require(len(records) == 1, f"{label} is missing or ambiguous at {revision}: {path}")
+    try:
+        metadata, encoded_path = records[0].split(b"\t", 1)
+        mode, object_type, _object_id = metadata.decode("ascii").split(" ", 2)
+        actual_path = encoded_path.decode("utf-8")
+    except (UnicodeDecodeError, ValueError) as error:
+        reject(f"{label} has invalid Git tree metadata at {revision}: {error}")
+    require(actual_path == path, f"{label} resolved to an unexpected path at {revision}: {actual_path}")
+    require(object_type == "blob", f"{label} must be a Git blob at {revision}: {path}")
+    return mode
+
+
+def require_regular_file(repo: Path, revision: str, path: str, label: str) -> None:
+    mode = git_file_mode(repo, revision, path, label)
+    require(mode in REGULAR_FILE_MODES, f"{label} must be a regular file at {revision}: {path} ({mode})")
 
 
 def parse_diff(repo: Path, base: str, head: str) -> list[DiffEntry]:
@@ -360,6 +436,7 @@ def parse_diff(repo: Path, base: str, head: str) -> list[DiffEntry]:
         "--name-status",
         "-z",
         "--find-renames",
+        "--find-copies=100%",
         "--find-copies-harder",
         base,
         head,
@@ -372,11 +449,17 @@ def parse_diff(repo: Path, base: str, head: str) -> list[DiffEntry]:
     entries: list[DiffEntry] = []
     index = 0
     while index < len(parts):
-        status = parts[index].decode("ascii", errors="strict")
+        try:
+            status = parts[index].decode("ascii", errors="strict")
+        except UnicodeDecodeError as error:
+            reject(f"git diff produced an invalid status: {error}")
         index += 1
         path_count = 2 if status.startswith(("R", "C")) else 1
         require(index + path_count <= len(parts), "git diff produced an incomplete name-status record")
-        paths = tuple(parts[index + offset].decode("utf-8") for offset in range(path_count))
+        try:
+            paths = tuple(parts[index + offset].decode("utf-8") for offset in range(path_count))
+        except UnicodeDecodeError as error:
+            reject(f"git diff path is not UTF-8: {error}")
         index += path_count
         entries.append(DiffEntry(status=status, paths=paths))
     return entries
@@ -446,10 +529,6 @@ def dotted_set(document: Any, key: str, value: Any, label: str) -> None:
     current[last] = value
 
 
-def require_repository_file(repo: Path, revision: str, path: str, label: str) -> None:
-    require(git_path_exists(repo, revision, path), f"{label} is missing at {revision}: {path}")
-
-
 def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: str) -> dict[str, Any]:
     require(repo.is_dir(), f"repository does not exist: {repo}")
     contract_path = validate_relative(contract_path, "contract path")
@@ -467,17 +546,19 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
     ).returncode
     require(ancestor_status == 0, "base must be an ancestor of head")
 
-    require_repository_file(repo, head, contract_path, "opt-in profile contract")
+    require_regular_file(repo, head, contract_path, "opt-in profile contract")
     contract = validate_contract(git_json(repo, head, contract_path, "profile contract"))
     require(event_ref == contract["source"]["ref"], "event ref does not match the profile source ref")
 
     unit = contract["releaseUnit"]
     for path_key in ("compatibilityContract", "changelog", "validationWorkflow", "publicationWorkflow"):
-        require_repository_file(repo, head, unit[path_key], f"releaseUnit.{path_key}")
+        require_regular_file(repo, head, unit[path_key], f"releaseUnit.{path_key}")
 
     entries = parse_diff(repo, base, head)
     require(bool(entries), "admission diff is empty")
     changed_paths = {path for entry in entries for path in entry.paths}
+    for path in changed_paths:
+        validate_relative(path, "changed path", allow_glob=True)
     require(contract_path not in changed_paths, "profile contract must be reviewed separately from release preparation")
     require(unit["validationWorkflow"] not in changed_paths, "validation workflow must be reviewed separately from release preparation")
     require(unit["publicationWorkflow"] not in changed_paths, "publication workflow must be reviewed separately from release preparation")
@@ -487,6 +568,7 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
             entry.status in {"A", "M"},
             f"release preparation may only add or modify files: {entry.status} {' -> '.join(entry.paths)}",
         )
+        require_regular_file(repo, head, entry.paths[0], "release-preparation path")
 
     for sibling in contract["siblingReleaseUnits"]:
         for path in sorted(changed_paths):
@@ -506,15 +588,31 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
     intent_path = intent_entry.paths[0]
     require(PurePosixPath(intent_path).parent == PurePosixPath(contract["intentDirectory"]), "release intent must be directly inside intentDirectory")
     require(intent_path.endswith(".json"), "release intent must be a JSON file")
+    require_regular_file(repo, head, intent_path, "release intent")
     intent = validate_intent(git_json(repo, head, intent_path, intent_path), intent_path)
     require(intent["releaseUnit"] == unit["id"], "release intent targets a different release unit")
     require(intent["source"]["ref"] == event_ref, "release intent source ref does not match the event ref")
     require(intent["source"]["baseCommit"] == base, "release intent is stale: source baseCommit does not equal the event before commit")
 
-    listed = git(repo, "ls-tree", "-r", "--name-only", "-z", head, "--", contract["intentDirectory"], binary=True)
-    intent_paths = [part.decode("utf-8") for part in listed.split(b"\0") if part]
+    listed = git(
+        repo,
+        "ls-tree",
+        "-r",
+        "--name-only",
+        "-z",
+        head,
+        "--",
+        f":(literal){contract['intentDirectory']}",
+        binary=True,
+    )
+    try:
+        intent_paths = [part.decode("utf-8") for part in listed.split(b"\0") if part]
+    except UnicodeDecodeError as error:
+        reject(f"intent directory contains a non-UTF-8 path: {error}")
     matching_identity: list[str] = []
     for historical_path in intent_paths:
+        validate_relative(historical_path, "historical release intent path", allow_glob=True)
+        require_regular_file(repo, head, historical_path, "historical release intent")
         historical = validate_intent(git_json(repo, head, historical_path, historical_path), historical_path)
         if historical["releaseUnit"] == intent["releaseUnit"] and historical["version"] == intent["version"]:
             matching_identity.append(historical_path)
@@ -524,6 +622,8 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
     version_path = version_source["path"]
     version_entries = [entry for entry in entries if version_path in entry.paths]
     require(len(version_entries) == 1 and version_entries[0].status == "M", "version source must be modified exactly once")
+    require_regular_file(repo, base, version_path, "base version source")
+    require_regular_file(repo, head, version_path, "head version source")
     if version_source["type"] == "json-pointer":
         base_manifest = git_json(repo, base, version_path, "base version source")
         head_manifest = git_json(repo, head, version_path, "head version source")
@@ -549,7 +649,10 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
     require(head_package_name == unit["packageName"], "native manifest package name does not match releaseUnit.packageName")
     require(isinstance(base_version, str) and SEMVER_RE.fullmatch(base_version) is not None, "base manifest version is not exact SemVer")
     require(isinstance(head_version, str) and SEMVER_RE.fullmatch(head_version) is not None, "head manifest version is not exact SemVer")
-    require(base_version != head_version, "manifest version did not change")
+    require(
+        compare_semver_precedence(head_version, base_version) > 0,
+        "head manifest version must have greater SemVer precedence than the base version",
+    )
     require(head_version == intent["version"], "release intent version does not match the head manifest")
     require(expected_manifest == head_manifest, "version source changed outside the configured version field")
 

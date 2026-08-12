@@ -49,7 +49,10 @@ intent/version/changelog diff and fails when the contract is absent. It also
 fails stale, multiple, channel-conflicting, version-mismatched, package-identity
 mismatch, non-version manifest, destructive diff, schema/checker boundary,
 unrelated-path, and sibling-release-unit mutations. It admits both supported
-JSON and TOML native manifest selectors.
+JSON and TOML native manifest selectors. The suite also covers successive
+release intent, segment-aware allowlists, strictly increasing SemVer precedence,
+strict UTF-8 JSON, regular-file modes, literal intent-directory scanning, and
+invalid derived tags.
 
 ```bash
 python3 scripts/docs/test-protected-package-tag-admission.py
