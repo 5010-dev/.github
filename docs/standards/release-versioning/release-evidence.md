@@ -34,6 +34,13 @@ The record MUST include the following when applicable:
 - known security, integrity, compatibility, scientific-scope, or use
   limitations.
 
+A protected package-tag release record MUST additionally include the immutable
+release intent, admitted base and head commits, exact merge-diff identity,
+derived package tag, registry version and integrity, selected channel, workflow
+run, package-only effect verification, and retry or recovery state. The record
+MUST distinguish a successful new publication from an idempotent verification
+of an already-published identical identity.
+
 A native client release record MUST additionally identify the application or
 bundle, platform-native display version and build identifier, signed build or
 archive, distribution channel, supported platform range, and applicable store

@@ -30,6 +30,12 @@ support state is Preferred and MUST NOT imply Stable maturity. A prerelease MUST
 use a native prerelease version or separate channel. Stable promotion publishes
 a new final version; it MUST NOT mutate an existing prerelease, tag, or artifact.
 
+Under the protected package-tag profile, a `dev` prerelease MUST use the same
+package identity as the final package, a native SemVer prerelease, and a
+repository-declared non-`latest` channel. Consumers MUST pin the exact version;
+the mutable channel is discovery only. Final publication MUST use a new final
+SemVer version and `latest`, and MUST NOT relabel prerelease bytes as final.
+
 ## Research record status
 
 The owning research contract MUST define a status vocabulary that distinguishes
@@ -147,6 +153,12 @@ version or repository-native release identifier. Otherwise, a repository MAY
 yank or retract the defective release without publishing a replacement.
 Emergency deletion MUST record credential rotation or containment, affected
 scope, replacement, required consumer action, owner, and follow-up review.
+
+A retry of protected package-tag publication MUST re-read both immutable tag and
+registry state. Matching tag, version, source, and integrity are an idempotent
+verification result; any mismatch is a conflict and MUST fail closed. A
+prerelease defect requires a new prerelease version, and a final defect requires
+a new SemVer correction.
 
 Database migrations are superseded by later migrations rather than deprecated,
 yanked, or deleted. Research records follow their correction, supersession, and

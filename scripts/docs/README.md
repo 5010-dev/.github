@@ -15,8 +15,10 @@ The gate checks required sources, including the Golden Path journeys and
 reference examples, local Markdown links, trailing whitespace, JSON syntax,
 YAML syntax through Ruby's standard parser, TOML syntax through Python
 `tomllib`, Just example syntax through Just itself, shell syntax, and the
-engineering-documentation scaffold. The workflow pins Just `1.57.0`; local
-validation requires compatible `python3`, `ruby`, and `just` commands.
+engineering-documentation scaffold. It also runs the dependency-free protected
+package-tag admission regression suite against temporary Git repositories. The
+workflow pins Just `1.57.0`; local validation requires Python 3.11 or newer plus
+compatible `ruby`, `git`, and `just` commands.
 
 The gate does not execute a Golden Path binary or any reference-example recipe,
 validate consumer repositories, call live GitHub APIs, or replay another
@@ -24,6 +26,33 @@ repository's `just ci`.
 
 The [documentation governance workflow](../../.github/workflows/docs.yml) runs
 this gate for pull requests and pushes to `main`.
+
+## Protected package-tag admission
+
+Run the exact-diff checker from a repository that has explicitly selected the
+profile:
+
+```bash
+python3 scripts/docs/check-protected-package-tag-admission.py \
+  --repository . \
+  --base "$BEFORE_SHA" \
+  --head "$AFTER_SHA" \
+  --event-ref refs/heads/dev
+```
+
+The checker derives package identity from the repository contract, newly added
+intent, JSON or TOML native manifest, and exact Git diff. It rejects stale,
+multiple, changed, duplicate, or conflicting intent; contract/native package
+identity mismatch; non-version manifest mutation; deletion, rename, copy, or
+type change; paths outside release preparation; and sibling release-unit
+mutation. It does not publish or query remote tag, registry, ruleset,
+permission, or approval state.
+
+Run its repository-owned tests directly with:
+
+```bash
+python3 scripts/docs/test-protected-package-tag-admission.py
+```
 
 ## Engineering documentation scaffold
 

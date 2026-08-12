@@ -23,6 +23,8 @@ organization contracts are interpreted as described in
 - [Developer Tooling Standard](./standards/developer-tooling/README.md)
 - [Developer Tooling schemas](./standards/developer-tooling/schemas/README.md)
 - [Release and Versioning Standard](./standards/release-versioning/README.md)
+- [Protected package-tag publication profile](./standards/release-versioning/protected-package-tag.md)
+- [Release and Versioning schemas](./standards/release-versioning/schemas/README.md)
 - [Engineering documentation standard](./standards/engineering-documentation/README.md)
 
 ## Guides
