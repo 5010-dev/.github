@@ -47,12 +47,13 @@ GitHub-native default.
 
 - Security alerts and security-update paths MUST be enabled where the ecosystem
   supports them.
-- Active buildable repositories MUST track known vulnerabilities and
-  unsupported dependencies and remediate them or record an approved risk
-  exception.
-- Dependency drift SHOULD be reviewed periodically. Each repository selects a
-  cadence that fits its activity, release lifecycle, exposure, runtime
-  criticality, test confidence, and owner capacity.
+- Active buildable repositories MUST track and triage known vulnerabilities
+  under an approved severity, exploitability, scope, and release-gate policy.
+  Findings over that policy's remediation threshold MUST be fixed or covered
+  by an approved dependency exception.
+- Dependency drift and upstream support status SHOULD be reviewed periodically.
+  Each repository selects a cadence that fits its activity, release lifecycle,
+  exposure, runtime criticality, test confidence, and owner capacity.
 - Automated routine version-update pull requests MAY be used. When enabled,
   the repository MUST enumerate only actual native roots, use one automation
   owner for each dependency surface, select an explicit target branch and a

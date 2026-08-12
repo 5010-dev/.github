@@ -37,12 +37,14 @@ not sufficient evidence to create that organization default.
 1. The Developer Tooling Standard owns dependency-risk outcomes: locked native
    authority, known-vulnerability visibility, remediation or accepted risk,
    dependency lifecycle review, and release safety.
-2. Active buildable repositories MUST track known vulnerabilities and
-   unsupported dependencies and remediate them or record an approved risk
-   exception.
-3. Repositories SHOULD review dependency drift periodically. Each repository
-   selects its cadence from actual activity, exposure, runtime criticality,
-   test confidence, review capacity, and release or deployment effects.
+2. Active buildable repositories MUST track and triage known vulnerabilities
+   under an approved severity, exploitability, scope, and release-gate policy.
+   Findings over that policy's remediation threshold MUST be fixed or covered
+   by an approved dependency exception.
+3. Repositories SHOULD review dependency drift and upstream support status
+   periodically. Each repository selects its cadence from actual activity,
+   exposure, runtime criticality, test confidence, review capacity, and release
+   or deployment effects.
 4. Automated routine version-update pull requests are an opt-in MAY. There is
    no organization-wide weekly cadence or numeric pull-request budget.
 5. When routine automation is enabled, the repository owns actual native roots,
@@ -65,8 +67,9 @@ not sufficient evidence to create that organization default.
 
 ## Consequences
 
-- Security and dependency-lifecycle accountability remain mandatory even when a
-  repository chooses not to generate routine version-update pull requests.
+- Security accountability remains mandatory and periodic dependency-lifecycle
+  review remains expected even when a repository chooses not to generate
+  routine version-update pull requests.
 - Repository teams may adopt Dependabot, Renovate, grouping, cooldowns,
   automerge, or other delivery automation when their tests, review capacity,
   and release boundaries support it.
@@ -86,8 +89,8 @@ repository queue or fit different review, release, and deployment boundaries.
 
 ### Disable dependency maintenance
 
-Rejected because vulnerability visibility, remediation, unsupported-dependency
-handling, and periodic lifecycle review remain required outcomes.
+Rejected because vulnerability visibility, risk-based remediation, and
+periodic lifecycle review remain required or expected outcomes.
 
 ### Build a central queue, compiler, or approval service
 
@@ -107,8 +110,11 @@ delivery boundaries rather than inferred from a reference configuration.
 This ADR and the linked repository standards are the authority for the
 decision. Git history preserves the superseded weekly and positive-limit source
 as development history. External planning systems are neither authority nor
-evidence. Security-sensitive organization inventory is not published in this
-public repository; any future preservation of that exact evidence requires an
-explicitly selected private repository authority.
+evidence. This decision creates no organization snapshot, evidence repository,
+or retention obligation; current operational state is observed from its owning
+repositories when needed.
 
-Boundary classification: unreleased — corrected in place.
+Boundary classification: released policy — Standard `2026.08.8` supersedes
+`2026.08.7`; no runtime compatibility or migration path applies because this
+decision changes no wire contract, durable state, released artifact, or
+mixed-version deployment.
