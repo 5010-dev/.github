@@ -42,8 +42,8 @@ severity, exploitability, scope, and release-gate policy determines failure.
 
 ## Update automation
 
-When a repository chooses an automated dependency adapter, Dependabot is the
-GitHub-native default.
+Security and dependency-lifecycle obligations apply whether or not a repository
+chooses an automated dependency adapter.
 
 - Security alerts and security-update paths MUST be enabled where the ecosystem
   supports them.
@@ -54,6 +54,11 @@ GitHub-native default.
 - Dependency drift and upstream support status SHOULD be reviewed periodically.
   Each repository selects a cadence that fits its activity, release lifecycle,
   exposure, runtime criticality, test confidence, and owner capacity.
+- Security updates MUST NOT be delayed behind a routine batch.
+
+When a repository chooses an automated dependency adapter, Dependabot is the
+GitHub-native default.
+
 - Automated routine version-update pull requests MAY be used. When enabled,
   the repository MUST enumerate only actual native roots, use one automation
   owner for each dependency surface, select an explicit target branch and a
@@ -63,7 +68,6 @@ GitHub-native default.
   hiding incompatible runtime, major, pre-1.0, base-image, IaC, or release
   effects. A repository MUST NOT combine the entire dependency graph merely to
   reduce pull-request count.
-- Security updates MUST NOT be delayed behind a routine batch.
 - When routine automation is enabled, GitHub Actions, base images, package
   ecosystems, and IaC dependencies SHOULD be included where supported and
   applicable.
