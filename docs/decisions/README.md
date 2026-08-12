@@ -18,6 +18,7 @@ index.
 | [ADR-0021](./0021-adopt-dependency-policy-compiler.md) | Superseded by ADR-0022 | Adopt the dependency policy compiler contract |
 | [ADR-0022](./0022-retire-golden-path-executable-tooling.md) | Accepted | Retire executable control plane and retain a repository-owned Golden Path |
 | [ADR-0023](./0023-adopt-protected-package-tag-publication-profile.md) | Accepted | Adopt the opt-in protected package-tag publication profile |
+| [ADR-0024](./0024-separate-dependency-risk-from-routine-automation.md) | Accepted | Separate dependency-risk outcomes from routine-update automation |
 
 Organization standards and platform contracts hold the current normative view.
 ADRs explain why those views were accepted.

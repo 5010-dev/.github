@@ -116,7 +116,9 @@ No central registry tracks adoption.
 Active buildable repositories retain vulnerability and lifecycle obligations,
 while routine version-update pull requests are repository opt-in. The standard
 no longer prescribes a weekly routine cadence or a universal numeric queue
-budget.
+budget. [ADR-0024](../../decisions/0024-separate-dependency-risk-from-routine-automation.md)
+preserves the repository-owned rationale, rejected alternatives, and future
+DevOps boundary for this change.
 
 `2026.08.7` retires the active executable Golden Path control plane and
 removes dependency compiler, live report, generated metadata, locator, and
