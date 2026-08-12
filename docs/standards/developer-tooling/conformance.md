@@ -1,7 +1,7 @@
 # Developer Tooling conformance
 
 - Status: Accepted
-- Standard version: `2026.08.7`
+- Standard version: `2026.08.8`
 - Active central checker: none
 
 Conformance is the owning repository's reviewable agreement between the central

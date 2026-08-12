@@ -31,9 +31,10 @@ checklist is guidance, not a central approval queue.
 
 ## Dependency and security state
 
-- [ ] One automation owner manages each dependency surface; Dependabot and
-      Renovate do not overlap.
-- [ ] Routine grouping and pull-request limits fit repository review capacity.
+- [ ] If dependency automation is used, one automation owner manages each
+      surface; Dependabot and Renovate do not overlap.
+- [ ] If routine automation is enabled, its cadence, grouping, and per-entry
+      pull-request limits fit repository review and release capacity.
 - [ ] Security alerts, routing failures, suppressed findings, and unresolved
       security updates remain visible to an accountable owner.
 - [ ] Security updates are not delayed, closed, or discarded for routine

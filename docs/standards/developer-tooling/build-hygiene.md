@@ -1,7 +1,7 @@
 # Dependency and build hygiene
 
 - Status: Accepted
-- Standard version: `2026.08.7`
+- Standard version: `2026.08.8`
 
 This cross-cutting profile separates three applicability layers:
 
@@ -42,16 +42,36 @@ severity, exploitability, scope, and release-gate policy determines failure.
 
 ## Update automation
 
-Dependabot is the GitHub-native default.
+When a repository chooses an automated dependency adapter, Dependabot is the
+GitHub-native default.
 
 - Security alerts and security-update paths MUST be enabled where the ecosystem
   supports them.
-- Routine version updates SHOULD run weekly as a starting cadence.
-- Updates SHOULD be grouped by ecosystem, runtime impact, dependency scope, and
-  risk without combining the entire graph into one change.
+- Active buildable repositories MUST track known vulnerabilities and
+  unsupported dependencies and remediate them or record an approved risk
+  exception.
+- Dependency drift SHOULD be reviewed periodically. Each repository selects a
+  cadence that fits its activity, release lifecycle, exposure, runtime
+  criticality, test confidence, and owner capacity.
+- Automated routine version-update pull requests MAY be used. When enabled,
+  the repository MUST enumerate only actual native roots, use one automation
+  owner for each dependency surface, select an explicit target branch and a
+  bounded positive per-entry pull-request limit, and apply its normal CI and
+  review/merge policy.
+- Routine updates SHOULD be grouped when grouping reduces review load without
+  hiding incompatible runtime, major, pre-1.0, base-image, IaC, or release
+  effects. A repository MUST NOT combine the entire dependency graph merely to
+  reduce pull-request count.
 - Security updates MUST NOT be delayed behind a routine batch.
-- GitHub Actions, base images, package ecosystems, and IaC dependencies SHOULD
-  be included where supported.
+- When routine automation is enabled, GitHub Actions, base images, package
+  ecosystems, and IaC dependencies SHOULD be included where supported and
+  applicable.
+
+There is no organization-wide routine cadence or numeric pull-request budget.
+A repository MAY choose a security-only Dependabot configuration by setting
+routine version-update limits to `0`; this does not require an expiry or exit
+condition merely because routine automation is absent. Security visibility and
+the remediation path remain required.
 
 Renovate MAY replace Dependabot when a monorepo, advanced grouping, extracted
 versions, or a dependency dashboard requires it and the repository records that
@@ -62,8 +82,9 @@ post-update behavior. It MUST use an explicit trusted-repository allowlist,
 reviewed execution policy, minimum credentials, and an isolated runner before
 unsafe execution is enabled.
 
-An unsupported ecosystem MUST use an owned scheduled review and explicit update
-command that achieves the same outcome.
+An ecosystem not covered by the selected automated adapter MUST still have an
+owned dependency-review and explicit update path that achieves the same
+security and lifecycle outcomes.
 
 ## Automerge
 
