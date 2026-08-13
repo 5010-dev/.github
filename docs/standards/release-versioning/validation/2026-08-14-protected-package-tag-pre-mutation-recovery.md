@@ -76,10 +76,12 @@ effects, or automatic advancement to a successor version.
 The dependency-free reference checker derives normal versus recovery admission
 from the exact diff. For recovery it validates one direct append-only record,
 current base/ref, unchanged manifest identity and version, one unambiguous
-historical intent, byte identity at failed source and recovery head, ancestral
-failed source, unique failed-run authorization, and derived tag. It does not
-query Actions, rulesets, required checks, authorization-use history, tags, or
-registries.
+historical intent, byte identity with no intervening protected-history mutation,
+a failed source on protected first-parent history that no earlier recovery
+record names, addition-only recovery-record history, and the derived tag. A
+different run URL does not create a second authorization for the same failed
+source. The checker does not query Actions, rulesets, required checks,
+authorization-use history, tags, or registries.
 
 The repository publication workflow must perform those live checks, prove that
 the prior run is terminal and stopped before immutable mutation, prove that both
@@ -89,8 +91,9 @@ same-version recovery plus rejection of stale base/ref, manifest mismatch,
 missing or ambiguous historical intent, modified original intent, duplicate or
 reused recovery authorization, unrelated and sibling changes, tag-present,
 registry-present, tag-only, registry-only, conflicting, non-terminal, and
-mutation-reaching claims. They also prove identity CLI inputs are rejected and
-normal repositories remain explicit opt-in only.
+mutation-reaching claims. They also reject delete/restore intent history,
+modify/restore recovery history, same-source authorization under another run,
+and identity CLI inputs; normal repositories remain explicit opt-in only.
 
 ```bash
 python3 scripts/docs/test-protected-package-tag-admission.py
@@ -98,8 +101,8 @@ scripts/docs/check-repository.sh
 git diff --check
 ```
 
-- focused admission suite: 61 tests, `OK`;
-- complete documentation gate: 61 embedded admission tests, `OK`, followed by
+- focused admission suite: 64 tests, `OK`;
+- complete documentation gate: 64 embedded admission tests, `OK`, followed by
   `organization documentation check: OK`; and
 - whitespace/error-marker check: exit 0 with no output.
 

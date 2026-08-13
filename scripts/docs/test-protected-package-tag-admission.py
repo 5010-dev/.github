@@ -640,6 +640,20 @@ class AdmissionTest(unittest.TestCase):
         )
         self.assert_rejected(self.check(head), "must remain byte-identical")
 
+    def test_rejects_deleted_and_restored_original_release_intent(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        original_bytes = (self.repo / original_path).read_bytes()
+        (self.repo / original_path).unlink()
+        self.base = self.commit("delete historical release intent")
+        self.write_bytes(Path(original_path), original_bytes)
+        self.base = self.commit("restore historical release intent")
+        head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assert_rejected(
+            self.check(head), "must remain append-only in protected source history"
+        )
+
     def test_rejects_multiple_recovery_authorizations(self) -> None:
         failed_source, original_path = self.materialize_failed_release()
         head = self.prepare_recovery(
@@ -676,6 +690,49 @@ class AdmissionTest(unittest.TestCase):
             recovery_name="recovery-2.json",
         )
         self.assert_rejected(self.check(head), "duplicate recovery authorization")
+
+    def test_rejects_same_failed_source_with_different_run(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        first_head = self.prepare_recovery(
+            failed_source=failed_source,
+            original_intent_path=original_path,
+            run_id=123456789,
+        )
+        self.assertEqual(self.check(first_head).returncode, 0)
+        self.base = first_head
+        head = self.prepare_recovery(
+            failed_source=failed_source,
+            original_intent_path=original_path,
+            run_id=987654321,
+            recovery_name="recovery-2.json",
+        )
+        self.assert_rejected(self.check(head), "same failed publication source")
+
+    def test_rejects_modified_and_restored_recovery_authorization(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        first_head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assertEqual(self.check(first_head).returncode, 0)
+        recovery_path = Path(".github/release-recovery-intents/recovery-1.json")
+        original_bytes = (self.repo / recovery_path).read_bytes()
+        recovery = json.loads(original_bytes)
+        recovery["failedAttempt"]["workflowRunUrl"] = (
+            "https://github.com/example/repository/actions/runs/111111111"
+        )
+        self.write_json(recovery_path, recovery)
+        self.base = self.commit("modify historical recovery authorization")
+        self.write_bytes(recovery_path, original_bytes)
+        self.base = self.commit("restore historical recovery authorization")
+        head = self.prepare_recovery(
+            failed_source=first_head,
+            original_intent_path=original_path,
+            run_id=987654321,
+            recovery_name="recovery-2.json",
+        )
+        self.assert_rejected(
+            self.check(head), "recovery intent directory must remain append-only"
+        )
 
     def test_rejects_recovery_with_unrelated_change(self) -> None:
         failed_source, original_path = self.materialize_failed_release()

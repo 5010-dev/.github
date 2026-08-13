@@ -578,6 +578,31 @@ def parse_diff(repo: Path, base: str, head: str) -> list[DiffEntry]:
     return entries
 
 
+def git_commit_list(repo: Path, *args: str, label: str) -> list[str]:
+    commits = [line for line in git(repo, "rev-list", *args).splitlines() if line]
+    require(
+        all(FULL_SHA_RE.fullmatch(commit) is not None for commit in commits),
+        f"{label} contains an invalid commit identity",
+    )
+    require(len(commits) == len(set(commits)), f"{label} contains duplicate commits")
+    return commits
+
+
+def path_change_commits(
+    repo: Path, head: str, path: str, label: str, *, start: str | None = None
+) -> list[str]:
+    revision = f"{start}..{head}" if start is not None else head
+    return git_commit_list(
+        repo,
+        "--first-parent",
+        "--full-history",
+        revision,
+        "--",
+        f":(literal){path}",
+        label=label,
+    )
+
+
 def json_pointer_tokens(pointer: str) -> list[str]:
     require(pointer.startswith("/"), "version JSON Pointer must start with /")
     return [token.replace("~1", "/").replace("~0", "~") for token in pointer[1:].split("/")]
@@ -765,12 +790,29 @@ def admit_recovery(
         failed_ancestor_status == 0,
         "failed attempt source must be an ancestor of the recovery base",
     )
+    protected_source_history = git_commit_list(
+        repo, "--first-parent", head, label="protected source first-parent history"
+    )
+    require(
+        failed_source in protected_source_history,
+        "failed attempt source must be on the protected source first-parent history",
+    )
     require_regular_file(repo, failed_source, original_path, "failed-source original release intent")
     failed_original_bytes = git(repo, "show", f"{failed_source}:{original_path}", binary=True)
     current_original_bytes = git(repo, "show", f"{head}:{original_path}", binary=True)
     require(
         failed_original_bytes == current_original_bytes,
         "original release intent must remain byte-identical after the failed attempt",
+    )
+    require(
+        not path_change_commits(
+            repo,
+            head,
+            original_path,
+            "original release intent history",
+            start=failed_source,
+        ),
+        "original release intent must remain append-only in protected source history",
     )
     original_base = original["source"]["baseCommit"]
     original_ancestor_status = subprocess.run(
@@ -797,11 +839,7 @@ def admit_recovery(
     recovery_paths = tree_paths(
         repo, head, recovery["intentDirectory"], "recovery intent directory"
     )
-    failed_attempt_key = (
-        authorization["failedAttempt"]["sourceCommit"],
-        authorization["failedAttempt"]["workflowRunUrl"],
-    )
-    matching_attempts: list[str] = []
+    matching_failed_sources: list[str] = []
     for historical_path in recovery_paths:
         validate_relative(historical_path, "historical recovery intent path", allow_glob=True)
         require(
@@ -814,15 +852,35 @@ def admit_recovery(
         historical = validate_recovery_intent(
             git_json(repo, head, historical_path, historical_path), historical_path
         )
-        if (
-            historical["failedAttempt"]["sourceCommit"],
-            historical["failedAttempt"]["workflowRunUrl"],
-        ) == failed_attempt_key:
-            matching_attempts.append(historical_path)
+        if historical["failedAttempt"]["sourceCommit"] == failed_source:
+            matching_failed_sources.append(historical_path)
     require(
-        matching_attempts == [recovery_path],
-        "duplicate recovery authorization exists for the same failed attempt",
+        matching_failed_sources == [recovery_path],
+        "duplicate recovery authorization exists for the same failed publication source",
     )
+    recovery_history = path_change_commits(
+        repo,
+        head,
+        recovery["intentDirectory"],
+        "recovery intent directory history",
+    )
+    require(
+        len(recovery_history) == len(recovery_paths),
+        "recovery intent directory must remain append-only in protected source history",
+    )
+    for historical_path in recovery_paths:
+        require(
+            len(
+                path_change_commits(
+                    repo,
+                    head,
+                    historical_path,
+                    f"historical recovery intent history: {historical_path}",
+                )
+            )
+            == 1,
+            f"historical recovery intent must be added once and never modified, renamed, or deleted: {historical_path}",
+        )
 
     base_manifest, base_package_name, base_version = read_native_manifest(
         repo, base, unit, "recovery base version source"
