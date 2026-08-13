@@ -5,7 +5,10 @@
 - Owner: `5010-dev/.github` maintainers
 - Last reviewed: 2026-08-14
 - Review by: 2027-02-11
-- Support: [open an issue in `5010-dev/.github`](https://github.com/5010-dev/.github/issues)
+- Support: [create an Engineering issue in Linear](https://linear.new?team=ENG) for triage by the `engineering-tooling` maintainers
+
+Linear is the support intake and work-tracking system. Reviewed source at
+`5010-dev/.github@main` remains the policy and Golden Path authority.
 
 The Developer Tooling Golden Path is the recommended, supported route from a
 repository's actual needs to a working repository-owned developer experience.
@@ -68,7 +71,9 @@ provides a generated upgrade lifecycle.
 
 For a repository-specific implementation problem, use that repository's normal
 issue or pull request flow and involve its owner. For a gap or ambiguity in the
-shared journey, open an issue in `5010-dev/.github` with the affected stack,
-repository shape, standard section, observed failure, and the smallest example
-that reproduces it. A proposed normative change belongs in the standard; an
-example-only improvement stays in the Golden Path.
+shared journey, [create an Engineering issue in
+Linear](https://linear.new?team=ENG) with the affected stack, repository shape,
+standard section, observed failure, and the smallest example that reproduces
+it. The `engineering-tooling` maintainers triage the issue with the relevant
+owner. A proposed normative change belongs in the standard; an example-only
+improvement stays in the Golden Path.
