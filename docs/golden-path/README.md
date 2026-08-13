@@ -3,7 +3,7 @@
 - Status: Supported
 - Model: Contract-backed, repository-owned
 - Owner: `5010-dev/.github` maintainers
-- Last reviewed: 2026-08-11
+- Last reviewed: 2026-08-14
 - Review by: 2027-02-11
 - Support: [open an issue in `5010-dev/.github`](https://github.com/5010-dev/.github/issues)
 
@@ -35,6 +35,9 @@ authority.
   existing repository while preserving native authorities.
 - [Executable-footprint retirement](../guides/migrating-developer-tooling.md)
   removes the former control plane without removing repository-owned behavior.
+- [Agent-assisted application](./agent.md) uses an explicitly invoked,
+  exact-version developer tool to prepare a bound plan and apply only an
+  approved repository-owned change.
 - [Stack defaults](./stack-defaults.md) map common Node.js/TypeScript, Go,
   Python, Rust, and polyglot shapes to the applicable standard profiles.
 - [Reference examples](./reference-examples.md) provide small copy-once
@@ -45,17 +48,20 @@ authority.
 
 ## Copy-once support contract
 
-Reference examples are not installed, generated, vendored, synchronized, or
-upgraded by the organization repository. Copy only an applicable snippet,
-replace its explicit choices, review it through the owning repository, and then
-treat that copy as repository-owned source. A later Golden Path documentation
-change does not create an upgrade campaign or an automatic consumer pull
-request.
+Reference examples are not installed, vendored, synchronized, or upgraded by
+the organization repository. Copy only an applicable snippet, replace its
+explicit choices, and review it through the owning repository. Whether a file
+is copied manually or written by an explicitly approved Agent `apply`, it is
+immediately repository-owned source. A later Golden Path documentation or Agent
+package change does not create a managed regeneration, upgrade campaign, or
+automatic consumer pull request.
 
-The Golden Path does not provide a locator, binary, generator/upgrader, managed
+The Golden Path does not provide a locator, managed generator/upgrader, managed
 file boundary, reusable conformance workflow, adoption registry, live
 organization report, dependency queue compiler, release-unit impact inference,
-security-closure orchestrator, or central approval queue.
+security-closure orchestrator, or central approval queue. The optional
+developer-invoked Agent is not an active central binary selected by repositories
+or CI and does not own consumer files or execution.
 
 ## Getting support
 
