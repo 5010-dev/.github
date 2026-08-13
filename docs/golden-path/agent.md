@@ -5,8 +5,11 @@
 - Visibility: Private
 - Owner: `5010-dev/engineering-tooling` maintainers
 - Last reviewed: 2026-08-14
-- General support: [open a `5010-dev/.github` issue](https://github.com/5010-dev/.github/issues/new) for triage by the `engineering-tooling` maintainers
+- General support: [create an Engineering issue in Linear](https://linear.new?team=ENG) for triage by the `engineering-tooling` maintainers
 - Sensitive security reports: [use the organization private vulnerability-reporting route](https://github.com/5010-dev/engineering-tooling/security/advisories/new)
+
+Linear is the support intake and work-tracking system. Reviewed source at
+`5010-dev/.github@main` remains the policy and Golden Path authority.
 
 This journey is an optional developer-host aid for applying the
 [Developer Tooling Standard](../standards/developer-tooling/README.md). It does
@@ -90,7 +93,8 @@ These identities document the supported release; they are not a machine
 locator or an automatic update instruction. Public `engineering-tooling`
 releases `v0.1.0` through `v1.6.1` remain immutable audit history for the
 retired Go executable line; this package is not a version of, locator for, or
-compatibility bridge to that line. General questions use `5010-dev/.github`
-Issues for triage by the `engineering-tooling` maintainers. Credentials,
-vulnerability details, and other sensitive material must use the private
-security-reporting route instead of a public issue or pull request.
+compatibility bridge to that line. General questions use the
+[Engineering Linear intake](https://linear.new?team=ENG) for triage by the
+`engineering-tooling` maintainers. Credentials, vulnerability details, and
+other sensitive material must use the private security-reporting route instead
+of a general support issue or pull request.
