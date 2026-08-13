@@ -5,7 +5,7 @@
 - Visibility: Private
 - Owner: `5010-dev/engineering-tooling` maintainers
 - Last reviewed: 2026-08-14
-- General support: [open an `engineering-tooling` issue](https://github.com/5010-dev/engineering-tooling/issues)
+- General support: [open a `5010-dev/.github` issue](https://github.com/5010-dev/.github/issues/new) for triage by the `engineering-tooling` maintainers
 - Sensitive security reports: [use the organization private vulnerability-reporting route](https://github.com/5010-dev/engineering-tooling/security/advisories/new)
 
 This journey is an optional developer-host aid for applying the
@@ -21,6 +21,11 @@ supported developer hosts:
 ```bash
 pnpm dlx @5010-dev/golden-path-agent@1.0.0 skill install --host all
 ```
+
+Before installing, authenticate the `@5010-dev` scope to GitHub Packages and
+authenticate GitHub CLI `gh` to `github.com` with read access to
+`5010-dev/.github`; follow the exact released package
+[setup instructions](https://github.com/5010-dev/engineering-tooling/blob/a1a7af61fe89434c1288a69b3114ba5725c6576d/README.md#install-the-package).
 
 Invocation is always explicit:
 
@@ -82,7 +87,10 @@ The supported `1.0.0` package is identified by the following release evidence:
 | Registry SRI | `sha512-Fhi7knxicEuHrsa/UOkcT9dxFrBzf+HVJYMMexl6eA0eXoVu6/jT+kPhQZ8iaB892ZFJEXE3a91RagYz1UboYQ==` |
 
 These identities document the supported release; they are not a machine
-locator or an automatic update instruction. General questions belong in
-`engineering-tooling` GitHub Issues. Credentials, vulnerability details, and
-other sensitive material must use the private security-reporting route instead
-of a public issue or pull request.
+locator or an automatic update instruction. Public `engineering-tooling`
+releases `v0.1.0` through `v1.6.1` remain immutable audit history for the
+retired Go executable line; this package is not a version of, locator for, or
+compatibility bridge to that line. General questions use `5010-dev/.github`
+Issues for triage by the `engineering-tooling` maintainers. Credentials,
+vulnerability details, and other sensitive material must use the private
+security-reporting route instead of a public issue or pull request.
