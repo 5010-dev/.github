@@ -75,9 +75,13 @@ required_sources=(
     docs/standards/release-versioning/schemas/README.md
     docs/standards/release-versioning/schemas/protected-package-tag-profile-v1.schema.json
     docs/standards/release-versioning/schemas/package-release-intent-v1.schema.json
+    docs/standards/release-versioning/schemas/package-release-recovery-intent-v1.schema.json
     docs/standards/release-versioning/schemas/examples/protected-package-tag-profile-v1.valid.json
     docs/standards/release-versioning/schemas/examples/package-release-intent-v1.valid.json
+    docs/standards/release-versioning/schemas/examples/package-release-recovery-intent-v1.valid.json
     docs/standards/release-versioning/validation/2026-08-12-protected-package-tag-profile.md
+    docs/standards/release-versioning/validation/2026-08-13-protected-package-tag-authorization.md
+    docs/standards/release-versioning/validation/2026-08-14-protected-package-tag-pre-mutation-recovery.md
     docs/guides/README.md
     docs/guides/adopting-developer-tooling.md
     docs/guides/bootstrap-new-repository.md

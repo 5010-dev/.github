@@ -40,20 +40,28 @@ python3 scripts/docs/check-protected-package-tag-admission.py \
   --event-ref refs/heads/dev
 ```
 
-The checker derives package identity from the repository contract, newly added
-intent, JSON or TOML native manifest, and exact Git diff. It rejects stale,
-multiple, changed, duplicate, or conflicting intent; contract/native package
-identity mismatch; non-increasing SemVer precedence; non-version manifest
-mutation; deletion, rename, exact-content copy, type change, non-regular files;
-paths outside release preparation; and sibling release-unit mutation. JSON input
-must be strict UTF-8 without duplicate keys or non-standard numeric constants.
-The checker intentionally does not publish, query remote tag or registry state,
-inspect hosting rulesets or permissions, or inspect pull-request approvals. The
-hosting layer owns the PR-only protected merge boundary. The repository
-publication workflow must pass the exact merge `before` and `after` commits to
-this checker and revalidate rulesets, required checks, tag and registry state,
-package closure, permissions, and every other publication prerequisite before
-mutation.
+The checker derives package identity from the repository contract, a newly added
+normal or recovery intent, JSON or TOML native manifest, historical intent, and
+exact Git diff. Normal admission rejects stale, multiple, changed, duplicate,
+or conflicting intent; contract/native package identity mismatch;
+non-increasing SemVer precedence; non-version manifest mutation; deletion,
+rename, exact-content copy, type change, non-regular files; paths outside
+release preparation; and sibling release-unit mutation. Recovery admission
+requires one newly added record and no other change, an unchanged manifest and
+byte-identical original intent, exact current base/ref, an ancestral failed
+source, unique failed-run authorization, and declared terminal pre-mutation
+absence of tag and registry identities. JSON input must be strict UTF-8 without
+duplicate keys or non-standard numeric constants.
+
+The checker intentionally does not publish, query Actions, remote tag, or
+registry state, inspect authorization-use history, inspect hosting rulesets or
+permissions, or inspect pull-request approvals. The hosting layer owns the
+PR-only protected merge boundary. The repository publication workflow must pass
+the exact merge `before` and `after` commits to this checker and revalidate
+rulesets, required checks, prior-run outcome, record non-reuse, tag and registry
+state, package closure, permissions, and every other publication prerequisite
+before mutation. A normal rerun or arbitrary workflow input is not publication
+authority.
 
 The invocation requires the exact base and head commit objects plus their
 ancestry. An adopting checkout MUST fetch sufficient history, normally with

@@ -67,6 +67,25 @@ boundary. The publication workflow revalidates the exact diff and every
 publication prerequisite before mutation; it does not infer or validate an
 independent human approval.
 
+One normal release intent may start only its first admitted publication
+attempt. An Actions rerun, manual dispatch, comment, or repeated evaluation of
+the old event is not renewed mutation authority. If that attempt reaches a
+terminal failure before any tag or registry version exists, same-version
+recovery requires one new PR-merged
+`package-release-recovery-intent/v1`. The recovery workflow derives all
+identities from the unchanged manifest, historical intent, recovery record, and
+new exact `before..after` diff; the recovery `after` is the new source.
+
+Before a recovery mutation, repository automation MUST query the prior Actions
+run and prove terminal failure before immutable mutation, query the exact tag
+and registry version and prove both absent, prove the recovery record has not
+started another attempt, and revalidate the protected source branch, required
+checks, protected tag authority, package closure, credentials, and sibling
+isolation. Record fields declaring absent identities are reviewed authorization
+claims, not replacements for live state. The central reference checker validates
+only record structure and local Git history and MUST NOT query Actions,
+rulesets, or registries.
+
 ## Native client distribution
 
 Native client automation MUST treat signed build production, store submission,
@@ -107,6 +126,11 @@ registry, archive, or record operations are permanent.
 
 - Before immutable publication or finalization, a draft MAY be completed,
   replaced, or removed under the owning system's documented recovery semantics.
+- A protected package attempt that failed terminally before creating either its
+  tag or registry version MAY preserve the same version only through a new,
+  unused, PR-mediated pre-mutation recovery record. The original intent and all
+  previous recovery records remain immutable. A second such failure requires a
+  second record bound to the newly failed run.
 - After a package version, tag, image digest, accepted native build, immutable
   release, or immutable research record is published or finalized, recovery
   MUST NOT overwrite it. Use the applicable correction, successor, deprecate,
@@ -116,6 +140,10 @@ registry, archive, or record operations are permanent.
   owner action, and retry, correction, or successor path.
 - A retry MUST re-read remote state and fail when it would create a conflicting
   identity or claim success for a different artifact.
+- Tag-only, registry-only, conflicting immutable state, and a successful exact
+  publication followed by verification failure are not pre-mutation recovery.
+  They retain the existing identities and use fail-closed verification,
+  correction, or owner action without deletion, movement, overwrite, or reuse.
 
 ## Shared automation admission
 

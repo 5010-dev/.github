@@ -63,6 +63,11 @@ compatibility level, scientific status, publication state, or verification resul
 that has not been established. It MUST NOT overwrite a published or finalized
 identity or reuse it for different content.
 
+An exception MUST NOT convert tag-only, registry-only, conflicting, or completed
+immutable package publication into the protected package-tag profile's
+pre-mutation same-version recovery path. That path is available only through its
+normal PR-mediated authorization while both immutable identities are absent.
+
 A `SHOULD` deviation MAY be documented in normal repository decision, release,
 or research records when the rationale and impact are clear. A `MUST` or `MUST
 NOT` deviation requires an explicit approved exception before publication or

@@ -69,8 +69,9 @@ and declare:
 - the package release-unit ID, native package identity, registry, compatibility
   contract, build-input closure, native manifest identity and version selectors,
   changelog, and tag pattern;
-- the `dev` source ref, release-intent directory, validation workflow, and
-  publication workflow;
+- the `dev` source ref, release-intent directory, validation workflow,
+  publication workflow, distinct recovery-authorization directory, and workflow
+  that owns recovery admission;
 - the allowed release-preparation paths and every sibling release-unit mutation
   path;
 - prerelease and final registry channels;
@@ -172,9 +173,72 @@ closed. A structurally valid intent is not publication permission unless the
 protected PR merge boundary, repository-required checks, exact diff, remote tag
 and registry state, package closure, and evidence checks also pass.
 
+One admitted release intent may start at most one publication attempt. A normal
+Actions rerun, `workflow_dispatch`, comment, manual tag, or repeated evaluation
+of the historical `before..after` diff does not renew mutation authority. An
+identical existing tag and registry version may be verified idempotently, but an
+attempt that ended before either identity existed requires the separate recovery
+authorization below before the same version may be attempted again.
+
+## Pre-mutation recovery authorization
+
+A terminal failed attempt is not a published release when it created neither
+the protected package tag nor the exact registry version. The repository MAY
+preserve the intended version only through a new protected pull request that
+adds one immutable record conforming to
+[`package-release-recovery-intent/v1`](./schemas/package-release-recovery-intent-v1.schema.json).
+The historical package release intent remains byte-identical, present, and
+append-only; it is referenced by the recovery record and is never edited,
+renamed, deleted, or treated as a new intent.
+
+The recovery record binds:
+
+- release unit, exact version, and channel;
+- the original release-intent path;
+- the exact source commit and GitHub Actions run that failed terminally;
+- reviewed claims that immutable mutation did not start and that both the
+  derived package tag and exact registry version are absent;
+- the exact current `dev` ref and full base commit; and
+- reason `pre-mutation-no-immutable-identity`.
+
+Recovery admission succeeds only when the protected `before..after` diff adds
+exactly that one record directly under the declared recovery directory. The
+profile contract, native manifest, original intent, workflows, changelog, and
+every other repository path remain unchanged. The record's base equals
+`before`; release unit, version, channel, package identity, manifest, historical
+intent, and derived tag agree; the failed source is an ancestor; and the
+historical intent is byte-identical at the failed source and recovery `after`.
+The admitted recovery `after` commit becomes the new publication source.
+
+The repository workflow MUST then re-read the protected branch and tag rules,
+required checks, failed Actions run, authorization-use history, tag, registry
+version, manifest, intent, and exact `before..after` admission before mutation.
+The record's no-identity fields are authorization claims, not a substitute for
+those live queries. Recovery is permitted only when the prior run is terminal,
+failed before tag or registry mutation, and both remote identities are still
+absent without ambiguity or conflict. The resulting tag and registry version
+MUST bind to the admitted recovery source and its built integrity.
+
+Each recovery record may start at most one admitted attempt. It MUST NOT be
+modified, reused by an Actions rerun, or replayed through manual dispatch. If
+that attempt also fails before immutable mutation, another protected pull
+request must add another recovery record bound to the newly failed run and
+source. Neither the historical release intent nor a previous recovery record is
+renewed authority.
+
+This path rejects tag-only, registry-only, conflicting, or otherwise partial
+immutable state. It also rejects an exact tag/version pair whose publication
+completed but later verification failed. Those states remain under the existing
+immutable-identity verification, correction, and fail-closed recovery rules;
+they do not permit rebuilding, deleting, moving, overwriting, or reusing an
+identity. Recovery authorization never permits a manual tag or package,
+ruleset relaxation, automatic successor version, or sibling release-unit
+effect.
+
 The dependency-free reference checker
 [`check-protected-package-tag-admission.py`](../../../scripts/docs/check-protected-package-tag-admission.py)
-implements the local Git, JSON, and TOML admission rules. It does not publish,
+implements the local Git, JSON, and TOML rules for normal and recovery admission.
+It does not publish, inspect Actions outcome or authorization-use history,
 inspect rulesets or pull-request approvals, query a registry, or replace
 repository-owned workflow checks. This is intentional: the hosting layer owns
 the PR-only merge boundary, while the publication workflow passes the protected
@@ -242,11 +306,21 @@ Publication MUST serialize on release-unit and version identity. Concurrency
 cancellation MUST be disabled before the first irreversible tag or registry
 mutation.
 
-Before mutation, the workflow MUST read the tag and registry. If neither exists,
-it may create and publish. If both already identify the same source, version,
-package, and integrity, a retry performs idempotent verification and records that
-outcome. If either identity is partial or conflicting, the workflow fails closed
-and records the completed phase and owner action.
+Before mutation, the workflow MUST read the tag and registry. On the first
+attempt authorized by a new release intent, if neither exists it may create and
+publish. If that attempt terminates before either immutable identity exists, an
+ordinary rerun MUST NOT mutate; a new recovery authorization is required. On an
+attempt authorized by a new recovery record, the workflow again requires both
+identities to be absent and must prove that record has not started a prior
+attempt.
+
+If both identities already identify the same source, version, package, and
+integrity, a retry performs idempotent verification and records that outcome; it
+does not enter pre-mutation recovery. If either identity is partial or
+conflicting, the workflow fails closed and records the completed phase and owner
+action. A successful immutable publication followed by evidence or consumer
+verification failure likewise keeps the exact pair and uses verification or a
+new correction version rather than same-version publication recovery.
 
 Published versions and tags MUST NOT be moved, overwritten, deleted for routine
 recovery, or reused. A prerelease correction uses a new prerelease version. A
@@ -270,6 +344,8 @@ regression remain in the
 [2026-08-12 validation record](./validation/2026-08-12-protected-package-tag-profile.md).
 The authorization-semantics correction is recorded separately in the
 [2026-08-13 validation record](./validation/2026-08-13-protected-package-tag-authorization.md).
+The pre-mutation recovery correction and incident boundary are recorded in the
+[2026-08-14 validation record](./validation/2026-08-14-protected-package-tag-pre-mutation-recovery.md).
 
 ## Out of scope
 

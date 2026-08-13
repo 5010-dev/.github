@@ -1,7 +1,7 @@
 # Release and Versioning schemas
 
 - Status: Accepted
-- Standard version: `2026.08.3`
+- Standard version: `2026.08.4`
 
 These Draft 2020-12 JSON Schemas support the opt-in
 [protected package-tag publication profile](../protected-package-tag.md):
@@ -10,6 +10,7 @@ These Draft 2020-12 JSON Schemas support the opt-in
 | --- | --- |
 | [`protected-package-tag-profile/v1`](./protected-package-tag-profile-v1.schema.json) | Repository-owned package release-unit, source, closure, tag, channel, isolation, permission, and ownership contract |
 | [`package-release-intent/v1`](./package-release-intent-v1.schema.json) | Immutable PR-based release-unit, channel, exact version, and source-boundary intent |
+| [`package-release-recovery-intent/v1`](./package-release-recovery-intent-v1.schema.json) | Separate immutable authorization for one same-version attempt after a terminal pre-mutation failure with no tag or registry version |
 
 Valid illustrative documents are under [`examples/`](./examples/). They use
 reserved example identities and do not select a package name, initial version,
@@ -19,6 +20,14 @@ The profile binds both package identity and version to one native manifest. A
 repository selects either JSON Pointer selectors for a JSON manifest or dotted
 bare-key selectors for a TOML manifest. The native manifest remains the version
 authority; the contract only tells admission where to read it.
+
+The profile also declares a distinct recovery-intent directory and the
+repository workflow that owns recovery admission. A recovery record binds the
+historical release intent, exact failed source and Actions run, unchanged native
+version, current base and ref, and the pre-mutation/no-identity recovery class.
+Its absent tag and registry states are reviewed claims, not remote truth: the
+repository workflow must query Actions, Git, and the registry again before any
+mutation and reject a consumed authorization or changed state.
 
 Path patterns are segment-aware: `*`, `?`, and bracket expressions match within
 one segment and never match `/`; a complete `**` segment matches zero or more
@@ -38,10 +47,11 @@ python3 scripts/docs/check-protected-package-tag-admission.py \
 
 The checker discovers the contract at
 `.github/release-policy/protected-package-tag.v1.json` by default and derives
-release unit, channel, version, and tag from repository state. It does not accept
-those identities as command inputs. A repository MAY use a different canonical
-contract path through `--contract`, but the workflow must keep that path fixed
-rather than expose it as an untrusted dispatch input.
+release unit, channel, version, tag, and normal-versus-recovery admission from
+repository state. It does not accept those identities as command inputs. A
+repository MAY use a different canonical contract path through `--contract`,
+but the workflow must keep that path fixed rather than expose it as an untrusted
+dispatch input.
 
 Schemas validate serialized structure and directly express channel/version
 shape where possible. Admission remains the narrower normative acceptor for
