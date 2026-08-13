@@ -702,8 +702,189 @@ def read_native_manifest(
     return manifest, package_name, version
 
 
+def is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
+    return (
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+            cwd=repo,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+        == 0
+    )
+
+
+def admit_release(
+    repo: Path,
+    contract_path: str,
+    contract: dict[str, Any],
+    base: str,
+    head: str,
+    event_ref: str,
+    entries: list[DiffEntry],
+) -> dict[str, Any]:
+    unit = contract["releaseUnit"]
+    require(bool(entries), "release admission diff is empty")
+    changed_paths = {path for entry in entries for path in entry.paths}
+    for path in changed_paths:
+        validate_relative(path, "changed path", allow_glob=True)
+    require(contract_path not in changed_paths, "profile contract must be established separately from release preparation")
+    require(unit["validationWorkflow"] not in changed_paths, "validation workflow must be established separately from release preparation")
+    require(unit["publicationWorkflow"] not in changed_paths, "publication workflow must be established separately from release preparation")
+    require(
+        contract["recovery"]["workflow"] not in changed_paths,
+        "recovery workflow must be established separately from release preparation",
+    )
+    require(
+        not any(
+            is_below(path, contract["recovery"]["intentDirectory"])
+            for path in changed_paths
+        ),
+        "release preparation cannot contain a recovery authorization",
+    )
+
+    for entry in entries:
+        require(
+            entry.status in {"A", "M"},
+            f"release preparation may only add or modify files: {entry.status} {' -> '.join(entry.paths)}",
+        )
+        require_regular_file(repo, head, entry.paths[0], "release-preparation path")
+    for sibling in contract["siblingReleaseUnits"]:
+        for path in sorted(changed_paths):
+            if any(path_matches(path, pattern) for pattern in sibling["mutationPaths"]):
+                reject(f"sibling release-unit mutation is forbidden: {sibling['id']} changed {path}")
+    for path in sorted(changed_paths):
+        require(
+            any(path_matches(path, pattern) for pattern in unit["releasePreparationPaths"]),
+            f"changed path is outside release preparation: {path}",
+        )
+
+    intent_entries = [
+        entry
+        for entry in entries
+        if any(is_below(path, contract["intentDirectory"]) for path in entry.paths)
+    ]
+    require(len(intent_entries) == 1, "exactly one release intent change is required")
+    intent_entry = intent_entries[0]
+    require(intent_entry.status == "A" and len(intent_entry.paths) == 1, "release intent must be newly added; modification, rename, copy, or deletion is stale")
+    intent_path = intent_entry.paths[0]
+    require(PurePosixPath(intent_path).parent == PurePosixPath(contract["intentDirectory"]), "release intent must be directly inside intentDirectory")
+    require(intent_path.endswith(".json"), "release intent must be a JSON file")
+    require_regular_file(repo, head, intent_path, "release intent")
+    intent = validate_intent(git_json(repo, head, intent_path, intent_path), intent_path)
+    require(intent["releaseUnit"] == unit["id"], "release intent targets a different release unit")
+    require(intent["source"]["ref"] == event_ref, "release intent source ref does not match the event ref")
+    require(intent["source"]["baseCommit"] == base, "release intent is stale: source baseCommit does not equal the event before commit")
+
+    intent_paths = tree_paths(repo, head, contract["intentDirectory"], "intent directory")
+    matching_identity: list[str] = []
+    for historical_path in intent_paths:
+        validate_relative(historical_path, "historical release intent path", allow_glob=True)
+        require_regular_file(repo, head, historical_path, "historical release intent")
+        historical = validate_intent(git_json(repo, head, historical_path, historical_path), historical_path)
+        if historical["releaseUnit"] == intent["releaseUnit"] and historical["version"] == intent["version"]:
+            matching_identity.append(historical_path)
+    require(matching_identity == [intent_path], "duplicate or conflicting release intent exists for the same release-unit and version")
+
+    version_source = unit["versionSource"]
+    version_path = version_source["path"]
+    version_entries = [entry for entry in entries if version_path in entry.paths]
+    require(len(version_entries) == 1 and version_entries[0].status == "M", "version source must be modified exactly once")
+    require_regular_file(repo, base, version_path, "base version source")
+    require_regular_file(repo, head, version_path, "head version source")
+    if version_source["type"] == "json-pointer":
+        base_manifest = git_json(repo, base, version_path, "base version source")
+        head_manifest = git_json(repo, head, version_path, "head version source")
+        base_version = pointer_get(base_manifest, version_source["versionPointer"], "base version source")
+        head_version = pointer_get(head_manifest, version_source["versionPointer"], "head version source")
+        base_package_name = pointer_get(base_manifest, version_source["packageNamePointer"], "base version source")
+        head_package_name = pointer_get(head_manifest, version_source["packageNamePointer"], "head version source")
+        expected_manifest = copy.deepcopy(base_manifest)
+        pointer_set(expected_manifest, version_source["versionPointer"], head_version, "version source")
+    else:
+        base_manifest = git_toml(repo, base, version_path, "base version source")
+        head_manifest = git_toml(repo, head, version_path, "head version source")
+        base_version = dotted_get(base_manifest, version_source["versionKey"], "base version source")
+        head_version = dotted_get(head_manifest, version_source["versionKey"], "head version source")
+        base_package_name = dotted_get(base_manifest, version_source["packageNameKey"], "base version source")
+        head_package_name = dotted_get(head_manifest, version_source["packageNameKey"], "head version source")
+        expected_manifest = copy.deepcopy(base_manifest)
+        dotted_set(expected_manifest, version_source["versionKey"], head_version, "version source")
+
+    require(isinstance(base_package_name, str) and bool(base_package_name), "base native manifest package name is invalid")
+    require(isinstance(head_package_name, str) and bool(head_package_name), "head native manifest package name is invalid")
+    require(base_package_name == head_package_name, "native manifest package name changed during release preparation")
+    require(head_package_name == unit["packageName"], "native manifest package name does not match releaseUnit.packageName")
+    require(isinstance(base_version, str) and SEMVER_RE.fullmatch(base_version) is not None, "base manifest version is not exact SemVer")
+    require(isinstance(head_version, str) and SEMVER_RE.fullmatch(head_version) is not None, "head manifest version is not exact SemVer")
+    require(
+        compare_semver_precedence(head_version, base_version) > 0,
+        "head manifest version must have greater SemVer precedence than the base version",
+    )
+    require(head_version == intent["version"], "release intent version does not match the head manifest")
+    require(expected_manifest == head_manifest, "version source changed outside the configured version field")
+
+    changelog_entries = [entry for entry in entries if unit["changelog"] in entry.paths]
+    require(len(changelog_entries) == 1 and changelog_entries[0].status in {"A", "M"}, "release changelog must be added or modified exactly once")
+
+    rendered_tag = unit["tagPattern"].replace("{version}", head_version)
+    tag_status = subprocess.run(
+        ["git", "check-ref-format", f"refs/tags/{rendered_tag}"],
+        cwd=repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode
+    require(tag_status == 0, "derived package tag is not a valid Git tag")
+
+    channel = intent["channel"]
+    return {
+        "schemaVersion": "protected-package-tag-admission/v1",
+        "status": "admitted",
+        "releaseUnit": unit["id"],
+        "packageName": unit["packageName"],
+        "registry": unit["registry"],
+        "channel": channel,
+        "distTag": contract["channels"][channel]["distTag"],
+        "version": head_version,
+        "tag": rendered_tag,
+        "intentPath": intent_path,
+        "source": {"ref": event_ref, "baseCommit": base, "commit": head},
+    }
+
+
+def validate_initial_publication_source(
+    repo: Path,
+    contract_path: str,
+    contract: dict[str, Any],
+    original: dict[str, Any],
+    original_path: str,
+    failed_source: str,
+    event_ref: str,
+) -> None:
+    """Prove a claimed first failed source could pass normal exact-diff admission."""
+    original_base = original["source"]["baseCommit"]
+    entries = parse_diff(repo, original_base, failed_source)
+    admitted = admit_release(
+        repo,
+        contract_path,
+        contract,
+        original_base,
+        failed_source,
+        event_ref,
+        entries,
+    )
+    require(
+        admitted["intentPath"] == original_path
+        and admitted["version"] == original["version"],
+        "initial failed publication source does not match the original release intent",
+    )
+
+
 def admit_recovery(
     repo: Path,
+    contract_path: str,
     contract: dict[str, Any],
     base: str,
     head: str,
@@ -779,15 +960,8 @@ def admit_recovery(
         == failed_source,
         "failed attempt source does not resolve to the exact commit",
     )
-    failed_ancestor_status = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", failed_source, base],
-        cwd=repo,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    ).returncode
     require(
-        failed_ancestor_status == 0,
+        is_ancestor(repo, failed_source, base),
         "failed attempt source must be an ancestor of the recovery base",
     )
     protected_source_history = git_commit_list(
@@ -815,15 +989,8 @@ def admit_recovery(
         "original release intent must remain append-only in protected source history",
     )
     original_base = original["source"]["baseCommit"]
-    original_ancestor_status = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", original_base, failed_source],
-        cwd=repo,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    ).returncode
     require(
-        original_ancestor_status == 0,
+        is_ancestor(repo, original_base, failed_source),
         "original release intent base must be an ancestor of the failed attempt source",
     )
     original_entries = parse_diff(repo, original_base, failed_source)
@@ -840,6 +1007,7 @@ def admit_recovery(
         repo, head, recovery["intentDirectory"], "recovery intent directory"
     )
     matching_failed_sources: list[str] = []
+    historical_recoveries: list[tuple[str, dict[str, Any]]] = []
     for historical_path in recovery_paths:
         validate_relative(historical_path, "historical recovery intent path", allow_glob=True)
         require(
@@ -852,6 +1020,7 @@ def admit_recovery(
         historical = validate_recovery_intent(
             git_json(repo, head, historical_path, historical_path), historical_path
         )
+        historical_recoveries.append((historical_path, historical))
         if historical["failedAttempt"]["sourceCommit"] == failed_source:
             matching_failed_sources.append(historical_path)
     require(
@@ -880,6 +1049,59 @@ def admit_recovery(
             )
             == 1,
             f"historical recovery intent must be added once and never modified, renamed, or deleted: {historical_path}",
+        )
+
+    prior_recoveries = [
+        (historical_path, historical)
+        for historical_path, historical in historical_recoveries
+        if historical_path != recovery_path
+        and historical["releaseUnit"] == authorization["releaseUnit"]
+        and historical["channel"] == authorization["channel"]
+        and historical["version"] == authorization["version"]
+        and historical["originalIntentPath"] == original_path
+    ]
+    if prior_recoveries:
+        history_positions = {
+            commit: index for index, commit in enumerate(protected_source_history)
+        }
+        prior_additions: list[tuple[int, str, dict[str, Any]]] = []
+        for historical_path, historical in prior_recoveries:
+            addition_commits = path_change_commits(
+                repo,
+                head,
+                historical_path,
+                f"historical recovery intent history: {historical_path}",
+            )
+            require(
+                len(addition_commits) == 1
+                and addition_commits[0] in history_positions,
+                "historical recovery intent addition must be on protected source first-parent history",
+            )
+            prior_additions.append(
+                (history_positions[addition_commits[0]], historical_path, historical)
+            )
+        _position, latest_path, latest_recovery = min(prior_additions)
+        latest_base = latest_recovery["source"]["baseCommit"]
+        require(
+            is_ancestor(repo, latest_base, failed_source),
+            "failed attempt source must descend from the latest recovery base",
+        )
+        latest_entries = parse_diff(repo, latest_base, failed_source)
+        require(
+            len(latest_entries) == 1
+            and latest_entries[0].status == "A"
+            and latest_entries[0].paths == (latest_path,),
+            "failed attempt source must be the exact source authorized by the latest recovery record",
+        )
+    else:
+        validate_initial_publication_source(
+            repo,
+            contract_path,
+            contract,
+            original,
+            original_path,
+            failed_source,
+            event_ref,
         )
 
     base_manifest, base_package_name, base_version = read_native_manifest(
@@ -983,133 +1205,12 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
         "release intent and recovery authorization cannot share one admission diff",
     )
     if recovery_intent_entries:
-        return admit_recovery(repo, contract, base, head, event_ref, entries)
-
-    for entry in entries:
-        require(
-            entry.status in {"A", "M"},
-            f"release preparation may only add or modify files: {entry.status} {' -> '.join(entry.paths)}",
+        return admit_recovery(
+            repo, contract_path, contract, base, head, event_ref, entries
         )
-        require_regular_file(repo, head, entry.paths[0], "release-preparation path")
-
-    for sibling in contract["siblingReleaseUnits"]:
-        for path in sorted(changed_paths):
-            if any(path_matches(path, pattern) for pattern in sibling["mutationPaths"]):
-                reject(f"sibling release-unit mutation is forbidden: {sibling['id']} changed {path}")
-
-    for path in sorted(changed_paths):
-        require(
-            any(path_matches(path, pattern) for pattern in unit["releasePreparationPaths"]),
-            f"changed path is outside release preparation: {path}",
-        )
-
-    intent_entries = release_intent_entries
-    require(len(intent_entries) == 1, "exactly one release intent change is required")
-    intent_entry = intent_entries[0]
-    require(intent_entry.status == "A" and len(intent_entry.paths) == 1, "release intent must be newly added; modification, rename, copy, or deletion is stale")
-    intent_path = intent_entry.paths[0]
-    require(PurePosixPath(intent_path).parent == PurePosixPath(contract["intentDirectory"]), "release intent must be directly inside intentDirectory")
-    require(intent_path.endswith(".json"), "release intent must be a JSON file")
-    require_regular_file(repo, head, intent_path, "release intent")
-    intent = validate_intent(git_json(repo, head, intent_path, intent_path), intent_path)
-    require(intent["releaseUnit"] == unit["id"], "release intent targets a different release unit")
-    require(intent["source"]["ref"] == event_ref, "release intent source ref does not match the event ref")
-    require(intent["source"]["baseCommit"] == base, "release intent is stale: source baseCommit does not equal the event before commit")
-
-    listed = git(
-        repo,
-        "ls-tree",
-        "-r",
-        "--name-only",
-        "-z",
-        head,
-        "--",
-        f":(literal){contract['intentDirectory']}",
-        binary=True,
+    return admit_release(
+        repo, contract_path, contract, base, head, event_ref, entries
     )
-    try:
-        intent_paths = [part.decode("utf-8") for part in listed.split(b"\0") if part]
-    except UnicodeDecodeError as error:
-        reject(f"intent directory contains a non-UTF-8 path: {error}")
-    matching_identity: list[str] = []
-    for historical_path in intent_paths:
-        validate_relative(historical_path, "historical release intent path", allow_glob=True)
-        require_regular_file(repo, head, historical_path, "historical release intent")
-        historical = validate_intent(git_json(repo, head, historical_path, historical_path), historical_path)
-        if historical["releaseUnit"] == intent["releaseUnit"] and historical["version"] == intent["version"]:
-            matching_identity.append(historical_path)
-    require(matching_identity == [intent_path], "duplicate or conflicting release intent exists for the same release-unit and version")
-
-    version_source = unit["versionSource"]
-    version_path = version_source["path"]
-    version_entries = [entry for entry in entries if version_path in entry.paths]
-    require(len(version_entries) == 1 and version_entries[0].status == "M", "version source must be modified exactly once")
-    require_regular_file(repo, base, version_path, "base version source")
-    require_regular_file(repo, head, version_path, "head version source")
-    if version_source["type"] == "json-pointer":
-        base_manifest = git_json(repo, base, version_path, "base version source")
-        head_manifest = git_json(repo, head, version_path, "head version source")
-        base_version = pointer_get(base_manifest, version_source["versionPointer"], "base version source")
-        head_version = pointer_get(head_manifest, version_source["versionPointer"], "head version source")
-        base_package_name = pointer_get(base_manifest, version_source["packageNamePointer"], "base version source")
-        head_package_name = pointer_get(head_manifest, version_source["packageNamePointer"], "head version source")
-        expected_manifest = copy.deepcopy(base_manifest)
-        pointer_set(expected_manifest, version_source["versionPointer"], head_version, "version source")
-    else:
-        base_manifest = git_toml(repo, base, version_path, "base version source")
-        head_manifest = git_toml(repo, head, version_path, "head version source")
-        base_version = dotted_get(base_manifest, version_source["versionKey"], "base version source")
-        head_version = dotted_get(head_manifest, version_source["versionKey"], "head version source")
-        base_package_name = dotted_get(base_manifest, version_source["packageNameKey"], "base version source")
-        head_package_name = dotted_get(head_manifest, version_source["packageNameKey"], "head version source")
-        expected_manifest = copy.deepcopy(base_manifest)
-        dotted_set(expected_manifest, version_source["versionKey"], head_version, "version source")
-
-    require(isinstance(base_package_name, str) and bool(base_package_name), "base native manifest package name is invalid")
-    require(isinstance(head_package_name, str) and bool(head_package_name), "head native manifest package name is invalid")
-    require(base_package_name == head_package_name, "native manifest package name changed during release preparation")
-    require(head_package_name == unit["packageName"], "native manifest package name does not match releaseUnit.packageName")
-    require(isinstance(base_version, str) and SEMVER_RE.fullmatch(base_version) is not None, "base manifest version is not exact SemVer")
-    require(isinstance(head_version, str) and SEMVER_RE.fullmatch(head_version) is not None, "head manifest version is not exact SemVer")
-    require(
-        compare_semver_precedence(head_version, base_version) > 0,
-        "head manifest version must have greater SemVer precedence than the base version",
-    )
-    require(head_version == intent["version"], "release intent version does not match the head manifest")
-    require(expected_manifest == head_manifest, "version source changed outside the configured version field")
-
-    changelog_entries = [entry for entry in entries if unit["changelog"] in entry.paths]
-    require(len(changelog_entries) == 1 and changelog_entries[0].status in {"A", "M"}, "release changelog must be added or modified exactly once")
-
-    rendered_tag = unit["tagPattern"].replace("{version}", head_version)
-    tag_status = subprocess.run(
-        ["git", "check-ref-format", f"refs/tags/{rendered_tag}"],
-        cwd=repo,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    ).returncode
-    require(tag_status == 0, "derived package tag is not a valid Git tag")
-
-    channel = intent["channel"]
-    dist_tag = contract["channels"][channel]["distTag"]
-    return {
-        "schemaVersion": "protected-package-tag-admission/v1",
-        "status": "admitted",
-        "releaseUnit": unit["id"],
-        "packageName": unit["packageName"],
-        "registry": unit["registry"],
-        "channel": channel,
-        "distTag": dist_tag,
-        "version": head_version,
-        "tag": rendered_tag,
-        "intentPath": intent_path,
-        "source": {
-            "ref": event_ref,
-            "baseCommit": base,
-            "commit": head,
-        },
-    }
 
 
 def parse_args() -> argparse.Namespace:

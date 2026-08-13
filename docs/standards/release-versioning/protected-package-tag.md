@@ -207,9 +207,11 @@ profile contract, native manifest, original intent, workflows, changelog, and
 every other repository path remain unchanged. The record's base equals
 `before`; release unit, version, channel, package identity, manifest, historical
 intent, and derived tag agree; the failed source is on the protected source's
-first-parent history and has not already been named by another recovery record;
-and the historical intent is byte-identical without any intervening protected-
-history mutation from the failed source through recovery `after`.
+first-parent history, structurally matches either the original normal admission
+or the latest recovery admission for that identity, and has not already been
+named by another recovery record; and the historical intent is byte-identical
+without any intervening protected-history mutation from the failed source
+through recovery `after`.
 The admitted recovery `after` commit becomes the new publication source.
 
 The repository workflow MUST then re-read the protected branch and tag rules,
@@ -226,7 +228,8 @@ modified, reused by an Actions rerun, or replayed through manual dispatch. If
 that attempt also fails before immutable mutation, another protected pull
 request must add another recovery record bound to the newly failed run and
 source. A different run URL does not permit another record to name a previously
-used failed source. Neither the historical release intent nor a previous
+used failed source, an unrelated later commit, or a source that skips the latest
+recovery authorization. Neither the historical release intent nor a previous
 recovery record is renewed authority, and their protected-history paths remain
 addition-only.
 

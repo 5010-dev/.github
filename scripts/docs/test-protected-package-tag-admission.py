@@ -478,6 +478,34 @@ class AdmissionTest(unittest.TestCase):
         head = self.prepare_release(remove_contract=True)
         self.assert_rejected(self.check(head), "opt-in profile contract is missing")
 
+    def test_rejects_profile_without_recovery_contract(self) -> None:
+        profile = self.profile()
+        profile.pop("recovery")
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("omit recovery contract")
+        head = self.prepare_release()
+        self.assert_rejected(self.check(head), "missing required fields: recovery")
+
+    def test_rejects_overlapping_release_and_recovery_directories(self) -> None:
+        profile = self.profile()
+        profile["recovery"]["intentDirectory"] = ".github/release-intents/recovery"
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("overlap release authorization directories")
+        head = self.prepare_release()
+        self.assert_rejected(self.check(head), "must be distinct and non-overlapping")
+
+    def test_rejects_release_paths_that_admit_recovery_records(self) -> None:
+        profile = self.profile()
+        profile["releaseUnit"]["releasePreparationPaths"].append(
+            ".github/release-recovery-intents/*.json"
+        )
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("admit recovery records as release preparation")
+        head = self.prepare_release()
+        self.assert_rejected(
+            self.check(head), "must not admit recovery authorization records"
+        )
+
     def test_rejects_weakened_minimum_permissions(self) -> None:
         profile = self.profile()
         profile["minimumPermissions"]["validation"] = []
@@ -598,6 +626,26 @@ class AdmissionTest(unittest.TestCase):
             "event ref does not match the profile source ref",
         )
 
+    def test_rejects_failed_source_off_first_parent_history(self) -> None:
+        release_base = self.base
+        self.git("switch", "-c", "side-release")
+        failed_source = self.prepare_release()
+        self.assertEqual(self.check(failed_source, base=release_base).returncode, 0)
+        self.git("switch", "dev")
+        self.git(
+            "merge",
+            "--no-ff",
+            "side-release",
+            "-m",
+            "merge side release as second parent",
+        )
+        self.base = self.git("rev-parse", "HEAD")
+        original_path = ".github/release-intents/1.4.0-next.1.json"
+        head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assert_rejected(self.check(head), "protected source first-parent history")
+
     def test_rejects_recovery_manifest_version_mismatch(self) -> None:
         failed_source, original_path = self.materialize_failed_release()
         self.write_json(
@@ -647,6 +695,20 @@ class AdmissionTest(unittest.TestCase):
         self.base = self.commit("delete historical release intent")
         self.write_bytes(Path(original_path), original_bytes)
         self.base = self.commit("restore historical release intent")
+        head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assert_rejected(
+            self.check(head), "must remain append-only in protected source history"
+        )
+
+    def test_rejects_renamed_and_restored_original_release_intent(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        temporary_path = ".github/release-intents/temporarily-renamed.json"
+        self.git("mv", original_path, temporary_path)
+        self.base = self.commit("rename historical release intent")
+        self.git("mv", temporary_path, original_path)
+        self.base = self.commit("restore historical release intent path")
         head = self.prepare_recovery(
             failed_source=failed_source, original_intent_path=original_path
         )
@@ -708,6 +770,37 @@ class AdmissionTest(unittest.TestCase):
         )
         self.assert_rejected(self.check(head), "same failed publication source")
 
+    def test_rejects_unrelated_commit_as_initial_failed_source(self) -> None:
+        _failed_source, original_path = self.materialize_failed_release()
+        self.write(Path("README.md"), "unrelated protected-source commit\n")
+        unrelated_source = self.commit("add unrelated commit after failed attempt")
+        self.base = unrelated_source
+        head = self.prepare_recovery(
+            failed_source=unrelated_source, original_intent_path=original_path
+        )
+        self.assert_rejected(
+            self.check(head), "changed path is outside release preparation"
+        )
+
+    def test_rejects_unrelated_commit_after_prior_recovery_as_failed_source(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        first_head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assertEqual(self.check(first_head).returncode, 0)
+        self.write(Path("README.md"), "unrelated commit after recovery\n")
+        unrelated_source = self.commit("add unrelated commit after recovery")
+        self.base = unrelated_source
+        head = self.prepare_recovery(
+            failed_source=unrelated_source,
+            original_intent_path=original_path,
+            run_id=987654321,
+            recovery_name="recovery-2.json",
+        )
+        self.assert_rejected(
+            self.check(head), "exact source authorized by the latest recovery record"
+        )
+
     def test_rejects_modified_and_restored_recovery_authorization(self) -> None:
         failed_source, original_path = self.materialize_failed_release()
         first_head = self.prepare_recovery(
@@ -732,6 +825,54 @@ class AdmissionTest(unittest.TestCase):
         )
         self.assert_rejected(
             self.check(head), "recovery intent directory must remain append-only"
+        )
+
+    def test_rejects_renamed_and_restored_recovery_authorization(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        first_head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assertEqual(self.check(first_head).returncode, 0)
+        recovery_path = ".github/release-recovery-intents/recovery-1.json"
+        temporary_path = ".github/release-recovery-intents/temporarily-renamed.json"
+        self.git("mv", recovery_path, temporary_path)
+        self.base = self.commit("rename historical recovery authorization")
+        self.git("mv", temporary_path, recovery_path)
+        self.base = self.commit("restore historical recovery authorization path")
+        head = self.prepare_recovery(
+            failed_source=first_head,
+            original_intent_path=original_path,
+            run_id=987654321,
+            recovery_name="recovery-2.json",
+        )
+        self.assert_rejected(
+            self.check(head), "recovery intent directory must remain append-only"
+        )
+
+    def test_rejects_release_and_recovery_intents_in_one_diff(self) -> None:
+        version = "1.4.0-next.1"
+        original_path = f".github/release-intents/{version}.json"
+        self.write_json(
+            Path("packages/browser/package.json"),
+            {"name": "@example/browser-package", "version": version},
+        )
+        self.write(
+            Path("packages/browser/CHANGELOG.md"),
+            f"# Changelog\n\n- Release {version}\n",
+        )
+        self.write_json(Path(original_path), self.intent(version, self.base))
+        self.write_json(
+            Path(".github/release-recovery-intents/recovery-1.json"),
+            self.recovery_intent(
+                version=version,
+                original_intent_path=original_path,
+                failed_source=self.base,
+                source_base=self.base,
+            ),
+        )
+        head = self.commit("mix release and recovery authorization")
+        self.assert_rejected(
+            self.check(head), "release intent and recovery authorization cannot share"
         )
 
     def test_rejects_recovery_with_unrelated_change(self) -> None:

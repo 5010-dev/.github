@@ -49,11 +49,12 @@ rename, exact-content copy, type change, non-regular files; paths outside
 release preparation; and sibling release-unit mutation. Recovery admission
 requires one newly added record and no other change, an unchanged manifest and
 byte-identical, addition-only original intent, exact current base/ref, a failed
-source on protected first-parent history that no prior recovery record names,
+source on protected first-parent history that structurally reconstructs the
+original or latest recovery admission and that no prior recovery record names,
 addition-only recovery history, and declared terminal pre-mutation absence of
-tag and registry identities. A different run URL cannot split one failed source
-into another authorization. JSON input must be strict UTF-8 without duplicate
-keys or non-standard numeric constants.
+tag and registry identities. A different run URL or unrelated later commit
+cannot split one authorization source into another. JSON input must be strict
+UTF-8 without duplicate keys or non-standard numeric constants.
 
 The checker intentionally does not publish, query Actions, remote tag, or
 registry state, inspect authorization-use history, inspect hosting rulesets or
