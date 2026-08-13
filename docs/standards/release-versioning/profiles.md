@@ -116,6 +116,11 @@ select the [protected package-tag publication profile](./protected-package-tag.m
 That profile is an explicit package release-unit opt-in, not a repository-wide
 branch-model change or authority for sibling deployment.
 
+Under that opt-in, a same-version attempt after failure is permitted only by the
+profile's separate pre-mutation recovery authorization and only while neither
+the derived tag nor exact registry version exists. Once either identity exists,
+native registry immutability and the normal correction lifecycle apply.
+
 ## CLI and distributed executable profile
 
 A distributed executable MUST record its version, source revision, applicable

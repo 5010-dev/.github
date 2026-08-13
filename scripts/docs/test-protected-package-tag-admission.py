@@ -22,6 +22,10 @@ EXAMPLE_INTENT = (
     Path(__file__).resolve().parents[2]
     / "docs/standards/release-versioning/schemas/examples/package-release-intent-v1.valid.json"
 )
+EXAMPLE_RECOVERY_INTENT = (
+    Path(__file__).resolve().parents[2]
+    / "docs/standards/release-versioning/schemas/examples/package-release-recovery-intent-v1.valid.json"
+)
 PROFILE_SCHEMA = (
     Path(__file__).resolve().parents[2]
     / "docs/standards/release-versioning/schemas/protected-package-tag-profile-v1.schema.json"
@@ -29,6 +33,10 @@ PROFILE_SCHEMA = (
 INTENT_SCHEMA = (
     Path(__file__).resolve().parents[2]
     / "docs/standards/release-versioning/schemas/package-release-intent-v1.schema.json"
+)
+RECOVERY_INTENT_SCHEMA = (
+    Path(__file__).resolve().parents[2]
+    / "docs/standards/release-versioning/schemas/package-release-recovery-intent-v1.schema.json"
 )
 
 
@@ -61,6 +69,27 @@ class AdmissionTest(unittest.TestCase):
         intent["channel"] = channel
         intent["version"] = version
         intent["source"]["baseCommit"] = base
+        return intent
+
+    def recovery_intent(
+        self,
+        *,
+        version: str,
+        original_intent_path: str,
+        failed_source: str,
+        source_base: str,
+        channel: str = "prerelease",
+        run_id: int = 123456789,
+    ) -> dict[str, Any]:
+        intent = json.loads(EXAMPLE_RECOVERY_INTENT.read_text(encoding="utf-8"))
+        intent["channel"] = channel
+        intent["version"] = version
+        intent["originalIntentPath"] = original_intent_path
+        intent["failedAttempt"]["sourceCommit"] = failed_source
+        intent["failedAttempt"]["workflowRunUrl"] = (
+            f"https://github.com/example/repository/actions/runs/{run_id}"
+        )
+        intent["source"]["baseCommit"] = source_base
         return intent
 
     def write(self, path: Path, content: str) -> None:
@@ -184,6 +213,53 @@ class AdmissionTest(unittest.TestCase):
         self.write(Path("packages/browser/CHANGELOG.md"), f"# Changelog\n\n- Release {version}\n")
         self.write_json(Path(f".github/release-intents/{version}.json"), self.intent(version, self.base))
         return self.commit("prepare TOML package release")
+
+    def materialize_failed_release(
+        self, *, version: str = "1.4.0-next.1", channel: str = "prerelease"
+    ) -> tuple[str, str]:
+        failed_source = self.prepare_release(channel=channel, manifest_version=version)
+        result = self.check(failed_source)
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.base = failed_source
+        return failed_source, f".github/release-intents/{version}.json"
+
+    def prepare_recovery(
+        self,
+        *,
+        version: str = "1.4.0-next.1",
+        channel: str = "prerelease",
+        original_intent_path: str | None = None,
+        failed_source: str | None = None,
+        source_base: str | None = None,
+        run_id: int = 123456789,
+        recovery_name: str = "recovery-1.json",
+        second_recovery: bool = False,
+        mutate_sibling: bool = False,
+        unrelated_change: bool = False,
+    ) -> str:
+        recovery = self.recovery_intent(
+            version=version,
+            original_intent_path=original_intent_path
+            or f".github/release-intents/{version}.json",
+            failed_source=failed_source or self.base,
+            source_base=source_base or self.base,
+            channel=channel,
+            run_id=run_id,
+        )
+        self.write_json(Path(f".github/release-recovery-intents/{recovery_name}"), recovery)
+        if second_recovery:
+            second = json.loads(json.dumps(recovery))
+            second["failedAttempt"]["workflowRunUrl"] = (
+                "https://github.com/example/repository/actions/runs/987654321"
+            )
+            self.write_json(
+                Path(".github/release-recovery-intents/recovery-2.json"), second
+            )
+        if mutate_sibling:
+            self.write(Path("services/calculator/service.txt"), "mutated calculator\n")
+        if unrelated_change:
+            self.write(Path("README.md"), "unrelated recovery change\n")
+        return self.commit("authorize package release recovery")
 
     def check(self, head: str, *, base: str | None = None, ref: str = "refs/heads/dev") -> subprocess.CompletedProcess[str]:
         return subprocess.run(
@@ -458,10 +534,305 @@ class AdmissionTest(unittest.TestCase):
         head = self.prepare_release(channel="final", manifest_version="1.4.0+release.lock")
         self.assert_rejected(self.check(head), "derived package tag is not a valid Git tag")
 
+    def test_admits_same_version_pre_mutation_recovery(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        result = self.check(head)
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        admitted = json.loads(result.stdout)
+        self.assertEqual(
+            admitted["schemaVersion"],
+            "protected-package-tag-recovery-admission/v1",
+        )
+        self.assertEqual(admitted["version"], "1.4.0-next.1")
+        self.assertEqual(admitted["tag"], "browser-package-v1.4.0-next.1")
+        self.assertEqual(admitted["originalIntentPath"], original_path)
+        self.assertEqual(admitted["source"]["commit"], head)
+
+    def test_admits_new_record_after_second_pre_mutation_failure(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        first_head = self.prepare_recovery(
+            failed_source=failed_source,
+            original_intent_path=original_path,
+            run_id=123456789,
+        )
+        self.assertEqual(self.check(first_head).returncode, 0)
+        self.base = first_head
+        second_head = self.prepare_recovery(
+            failed_source=first_head,
+            original_intent_path=original_path,
+            run_id=987654321,
+            recovery_name="recovery-2.json",
+        )
+        result = self.check(second_head)
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertEqual(json.loads(result.stdout)["failedAttempt"]["sourceCommit"], first_head)
+
+    def test_recovery_preserves_original_intent_bytes(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        before = self.git("show", f"{failed_source}:{original_path}")
+        head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assertEqual(self.check(head).returncode, 0)
+        self.assertEqual(before, self.git("show", f"{head}:{original_path}"))
+
+    def test_rejects_stale_recovery_base(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        head = self.prepare_recovery(
+            failed_source=failed_source,
+            original_intent_path=original_path,
+            source_base="1" * 40,
+        )
+        self.assert_rejected(self.check(head), "release recovery intent is stale")
+
+    def test_rejects_recovery_ref_mismatch(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assert_rejected(
+            self.check(head, ref="refs/heads/main"),
+            "event ref does not match the profile source ref",
+        )
+
+    def test_rejects_recovery_manifest_version_mismatch(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        self.write_json(
+            Path("packages/browser/package.json"),
+            {"name": "@example/browser-package", "version": "1.4.0-next.2"},
+        )
+        self.base = self.commit("drift package version after failed publication")
+        head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assert_rejected(
+            self.check(head), "recovery version does not match the unchanged native manifest"
+        )
+
+    def test_rejects_missing_original_release_intent(self) -> None:
+        failed_source, _original_path = self.materialize_failed_release()
+        head = self.prepare_recovery(
+            failed_source=failed_source,
+            original_intent_path=".github/release-intents/missing.json",
+        )
+        self.assert_rejected(self.check(head), "original release intent is missing")
+
+    def test_rejects_ambiguous_original_release_intent(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        duplicate = self.intent("1.4.0-next.1", "0" * 40)
+        self.write_json(Path(".github/release-intents/duplicate.json"), duplicate)
+        self.base = self.commit("add ambiguous historical release intent")
+        head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assert_rejected(self.check(head), "missing or ambiguous")
+
+    def test_rejects_modified_original_release_intent(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        intent_file = self.repo / original_path
+        self.write(Path(original_path), intent_file.read_text(encoding="utf-8") + "\n")
+        self.base = self.commit("rewrite historical release intent bytes")
+        head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assert_rejected(self.check(head), "must remain byte-identical")
+
+    def test_rejects_multiple_recovery_authorizations(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        head = self.prepare_recovery(
+            failed_source=failed_source,
+            original_intent_path=original_path,
+            second_recovery=True,
+        )
+        self.assert_rejected(self.check(head), "exactly one recovery record")
+
+    def test_rejects_reused_recovery_authorization(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        first_head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assertEqual(self.check(first_head).returncode, 0)
+        self.base = first_head
+        path = Path(".github/release-recovery-intents/recovery-1.json")
+        reused = json.loads((self.repo / path).read_text(encoding="utf-8"))
+        reused["$schema"] = "package-release-recovery-intent-v1.schema.json"
+        self.write_json(path, reused)
+        head = self.commit("reuse recovery authorization")
+        self.assert_rejected(self.check(head), "modification, rename, copy, or deletion is reuse")
+
+    def test_rejects_duplicate_authorization_for_failed_attempt(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        first_head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        self.assertEqual(self.check(first_head).returncode, 0)
+        self.base = first_head
+        head = self.prepare_recovery(
+            failed_source=failed_source,
+            original_intent_path=original_path,
+            recovery_name="recovery-2.json",
+        )
+        self.assert_rejected(self.check(head), "duplicate recovery authorization")
+
+    def test_rejects_recovery_with_unrelated_change(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        head = self.prepare_recovery(
+            failed_source=failed_source,
+            original_intent_path=original_path,
+            unrelated_change=True,
+        )
+        self.assert_rejected(self.check(head), "no other paths")
+
+    def test_rejects_recovery_with_sibling_mutation(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        head = self.prepare_recovery(
+            failed_source=failed_source,
+            original_intent_path=original_path,
+            mutate_sibling=True,
+        )
+        self.assert_rejected(self.check(head), "no other paths")
+
+    def test_rejects_recovery_when_tag_is_present(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        recovery = self.recovery_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+        )
+        recovery["failedAttempt"]["tagState"] = "present"
+        self.write_json(Path(".github/release-recovery-intents/tag-present.json"), recovery)
+        self.assert_rejected(
+            self.check(self.commit("claim tag-present recovery")),
+            "requires the package tag to be absent",
+        )
+
+    def test_rejects_recovery_when_registry_version_is_present(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        recovery = self.recovery_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+        )
+        recovery["failedAttempt"]["registryVersionState"] = "present"
+        self.write_json(Path(".github/release-recovery-intents/registry-present.json"), recovery)
+        self.assert_rejected(
+            self.check(self.commit("claim registry-present recovery")),
+            "requires the registry version to be absent",
+        )
+
+    def test_rejects_tag_only_partial_state(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        recovery = self.recovery_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+        )
+        recovery["failedAttempt"]["tagState"] = "present"
+        recovery["failedAttempt"]["registryVersionState"] = "absent"
+        self.write_json(Path(".github/release-recovery-intents/tag-only.json"), recovery)
+        self.assert_rejected(self.check(self.commit("claim tag-only state")), "tag to be absent")
+
+    def test_rejects_registry_only_partial_state(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        recovery = self.recovery_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+        )
+        recovery["failedAttempt"]["registryVersionState"] = "present"
+        self.write_json(Path(".github/release-recovery-intents/registry-only.json"), recovery)
+        self.assert_rejected(
+            self.check(self.commit("claim registry-only state")), "registry version to be absent"
+        )
+
+    def test_rejects_conflicting_immutable_identity(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        recovery = self.recovery_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+        )
+        recovery["failedAttempt"]["tagState"] = "conflicting"
+        self.write_json(Path(".github/release-recovery-intents/conflict.json"), recovery)
+        self.assert_rejected(
+            self.check(self.commit("claim conflicting identity")), "tag to be absent"
+        )
+
+    def test_rejects_non_terminal_prior_run(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        recovery = self.recovery_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+        )
+        recovery["failedAttempt"]["outcome"] = "in-progress"
+        self.write_json(Path(".github/release-recovery-intents/non-terminal.json"), recovery)
+        self.assert_rejected(
+            self.check(self.commit("claim non-terminal recovery")), "terminal failed attempt"
+        )
+
+    def test_rejects_mutation_reaching_prior_run(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        recovery = self.recovery_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+        )
+        recovery["failedAttempt"]["mutationState"] = "started"
+        self.write_json(Path(".github/release-recovery-intents/mutated.json"), recovery)
+        self.assert_rejected(
+            self.check(self.commit("claim mutation-reaching recovery")),
+            "failure before immutable mutation",
+        )
+
+    def test_arbitrary_workflow_inputs_are_not_admission_authority(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        head = self.prepare_recovery(
+            failed_source=failed_source, original_intent_path=original_path
+        )
+        result = subprocess.run(
+            [
+                "python3",
+                str(SCRIPT),
+                "--repository",
+                str(self.repo),
+                "--base",
+                self.base,
+                "--head",
+                head,
+                "--event-ref",
+                "refs/heads/dev",
+                "--version",
+                "1.4.0-next.1",
+                "--workflow-dispatch",
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("unrecognized arguments", result.stderr)
+
     def test_schema_matches_checker_path_and_registry_boundaries(self) -> None:
         schema = json.loads(PROFILE_SCHEMA.read_text(encoding="utf-8"))
         intent_schema = json.loads(INTENT_SCHEMA.read_text(encoding="utf-8"))
+        recovery_schema = json.loads(RECOVERY_INTENT_SCHEMA.read_text(encoding="utf-8"))
         self.assertEqual(schema["properties"]["intentDirectory"]["$ref"], "#/$defs/plainRelativePath")
+        self.assertEqual(
+            schema["properties"]["recovery"]["properties"]["intentDirectory"]["$ref"],
+            "#/$defs/plainRelativePath",
+        )
         self.assertEqual(schema["$defs"]["pathPatterns"]["items"]["$ref"], "#/$defs/pathPattern")
         self.assertEqual(schema["properties"]["releaseUnit"]["properties"]["registry"]["pattern"], "^https://")
         self.assertTrue(schema["properties"]["siblingReleaseUnits"]["uniqueItems"])
@@ -484,6 +855,14 @@ class AdmissionTest(unittest.TestCase):
         self.assertIsNone(re.fullmatch(channel_patterns["prerelease"], "1.2.3"))
         self.assertIsNotNone(re.fullmatch(channel_patterns["final"], "1.2.3+build.1"))
         self.assertIsNone(re.fullmatch(channel_patterns["final"], "1.2.3-rc.1"))
+        self.assertEqual(
+            recovery_schema["properties"]["reason"]["const"],
+            "pre-mutation-no-immutable-identity",
+        )
+        self.assertEqual(
+            recovery_schema["properties"]["failedAttempt"]["properties"]["tagState"]["const"],
+            "absent",
+        )
 
 
 if __name__ == "__main__":

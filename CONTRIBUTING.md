@@ -220,6 +220,14 @@ explicit merge and satisfy the profile's exact merge-diff, protected-tag,
 immutability, isolation, evidence, and least-privilege requirements before
 publication.
 
+If an admitted package publication attempt fails before creating any package
+tag or registry version, the repository MAY preserve the same version only
+through the profile's separate append-only, PR-mediated pre-mutation recovery
+authorization. A normal workflow rerun and the historical release intent are
+not renewed publication authority. Any tag, registry version, partial immutable
+state, or successful publication followed by verification failure remains under
+the immutable-identity correction and verification rules.
+
 Organization release units must follow the
 [Release and Versioning Standard](https://github.com/5010-dev/.github/blob/main/docs/standards/release-versioning/README.md).
 It defines artifact profiles, version and release identity, compatibility

@@ -2,9 +2,10 @@
 """Fail-closed admission checker for protected package-tag publication.
 
 The checker is intentionally dependency-free. It validates one repository-local
-profile contract and derives publication identity from an exact Git diff. It
-does not publish, inspect hosting rulesets or pull-request approvals, or query a
-package registry.
+profile contract and derives normal or pre-mutation recovery publication
+identity from an exact Git diff. It does not publish, inspect Actions or
+authorization-use history, inspect hosting rulesets or pull-request approvals,
+or query a package registry.
 """
 
 from __future__ import annotations
@@ -28,6 +29,9 @@ FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 ID_RE = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 TOML_DOTTED_KEY_RE = re.compile(r"^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*$")
 WORKFLOW_RE = re.compile(r"^\.github/workflows/[^/]+\.ya?ml$")
+WORKFLOW_RUN_URL_RE = re.compile(
+    r"^https://github\.com/[^/\s]+/[^/\s]+/actions/runs/[1-9][0-9]*$"
+)
 SEMVER_RE = re.compile(
     r"^(0|[1-9][0-9]*)\."
     r"(0|[1-9][0-9]*)\."
@@ -142,6 +146,7 @@ def validate_contract(document: Any) -> dict[str, Any]:
         "profile",
         "source",
         "intentDirectory",
+        "recovery",
         "releaseUnit",
         "siblingReleaseUnits",
         "channels",
@@ -161,6 +166,19 @@ def validate_contract(document: Any) -> dict[str, Any]:
     require(source == {"branch": "dev", "ref": "refs/heads/dev", "admissionEvent": "push"}, "profile source must select the dev push boundary")
 
     contract["intentDirectory"] = validate_relative(contract["intentDirectory"], "intentDirectory")
+
+    recovery = require_object(contract["recovery"], "recovery")
+    require_exact_keys(recovery, {"intentDirectory", "workflow"}, "recovery")
+    recovery["intentDirectory"] = validate_relative(
+        recovery["intentDirectory"], "recovery.intentDirectory"
+    )
+    recovery["workflow"] = validate_workflow(recovery["workflow"], "recovery.workflow")
+    require(
+        recovery["intentDirectory"] != contract["intentDirectory"]
+        and not recovery["intentDirectory"].startswith(f"{contract['intentDirectory']}/")
+        and not contract["intentDirectory"].startswith(f"{recovery['intentDirectory']}/"),
+        "release and recovery intent directories must be distinct and non-overlapping",
+    )
 
     unit = require_object(contract["releaseUnit"], "releaseUnit")
     unit_fields = {
@@ -277,6 +295,11 @@ def validate_contract(document: Any) -> dict[str, Any]:
         require(any(path_matches(required_path, pattern) for pattern in preparation), f"releasePreparationPaths does not admit required path: {required_path}")
     intent_probe = f"{contract['intentDirectory']}/intent.json"
     require(any(path_matches(intent_probe, pattern) for pattern in preparation), "releasePreparationPaths does not admit JSON release intents")
+    recovery_probe = f"{recovery['intentDirectory']}/recovery.json"
+    require(
+        not any(path_matches(recovery_probe, pattern) for pattern in preparation),
+        "releasePreparationPaths must not admit recovery authorization records",
+    )
     return contract
 
 
@@ -302,6 +325,95 @@ def validate_intent(document: Any, label: str = "release intent") -> dict[str, A
     require_exact_keys(source, {"ref", "baseCommit"}, f"{label}.source")
     require(source["ref"] == "refs/heads/dev", f"{label}.source.ref must be refs/heads/dev")
     require(isinstance(source["baseCommit"], str) and FULL_SHA_RE.fullmatch(source["baseCommit"]) is not None, f"{label}.source.baseCommit must be a lowercase full commit SHA")
+    return intent
+
+
+def validate_recovery_intent(
+    document: Any, label: str = "release recovery intent"
+) -> dict[str, Any]:
+    intent = require_object(document, label)
+    required = {
+        "schemaVersion",
+        "releaseUnit",
+        "channel",
+        "version",
+        "originalIntentPath",
+        "failedAttempt",
+        "source",
+        "reason",
+    }
+    require_exact_keys(intent, required, label, {"$schema"})
+    if "$schema" in intent:
+        require_string(intent["$schema"], f"{label}.$schema")
+    require(
+        intent["schemaVersion"] == "package-release-recovery-intent/v1",
+        f"{label} has an unsupported schemaVersion",
+    )
+    intent["releaseUnit"] = validate_id(intent["releaseUnit"], f"{label}.releaseUnit")
+    require(intent["channel"] in {"prerelease", "final"}, f"{label}.channel is invalid")
+    version = require_string(intent["version"], f"{label}.version")
+    require(len(version) <= 128, f"{label}.version is too long")
+    match = SEMVER_RE.fullmatch(version)
+    require(match is not None, f"{label}.version is not exact SemVer")
+    if intent["channel"] == "prerelease":
+        require(match.group(4) is not None, f"{label} prerelease channel requires a SemVer prerelease")
+    else:
+        require(match.group(4) is None, f"{label} final channel requires a final SemVer")
+
+    intent["originalIntentPath"] = validate_relative(
+        intent["originalIntentPath"], f"{label}.originalIntentPath"
+    )
+    require(
+        intent["originalIntentPath"].endswith(".json"),
+        f"{label}.originalIntentPath must name a JSON file",
+    )
+
+    failed = require_object(intent["failedAttempt"], f"{label}.failedAttempt")
+    require_exact_keys(
+        failed,
+        {
+            "sourceCommit",
+            "workflowRunUrl",
+            "outcome",
+            "mutationState",
+            "tagState",
+            "registryVersionState",
+        },
+        f"{label}.failedAttempt",
+    )
+    require(
+        isinstance(failed["sourceCommit"], str)
+        and FULL_SHA_RE.fullmatch(failed["sourceCommit"]) is not None,
+        f"{label}.failedAttempt.sourceCommit must be a lowercase full commit SHA",
+    )
+    run_url = require_string(failed["workflowRunUrl"], f"{label}.failedAttempt.workflowRunUrl")
+    require(
+        WORKFLOW_RUN_URL_RE.fullmatch(run_url) is not None,
+        f"{label}.failedAttempt.workflowRunUrl must identify an exact GitHub Actions run",
+    )
+    require(failed["outcome"] == "terminal-failure", f"{label} requires a terminal failed attempt")
+    require(
+        failed["mutationState"] == "not-started",
+        f"{label} requires failure before immutable mutation",
+    )
+    require(failed["tagState"] == "absent", f"{label} requires the package tag to be absent")
+    require(
+        failed["registryVersionState"] == "absent",
+        f"{label} requires the registry version to be absent",
+    )
+
+    source = require_object(intent["source"], f"{label}.source")
+    require_exact_keys(source, {"ref", "baseCommit"}, f"{label}.source")
+    require(source["ref"] == "refs/heads/dev", f"{label}.source.ref must be refs/heads/dev")
+    require(
+        isinstance(source["baseCommit"], str)
+        and FULL_SHA_RE.fullmatch(source["baseCommit"]) is not None,
+        f"{label}.source.baseCommit must be a lowercase full commit SHA",
+    )
+    require(
+        intent["reason"] == "pre-mutation-no-immutable-identity",
+        f"{label}.reason must select pre-mutation no-identity recovery",
+    )
     return intent
 
 
@@ -530,6 +642,232 @@ def dotted_set(document: Any, key: str, value: Any, label: str) -> None:
     current[last] = value
 
 
+def tree_paths(repo: Path, revision: str, directory: str, label: str) -> list[str]:
+    listed = git(
+        repo,
+        "ls-tree",
+        "-r",
+        "--name-only",
+        "-z",
+        revision,
+        "--",
+        f":(literal){directory}",
+        binary=True,
+    )
+    try:
+        return [part.decode("utf-8") for part in listed.split(b"\0") if part]
+    except UnicodeDecodeError as error:
+        reject(f"{label} contains a non-UTF-8 path: {error}")
+
+
+def read_native_manifest(
+    repo: Path, revision: str, unit: dict[str, Any], label: str
+) -> tuple[Any, Any, Any]:
+    version_source = unit["versionSource"]
+    version_path = version_source["path"]
+    require_regular_file(repo, revision, version_path, label)
+    if version_source["type"] == "json-pointer":
+        manifest = git_json(repo, revision, version_path, label)
+        version = pointer_get(manifest, version_source["versionPointer"], label)
+        package_name = pointer_get(manifest, version_source["packageNamePointer"], label)
+    else:
+        manifest = git_toml(repo, revision, version_path, label)
+        version = dotted_get(manifest, version_source["versionKey"], label)
+        package_name = dotted_get(manifest, version_source["packageNameKey"], label)
+    return manifest, package_name, version
+
+
+def admit_recovery(
+    repo: Path,
+    contract: dict[str, Any],
+    base: str,
+    head: str,
+    event_ref: str,
+    entries: list[DiffEntry],
+) -> dict[str, Any]:
+    recovery = contract["recovery"]
+    unit = contract["releaseUnit"]
+    require(
+        len(entries) == 1,
+        "recovery authorization diff must add exactly one recovery record and no other paths",
+    )
+    entry = entries[0]
+    require(
+        entry.status == "A" and len(entry.paths) == 1,
+        "recovery authorization must be newly added; modification, rename, copy, or deletion is reuse",
+    )
+    recovery_path = entry.paths[0]
+    require(
+        PurePosixPath(recovery_path).parent == PurePosixPath(recovery["intentDirectory"]),
+        "recovery authorization must be directly inside recovery.intentDirectory",
+    )
+    require(recovery_path.endswith(".json"), "recovery authorization must be a JSON file")
+    require_regular_file(repo, head, recovery_path, "release recovery intent")
+    authorization = validate_recovery_intent(
+        git_json(repo, head, recovery_path, recovery_path), recovery_path
+    )
+    require(
+        authorization["releaseUnit"] == unit["id"],
+        "release recovery intent targets a different release unit",
+    )
+    require(
+        authorization["source"]["ref"] == event_ref,
+        "release recovery intent source ref does not match the event ref",
+    )
+    require(
+        authorization["source"]["baseCommit"] == base,
+        "release recovery intent is stale: source baseCommit does not equal the event before commit",
+    )
+
+    original_path = authorization["originalIntentPath"]
+    require(
+        PurePosixPath(original_path).parent == PurePosixPath(contract["intentDirectory"]),
+        "original release intent must be directly inside intentDirectory",
+    )
+    require_regular_file(repo, head, original_path, "original release intent")
+    original = validate_intent(git_json(repo, head, original_path, original_path), original_path)
+    require(original["releaseUnit"] == authorization["releaseUnit"], "original release intent release unit does not match recovery")
+    require(original["channel"] == authorization["channel"], "original release intent channel does not match recovery")
+    require(original["version"] == authorization["version"], "original release intent version does not match recovery")
+
+    intent_paths = tree_paths(repo, head, contract["intentDirectory"], "intent directory")
+    matching_originals: list[str] = []
+    for historical_path in intent_paths:
+        validate_relative(historical_path, "historical release intent path", allow_glob=True)
+        require_regular_file(repo, head, historical_path, "historical release intent")
+        historical = validate_intent(
+            git_json(repo, head, historical_path, historical_path), historical_path
+        )
+        if (
+            historical["releaseUnit"] == authorization["releaseUnit"]
+            and historical["version"] == authorization["version"]
+        ):
+            matching_originals.append(historical_path)
+    require(
+        matching_originals == [original_path],
+        "original release intent is missing or ambiguous for the recovery identity",
+    )
+
+    failed_source = authorization["failedAttempt"]["sourceCommit"]
+    require(
+        git(repo, "rev-parse", "--verify", f"{failed_source}^{{commit}}").strip()
+        == failed_source,
+        "failed attempt source does not resolve to the exact commit",
+    )
+    failed_ancestor_status = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", failed_source, base],
+        cwd=repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode
+    require(
+        failed_ancestor_status == 0,
+        "failed attempt source must be an ancestor of the recovery base",
+    )
+    require_regular_file(repo, failed_source, original_path, "failed-source original release intent")
+    failed_original_bytes = git(repo, "show", f"{failed_source}:{original_path}", binary=True)
+    current_original_bytes = git(repo, "show", f"{head}:{original_path}", binary=True)
+    require(
+        failed_original_bytes == current_original_bytes,
+        "original release intent must remain byte-identical after the failed attempt",
+    )
+    original_base = original["source"]["baseCommit"]
+    original_ancestor_status = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", original_base, failed_source],
+        cwd=repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode
+    require(
+        original_ancestor_status == 0,
+        "original release intent base must be an ancestor of the failed attempt source",
+    )
+    original_entries = parse_diff(repo, original_base, failed_source)
+    require(
+        any(
+            historical_entry.status == "A"
+            and historical_entry.paths == (original_path,)
+            for historical_entry in original_entries
+        ),
+        "original release intent was not newly added for the failed publication source",
+    )
+
+    recovery_paths = tree_paths(
+        repo, head, recovery["intentDirectory"], "recovery intent directory"
+    )
+    failed_attempt_key = (
+        authorization["failedAttempt"]["sourceCommit"],
+        authorization["failedAttempt"]["workflowRunUrl"],
+    )
+    matching_attempts: list[str] = []
+    for historical_path in recovery_paths:
+        validate_relative(historical_path, "historical recovery intent path", allow_glob=True)
+        require(
+            PurePosixPath(historical_path).parent
+            == PurePosixPath(recovery["intentDirectory"])
+            and historical_path.endswith(".json"),
+            "recovery intent directory may contain only direct JSON recovery records",
+        )
+        require_regular_file(repo, head, historical_path, "historical recovery intent")
+        historical = validate_recovery_intent(
+            git_json(repo, head, historical_path, historical_path), historical_path
+        )
+        if (
+            historical["failedAttempt"]["sourceCommit"],
+            historical["failedAttempt"]["workflowRunUrl"],
+        ) == failed_attempt_key:
+            matching_attempts.append(historical_path)
+    require(
+        matching_attempts == [recovery_path],
+        "duplicate recovery authorization exists for the same failed attempt",
+    )
+
+    base_manifest, base_package_name, base_version = read_native_manifest(
+        repo, base, unit, "recovery base version source"
+    )
+    head_manifest, head_package_name, head_version = read_native_manifest(
+        repo, head, unit, "recovery head version source"
+    )
+    require(base_manifest == head_manifest, "native manifest must remain unchanged during recovery authorization")
+    require(base_package_name == head_package_name == unit["packageName"], "native manifest package name does not match releaseUnit.packageName")
+    require(isinstance(base_version, str) and SEMVER_RE.fullmatch(base_version) is not None, "recovery base manifest version is not exact SemVer")
+    require(base_version == head_version == authorization["version"], "recovery version does not match the unchanged native manifest")
+
+    rendered_tag = unit["tagPattern"].replace("{version}", authorization["version"])
+    tag_status = subprocess.run(
+        ["git", "check-ref-format", f"refs/tags/{rendered_tag}"],
+        cwd=repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode
+    require(tag_status == 0, "derived package tag is not a valid Git tag")
+
+    channel = authorization["channel"]
+    return {
+        "schemaVersion": "protected-package-tag-recovery-admission/v1",
+        "status": "admitted",
+        "authorization": "pre-mutation-recovery",
+        "releaseUnit": unit["id"],
+        "packageName": unit["packageName"],
+        "registry": unit["registry"],
+        "channel": channel,
+        "distTag": contract["channels"][channel]["distTag"],
+        "version": authorization["version"],
+        "tag": rendered_tag,
+        "originalIntentPath": original_path,
+        "recoveryIntentPath": recovery_path,
+        "failedAttempt": authorization["failedAttempt"],
+        "source": {
+            "ref": event_ref,
+            "baseCommit": base,
+            "commit": head,
+        },
+    }
+
+
 def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: str) -> dict[str, Any]:
     require(repo.is_dir(), f"repository does not exist: {repo}")
     contract_path = validate_relative(contract_path, "contract path")
@@ -554,6 +892,7 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
     unit = contract["releaseUnit"]
     for path_key in ("compatibilityContract", "changelog", "validationWorkflow", "publicationWorkflow"):
         require_regular_file(repo, head, unit[path_key], f"releaseUnit.{path_key}")
+    require_regular_file(repo, head, contract["recovery"]["workflow"], "recovery.workflow")
 
     entries = parse_diff(repo, base, head)
     require(bool(entries), "admission diff is empty")
@@ -563,6 +902,30 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
     require(contract_path not in changed_paths, "profile contract must be established separately from release preparation")
     require(unit["validationWorkflow"] not in changed_paths, "validation workflow must be established separately from release preparation")
     require(unit["publicationWorkflow"] not in changed_paths, "publication workflow must be established separately from release preparation")
+    require(
+        contract["recovery"]["workflow"] not in changed_paths,
+        "recovery workflow must be established separately from recovery authorization",
+    )
+
+    release_intent_entries = [
+        entry
+        for entry in entries
+        if any(is_below(path, contract["intentDirectory"]) for path in entry.paths)
+    ]
+    recovery_intent_entries = [
+        entry
+        for entry in entries
+        if any(
+            is_below(path, contract["recovery"]["intentDirectory"])
+            for path in entry.paths
+        )
+    ]
+    require(
+        not (release_intent_entries and recovery_intent_entries),
+        "release intent and recovery authorization cannot share one admission diff",
+    )
+    if recovery_intent_entries:
+        return admit_recovery(repo, contract, base, head, event_ref, entries)
 
     for entry in entries:
         require(
@@ -582,7 +945,7 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
             f"changed path is outside release preparation: {path}",
         )
 
-    intent_entries = [entry for entry in entries if any(is_below(path, contract["intentDirectory"]) for path in entry.paths)]
+    intent_entries = release_intent_entries
     require(len(intent_entries) == 1, "exactly one release intent change is required")
     intent_entry = intent_entries[0]
     require(intent_entry.status == "A" and len(intent_entry.paths) == 1, "release intent must be newly added; modification, rename, copy, or deletion is stale")

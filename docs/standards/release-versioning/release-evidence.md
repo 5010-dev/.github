@@ -41,6 +41,14 @@ run, package-only effect verification, and retry or recovery state. The record
 MUST distinguish a successful new publication from an idempotent verification
 of an already-published identical identity.
 
+A pre-mutation recovery record MUST additionally preserve the unchanged original
+release-intent path, prior failed source and workflow run, terminal pre-mutation
+outcome, observed absence of both immutable identities, newly admitted base and
+head, recovery-record path, authorization-use result, and final tag/registry
+state. Evidence MUST distinguish an unpublished pre-mutation failure from
+tag-only or registry-only partial publication and from successful immutable
+publication followed by verification failure.
+
 A native client release record MUST additionally identify the application or
 bundle, platform-native display version and build identifier, signed build or
 archive, distribution channel, supported platform range, and applicable store

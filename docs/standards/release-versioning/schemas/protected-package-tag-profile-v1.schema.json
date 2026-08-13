@@ -9,6 +9,7 @@
     "profile",
     "source",
     "intentDirectory",
+    "recovery",
     "releaseUnit",
     "siblingReleaseUnits",
     "channels",
@@ -50,6 +51,22 @@
     },
     "intentDirectory": {
       "$ref": "#/$defs/plainRelativePath"
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intentDirectory",
+        "workflow"
+      ],
+      "properties": {
+        "intentDirectory": {
+          "$ref": "#/$defs/plainRelativePath"
+        },
+        "workflow": {
+          "$ref": "#/$defs/workflowPath"
+        }
+      }
     },
     "releaseUnit": {
       "type": "object",

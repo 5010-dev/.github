@@ -7,6 +7,10 @@
     "admissionEvent": "push"
   },
   "intentDirectory": ".github/release-intents",
+  "recovery": {
+    "intentDirectory": ".github/release-recovery-intents",
+    "workflow": ".github/workflows/publish-browser-package.yml"
+  },
   "releaseUnit": {
     "id": "example-browser-package",
     "artifactProfile": "registry-package",

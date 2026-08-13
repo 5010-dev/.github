@@ -162,6 +162,14 @@ verification result; any mismatch is a conflict and MUST fail closed. A
 prerelease defect requires a new prerelease version, and a final defect requires
 a new SemVer correction.
 
+A terminal protected package attempt that created neither its package tag nor
+its registry version is not a published release and has no immutable release
+identity to correct. It MAY preserve the intended version only through the
+profile's new PR-mediated pre-mutation recovery authorization. The failed
+attempt, original intent, and prior recovery records remain historical evidence;
+a normal rerun is not authorization. If either immutable identity exists, the
+attempt is partial or published and this same-version path is forbidden.
+
 Database migrations are superseded by later migrations rather than deprecated,
 yanked, or deleted. Research records follow their correction, supersession, and
 withdrawal contract rather than package yanking semantics. Mutable container

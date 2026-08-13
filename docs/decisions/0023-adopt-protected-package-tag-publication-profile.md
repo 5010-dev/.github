@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-12
-- Last amended: 2026-08-13
+- Last amended: 2026-08-14
 - Owners: `5010-dev/.github` maintainers and selecting repository maintainers
 
 ## Context
@@ -32,6 +32,15 @@ qualified independent reviewer to materialize a mandatory second-person gate.
 An uninformed or rubber-stamp approval adds latency without improving assurance;
 the central contract needs explicit maintainer merge authorization, not a
 generic two-person convention.
+
+The first Core prerelease attempt then exposed a separate recovery ambiguity.
+Its protected release intent was admitted, but the workflow failed while
+constructing the artifact and before it created a package tag or registry
+version. The historical intent was already merged and append-only, while a
+normal Actions rerun would execute the historical event source rather than a
+new reviewed source containing the fix. Requiring a successor prerelease would
+mistake an unpublished attempt for an immutable release; reusing the intent or
+rerunning it would omit a new PR-mediated authorization boundary.
 
 ## Decision
 
@@ -88,6 +97,22 @@ generic two-person convention.
 14. Do not create a central release queue, repository current-version registry,
     package-name registry, shared publication workflow, or cross-repository
     approval gate.
+15. Add a distinct append-only `package-release-recovery-intent/v1` for the
+    narrow case where an admitted attempt reached terminal failure before tag or
+    registry mutation and both immutable identities remain absent. Preserve the
+    original release intent byte-for-byte and permit the same exact version only
+    through a new protected pull-request merge.
+16. Bind the recovery record to the original intent, failed source and Actions
+    run, exact current base and ref, release unit, version, channel, and the
+    pre-mutation/no-identity reason. Admit only the one newly added record; the
+    admitted `after` becomes the new publication source. One record may start at
+    most one attempt, and another pre-mutation failure requires another record.
+17. Keep live ruleset, required-check, Actions-run, tag, registry, authorization-
+    use, and integrity validation repository-owned. Reject recovery when either
+    immutable identity exists, including tag-only, registry-only, conflicting,
+    or successfully published then verification-failed state. Do not authorize
+    reruns, manual dispatch, tag/package mutation, ruleset relaxation, or an
+    automatic successor version through this path.
 
 ## Consequences
 
@@ -102,10 +127,14 @@ generic two-person convention.
   when its operating model or concrete obligations support that control.
 - Release preparation becomes intentionally narrow: version, changelog, one
   intent, and repository-declared supporting paths.
+- Pre-mutation recovery is also narrow: a separate PR adds one immutable
+  recovery record and changes no manifest, historical intent, workflow,
+  changelog, or sibling path. An unpublished version may be preserved without
+  converting a failed attempt into a release.
 - The checker has a bounded responsibility and dependency surface. A repository
   still owns PR-only merge protection, optional independent-approval policy,
-  rulesets, package closure, registry uniqueness, publication, evidence, and
-  recovery.
+  rulesets, Actions outcome and attempt-use validation, package closure,
+  registry uniqueness, publication, evidence, and recovery.
 - Schema or checker incompatibility is corrected in place until a real released
   consumer exists; after that boundary, consumers coordinate or select a new
   compatibility major.
@@ -139,6 +168,14 @@ second publication authority.
 
 Rejected because structural validation cannot establish source ancestry, a
 single newly added intent, a version-only manifest change, or sibling isolation.
+
+### Rerun the failed release intent or always advance the version
+
+Rejected because a normal rerun is not a new protected merge and may execute the
+historical workflow source, while a forced successor version would treat a
+pre-mutation failure with no immutable identity as though it had published. A
+separate recovery record preserves both the original intent and explicit
+authorization without weakening immutable-state handling.
 
 Boundary classification: unreleased — corrected in place. This decision adds a
 new opt-in profile before its first package publication; it does not rewrite an
