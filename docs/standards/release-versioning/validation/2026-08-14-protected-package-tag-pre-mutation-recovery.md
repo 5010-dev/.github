@@ -77,11 +77,12 @@ The dependency-free reference checker derives normal versus recovery admission
 from the exact diff. For recovery it validates one direct append-only record,
 current base/ref, unchanged manifest identity and version, one unambiguous
 historical intent, byte identity with no intervening protected-history mutation,
-a failed source on protected first-parent history that no earlier recovery
-record names, addition-only recovery-record history, and the derived tag. A
-different run URL does not create a second authorization for the same failed
-source. The checker does not query Actions, rulesets, required checks,
-authorization-use history, tags, or registries.
+a failed source on protected first-parent history that reconstructs the exact
+normal or latest recovery admission and that no earlier recovery record names,
+addition-only recovery-record history, and the derived tag. A different run URL,
+unrelated later commit, or source that skips the latest recovery does not create
+a second authorization. The checker does not query Actions, rulesets, required
+checks, authorization-use history, tags, or registries.
 
 The repository publication workflow must perform those live checks, prove that
 the prior run is terminal and stopped before immutable mutation, prove that both
@@ -93,7 +94,10 @@ reused recovery authorization, unrelated and sibling changes, tag-present,
 registry-present, tag-only, registry-only, conflicting, non-terminal, and
 mutation-reaching claims. They also reject delete/restore intent history,
 modify/restore recovery history, same-source authorization under another run,
-and identity CLI inputs; normal repositories remain explicit opt-in only.
+renamed/restored authorization history, off-first-parent sources, unrelated
+claimed sources, overlapping or incomplete profile recovery boundaries, mixed
+release/recovery diffs, and identity CLI inputs; normal repositories remain
+explicit opt-in only.
 
 ```bash
 python3 scripts/docs/test-protected-package-tag-admission.py
@@ -101,8 +105,8 @@ scripts/docs/check-repository.sh
 git diff --check
 ```
 
-- focused admission suite: 64 tests, `OK`;
-- complete documentation gate: 64 embedded admission tests, `OK`, followed by
+- focused admission suite: 73 tests, `OK`;
+- complete documentation gate: 73 embedded admission tests, `OK`, followed by
   `organization documentation check: OK`; and
 - whitespace/error-marker check: exit 0 with no output.
 
