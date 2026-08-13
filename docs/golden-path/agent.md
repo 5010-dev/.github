@@ -19,7 +19,7 @@ Install the supported private package at its exact coordinate for both
 supported developer hosts:
 
 ```bash
-pnpm dlx @5010-dev/golden-path-agent@1.0.0 install --host all
+pnpm dlx @5010-dev/golden-path-agent@1.0.0 skill install --host all
 ```
 
 Invocation is always explicit:
@@ -33,12 +33,9 @@ Implicit invocation is disabled. Installing the host integration does not add
 the package to a consumer manifest or lock, pin a consumer version, or install a
 repository-managed runtime.
 
-Update by reinstalling a newer exact package coordinate. Roll back by
-reinstalling a prior exact package coordinate:
-
-```bash
-pnpm dlx @5010-dev/golden-path-agent@<exact-version> install --host all
-```
+Update by replacing the package coordinate in that command with a newer exact
+version and running `skill install --host all` again. Roll back by doing the
+same with a prior exact version.
 
 Do not use `latest`, a range, or another moving selector. Installation does not
 automatically regenerate repository files or open consumer upgrade pull
@@ -66,7 +63,7 @@ local and CI paths.
 
 ## Control-plane exclusions
 
-This supported journey does not add a locator, central checker, managed
+This supported journey does not add a locator, central checker,
 generator/upgrader, approval queue, organization registry, or shared workflow.
 It creates no consumer dependency or version pin, owns no managed runtime, and
 does not make the Agent or its package a source of normative policy.

@@ -56,12 +56,13 @@ immediately repository-owned source. A later Golden Path documentation or Agent
 package change does not create a managed regeneration, upgrade campaign, or
 automatic consumer pull request.
 
-The Golden Path does not provide a locator, managed generator/upgrader, managed
+The Golden Path does not provide a locator, binary, generator/upgrader, managed
 file boundary, reusable conformance workflow, adoption registry, live
 organization report, dependency queue compiler, release-unit impact inference,
 security-closure orchestrator, or central approval queue. The optional
-developer-invoked Agent is not an active central binary selected by repositories
-or CI and does not own consumer files or execution.
+developer-invoked Agent does not alter this boundary: repositories and CI do not
+select it, and its bounded copy-once `apply` neither manages consumer files nor
+provides a generated upgrade lifecycle.
 
 ## Getting support
 
