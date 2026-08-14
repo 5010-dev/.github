@@ -86,6 +86,24 @@ claims, not replacements for live state. The central reference checker validates
 only record structure and local Git history and MUST NOT query Actions,
 rulesets, or registries.
 
+Tag-only completion uses a different state machine and a different immutable
+record conforming to `package-release-tag-only-completion-intent/v1`. Before any
+registry mutation, repository automation MUST verify the exact existing tag and
+its source, terminal failed publication run and attempt 1, the original admitted
+release or recovery authorization, the unexpired retained artifact ID and run,
+archive digest, tarball SHA-256, native integrity, embedded source, unchanged
+manifest/version, expected dist-tag, authorization-use history, rulesets, and
+current registry state. It MUST download the retained artifact and MUST NOT
+rebuild or substitute bytes.
+
+Only the first workflow run created by that newly merged completion record, and
+only its run attempt 1, may create the absent exact registry version. A rerun or
+second workflow run MUST be mutation-disabled before the publication credential
+is exposed. If the exact version already exists and tag, source, integrity, and
+dist-tag all match, every run is verification-only. Any mismatch, registry-only
+state, unavailable or expired artifact, ambiguous query, or consumed
+authorization fails closed without mutation.
+
 ## Native client distribution
 
 Native client automation MUST treat signed build production, store submission,
@@ -131,6 +149,10 @@ registry, archive, or record operations are permanent.
   unused, PR-mediated pre-mutation recovery record. The original intent and all
   previous recovery records remain immutable. A second such failure requires a
   second record bound to the newly failed run.
+- A protected package attempt-1 run that created the exact immutable tag and
+  then failed before registry publication MAY complete only the absent registry
+  version through one unused PR-mediated tag-only completion record and the
+  original run's retained artifact. It never rebuilds or mutates the tag.
 - After a package version, tag, image digest, accepted native build, immutable
   release, or immutable research record is published or finalized, recovery
   MUST NOT overwrite it. Use the applicable correction, successor, deprecate,
@@ -140,9 +162,10 @@ registry, archive, or record operations are permanent.
   owner action, and retry, correction, or successor path.
 - A retry MUST re-read remote state and fail when it would create a conflicting
   identity or claim success for a different artifact.
-- Tag-only, registry-only, conflicting immutable state, and a successful exact
-  publication followed by verification failure are not pre-mutation recovery.
-  They retain the existing identities and use fail-closed verification,
+- Tag-only state is not pre-mutation recovery and is eligible only for the
+  narrower retained-artifact completion above. Registry-only, conflicting
+  immutable state, and a successful exact publication followed by verification
+  failure retain the existing identities and use fail-closed verification,
   correction, or owner action without deletion, movement, overwrite, or reuse.
 
 ## Shared automation admission
@@ -177,6 +200,11 @@ deterministic release logic remains locally or independently executable.
   split: validation uses `contents: read`, private-package consumption uses
   `packages: read`, and `packages: write` exists only in the package publication
   job. Validation and consumer jobs MUST NOT receive package write access.
+- A tag-only completion workflow isolates Actions/artifact/ruleset inspection
+  from the registry mutation job. `packages: write` is the mutation job's only
+  write capability and is exposed only to the exact native publish step. The
+  tag-mutation App credential or equivalent tag authority MUST NOT be minted,
+  forwarded, or referenced anywhere in the completion workflow.
 - Secrets MUST be forwarded by name. `secrets: inherit` MUST NOT be the default.
 - OIDC or repository-scoped `GITHUB_TOKEN` SHOULD replace long-lived publication
   credentials when the registry or cloud supports it.

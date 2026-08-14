@@ -49,6 +49,16 @@ state. Evidence MUST distinguish an unpublished pre-mutation failure from
 tag-only or registry-only partial publication and from successful immutable
 publication followed by verification failure.
 
+A tag-only completion record MUST additionally preserve the unchanged original
+release intent; the exact failed publication source, workflow run, run attempt,
+authorization type and path; the existing tag and observed absent registry
+version; retained Actions artifact ID, name, expiry, archive digest, tarball file
+name and SHA-256, native package integrity, and embedded source; newly admitted
+base and head; authorization-use result; and final tag, registry integrity, and
+dist-tag state. Evidence MUST distinguish a new registry publication from
+verification-only exact state and MUST prove that no rebuild, tag mutation,
+rerun mutation, second-run mutation, sibling effect, or tag credential occurred.
+
 A native client release record MUST additionally identify the application or
 bundle, platform-native display version and build identifier, signed build or
 archive, distribution channel, supported platform range, and applicable store

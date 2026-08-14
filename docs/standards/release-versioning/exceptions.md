@@ -67,6 +67,11 @@ An exception MUST NOT convert tag-only, registry-only, conflicting, or completed
 immutable package publication into the protected package-tag profile's
 pre-mutation same-version recovery path. That path is available only through its
 normal PR-mediated authorization while both immutable identities are absent.
+Tag-only state may use only the profile's separate retained-artifact completion
+contract while the exact registry version is absent; an exception cannot waive
+its attempt-1, one-record, immutable-tag, no-rebuild, digest, first-run, or
+credential-isolation requirements. Registry-only and conflicting state remain
+ineligible for same-version mutation.
 
 A `SHOULD` deviation MAY be documented in normal repository decision, release,
 or research records when the rationale and impact are clear. A `MUST` or `MUST

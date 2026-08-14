@@ -1,7 +1,7 @@
 # Release and Versioning schemas
 
 - Status: Accepted
-- Standard version: `2026.08.4`
+- Standard version: `2026.08.5`
 
 These Draft 2020-12 JSON Schemas support the opt-in
 [protected package-tag publication profile](../protected-package-tag.md):
@@ -11,6 +11,7 @@ These Draft 2020-12 JSON Schemas support the opt-in
 | [`protected-package-tag-profile/v1`](./protected-package-tag-profile-v1.schema.json) | Repository-owned package release-unit, source, closure, tag, channel, isolation, permission, and ownership contract |
 | [`package-release-intent/v1`](./package-release-intent-v1.schema.json) | Immutable PR-based release-unit, channel, exact version, and source-boundary intent |
 | [`package-release-recovery-intent/v1`](./package-release-recovery-intent-v1.schema.json) | Separate immutable authorization for one same-version attempt after a terminal pre-mutation failure with no tag or registry version |
+| [`package-release-tag-only-completion-intent/v1`](./package-release-tag-only-completion-intent-v1.schema.json) | Separate immutable authorization to publish only an absent registry version from an exact retained attempt-1 artifact while preserving the existing tag |
 
 Valid illustrative documents are under [`examples/`](./examples/). They use
 reserved example identities and do not select a package name, initial version,
@@ -28,6 +29,16 @@ version, current base and ref, and the pre-mutation/no-identity recovery class.
 Its absent tag and registry states are reviewed claims, not remote truth: the
 repository workflow must query Actions, Git, and the registry again before any
 mutation and reject a consumed authorization or changed state.
+
+The profile additionally declares a non-overlapping tag-only completion-intent
+directory and a distinct registry-only completion workflow. A completion record
+binds the original intent, exact failed publication source/run/attempt and
+admission record, existing tag, expected dist-tag, current base/ref, and the
+retained artifact ID, expiry, archive digest, tarball SHA-256, npm integrity,
+and embedded source. These are reviewed claims; the repository workflow must
+re-read the run, tag, registry, artifact, authorization-use history, rulesets,
+and credentials and must reject rebuilds, rerun mutation, second-run mutation,
+expired artifacts, registry-only state, or any mismatch.
 
 Path patterns are segment-aware: `*`, `?`, and bracket expressions match within
 one segment and never match `/`; a complete `**` segment matches zero or more
@@ -48,7 +59,9 @@ python3 scripts/docs/check-protected-package-tag-admission.py \
 The checker discovers the contract at
 `.github/release-policy/protected-package-tag.v1.json` by default and derives
 release unit, channel, version, tag, and normal-versus-recovery admission from
-repository state. It does not accept those identities as command inputs. A
+repository state. It also derives tag-only completion admission when the exact
+diff adds one record in the declared third directory. It does not accept those
+identities as command inputs. A
 repository MAY use a different canonical contract path through `--contract`,
 but the workflow must keep that path fixed rather than expose it as an untrusted
 dispatch input.

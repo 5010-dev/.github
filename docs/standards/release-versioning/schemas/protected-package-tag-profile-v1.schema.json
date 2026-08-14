@@ -10,6 +10,7 @@
     "source",
     "intentDirectory",
     "recovery",
+    "tagOnlyCompletion",
     "releaseUnit",
     "siblingReleaseUnits",
     "channels",
@@ -65,6 +66,56 @@
         },
         "workflow": {
           "$ref": "#/$defs/workflowPath"
+        }
+      }
+    },
+    "tagOnlyCompletion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intentDirectory",
+        "workflow",
+        "minimumPermissions",
+        "publicationEffects"
+      ],
+      "properties": {
+        "intentDirectory": {
+          "$ref": "#/$defs/plainRelativePath"
+        },
+        "workflow": {
+          "$ref": "#/$defs/workflowPath"
+        },
+        "minimumPermissions": {
+          "const": [
+            "packages: write"
+          ]
+        },
+        "publicationEffects": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "allowed",
+            "forbidden"
+          ],
+          "properties": {
+            "allowed": {
+              "const": [
+                "registry-package-publication"
+              ]
+            },
+            "forbidden": {
+              "const": [
+                "package-tag-creation",
+                "branch-push",
+                "source-commit",
+                "service-deployment",
+                "application-deployment",
+                "oci-publication",
+                "object-storage-publication",
+                "sibling-release-unit-mutation"
+              ]
+            }
+          }
         }
       }
     },
