@@ -1,7 +1,7 @@
 # Release and Versioning Standard
 
 - Status: Accepted
-- Standard version: `2026.08.5`
+- Standard version: `2026.08.6`
 - Last reviewed: 2026-08-14
 
 This standard defines how the `5010-dev` organization versions, identifies,
@@ -219,6 +219,7 @@ part of this standard.
 
 | Version | Normative change |
 | --- | --- |
+| `2026.08.6` | Fix tag-only completion to require exact job-scoped read, artifact-retrieval, registry-mutation, and post-publication permissions and classify the existing protected tag as a released immutable identity |
 | `2026.08.5` | Add one PR-mediated retained-artifact completion path for an exact tag-only attempt-1 failure while preserving the immutable tag and forbidding rerun or second-run mutation |
 | `2026.08.4` | Add a separate PR-mediated pre-mutation recovery authorization that may preserve an unpublished version only while both immutable identities are absent |
 | `2026.08.3` | Clarify that the protected package-tag profile requires PR-mediated maintainer merge authorization, not an organization-wide independent approval |

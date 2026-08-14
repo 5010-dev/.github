@@ -204,11 +204,14 @@ deterministic release logic remains locally or independently executable.
   split: validation uses `contents: read`, private-package consumption uses
   `packages: read`, and `packages: write` exists only in the package publication
   job. Validation and consumer jobs MUST NOT receive package write access.
-- A tag-only completion workflow isolates Actions/artifact/ruleset inspection
-  from the registry mutation job. `packages: write` is the mutation job's only
-  write capability and is exposed only to the exact native publish step. The
-  tag-mutation App credential or equivalent tag authority MUST NOT be minted,
-  forwarded, or referenced anywhere in the completion workflow.
+- A tag-only completion workflow uses four exact job permission sets: admission
+  and live verification receive `contents: read`, `actions: read`, and
+  `packages: read`; retained-artifact retrieval receives only `actions: read`;
+  registry mutation receives only `packages: write`; and post-publication
+  verification receives `contents: read` and `packages: read`. The registry
+  credential is exposed only to the exact native publish step. The tag-mutation
+  App credential or equivalent tag authority MUST NOT be minted, forwarded, or
+  referenced anywhere in the completion workflow.
 - Secrets MUST be forwarded by name. `secrets: inherit` MUST NOT be the default.
 - OIDC or repository-scoped `GITHUB_TOKEN` SHOULD replace long-lived publication
   credentials when the registry or cloud supports it.

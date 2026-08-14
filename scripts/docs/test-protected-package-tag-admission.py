@@ -1484,6 +1484,46 @@ class AdmissionTest(unittest.TestCase):
             self.check(head), "missing required fields: tagOnlyCompletion"
         )
 
+    def test_rejects_weakened_completion_admission_permissions(self) -> None:
+        profile = self.profile()
+        profile["tagOnlyCompletion"]["jobPermissions"][
+            "admissionAndLiveVerification"
+        ].remove("actions: read")
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("weaken completion admission permissions")
+        head = self.prepare_release()
+        self.assert_rejected(self.check(head), "exact job-scoped permissions")
+
+    def test_rejects_broadened_artifact_retrieval_permissions(self) -> None:
+        profile = self.profile()
+        profile["tagOnlyCompletion"]["jobPermissions"][
+            "retainedArtifactRetrieval"
+        ].append("contents: read")
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("broaden artifact retrieval permissions")
+        head = self.prepare_release()
+        self.assert_rejected(self.check(head), "exact job-scoped permissions")
+
+    def test_rejects_broadened_completion_mutation_permissions(self) -> None:
+        profile = self.profile()
+        profile["tagOnlyCompletion"]["jobPermissions"][
+            "registryMutation"
+        ].append("contents: read")
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("broaden completion mutation permissions")
+        head = self.prepare_release()
+        self.assert_rejected(self.check(head), "exact job-scoped permissions")
+
+    def test_rejects_weakened_post_publication_permissions(self) -> None:
+        profile = self.profile()
+        profile["tagOnlyCompletion"]["jobPermissions"][
+            "postPublicationVerification"
+        ].remove("packages: read")
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("weaken post-publication permissions")
+        head = self.prepare_release()
+        self.assert_rejected(self.check(head), "exact job-scoped permissions")
+
     def test_rejects_overlapping_completion_and_recovery_directories(self) -> None:
         profile = self.profile()
         profile["tagOnlyCompletion"]["intentDirectory"] = (
@@ -1586,9 +1626,36 @@ class AdmissionTest(unittest.TestCase):
             schema["properties"]["tagOnlyCompletion"]["properties"]["intentDirectory"]["$ref"],
             "#/$defs/plainRelativePath",
         )
+        completion_permissions = schema["properties"]["tagOnlyCompletion"][
+            "properties"
+        ]["jobPermissions"]
         self.assertEqual(
-            schema["properties"]["tagOnlyCompletion"]["properties"]["minimumPermissions"]["const"],
-            ["packages: write"],
+            completion_permissions["required"],
+            [
+                "admissionAndLiveVerification",
+                "retainedArtifactRetrieval",
+                "registryMutation",
+                "postPublicationVerification",
+            ],
+        )
+        self.assertEqual(
+            {
+                name: definition["const"]
+                for name, definition in completion_permissions["properties"].items()
+            },
+            {
+                "admissionAndLiveVerification": [
+                    "contents: read",
+                    "actions: read",
+                    "packages: read",
+                ],
+                "retainedArtifactRetrieval": ["actions: read"],
+                "registryMutation": ["packages: write"],
+                "postPublicationVerification": [
+                    "contents: read",
+                    "packages: read",
+                ],
+            },
         )
         self.assertEqual(schema["$defs"]["pathPatterns"]["items"]["$ref"], "#/$defs/pathPattern")
         self.assertEqual(schema["properties"]["releaseUnit"]["properties"]["registry"]["pattern"], "^https://")

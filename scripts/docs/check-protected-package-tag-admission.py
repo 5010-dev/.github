@@ -73,7 +73,19 @@ EXPECTED_EFFECTS = {
     ],
 }
 EXPECTED_TAG_ONLY_COMPLETION = {
-    "minimumPermissions": ["packages: write"],
+    "jobPermissions": {
+        "admissionAndLiveVerification": [
+            "contents: read",
+            "actions: read",
+            "packages: read",
+        ],
+        "retainedArtifactRetrieval": ["actions: read"],
+        "registryMutation": ["packages: write"],
+        "postPublicationVerification": [
+            "contents: read",
+            "packages: read",
+        ],
+    },
     "publicationEffects": {
         "allowed": ["registry-package-publication"],
         "forbidden": [
@@ -222,7 +234,7 @@ def validate_contract(document: Any) -> dict[str, Any]:
     completion = require_object(contract["tagOnlyCompletion"], "tagOnlyCompletion")
     require_exact_keys(
         completion,
-        {"intentDirectory", "workflow", "minimumPermissions", "publicationEffects"},
+        {"intentDirectory", "workflow", "jobPermissions", "publicationEffects"},
         "tagOnlyCompletion",
     )
     completion["intentDirectory"] = validate_relative(
@@ -243,11 +255,11 @@ def validate_contract(document: Any) -> dict[str, Any]:
         )
     require(
         {
-            "minimumPermissions": completion["minimumPermissions"],
+            "jobPermissions": completion["jobPermissions"],
             "publicationEffects": completion["publicationEffects"],
         }
         == EXPECTED_TAG_ONLY_COMPLETION,
-        "tagOnlyCompletion must preserve registry-only effects and package-write-only mutation permission",
+        "tagOnlyCompletion must preserve exact job-scoped permissions and registry-only effects",
     )
 
     unit = require_object(contract["releaseUnit"], "releaseUnit")

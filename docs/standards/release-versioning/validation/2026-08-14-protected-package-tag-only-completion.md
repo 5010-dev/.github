@@ -1,8 +1,9 @@
 # Protected package-tag tag-only completion validation — 2026-08-14
 
 - Status: Passed
-- Observed at: `2026-08-14T09:53:19+09:00`
+- Observed at: `2026-08-14T20:57:28+09:00`
 - Central change base: `5010-dev/.github@f1cd525a5040ccd2c219eb044014d5b6eadf4f5f`
+- Permission correction base: `5010-dev/.github@1462bff26a9ee3528cac32c4b1678bc9c59f1ff2`
 - Tag-only partial-publication source: `5010-dev/fiftyten-indicators-core@099edf52740633a200c9d57abf8c7a4310fe1507`
 - Failed publication run: `5010-dev/fiftyten-indicators-core#31756609971`, attempt `1`
 - Intended identity: `@5010-dev/technical-indicators@0.1.0-next.0`
@@ -52,6 +53,12 @@ workflow. The record freezes the failed publication admission and the retained
 artifact identities above. The exact completion-authorization diff adds one
 record and nothing else.
 
+Standard `2026.08.6` closes the executable permission profile before downstream
+adoption. It separates admission and live verification, retained-artifact
+retrieval, registry mutation, and post-publication verification into four exact
+job permission sets instead of modeling the mutation permission as the whole
+completion workflow.
+
 The first workflow run triggered by that record, at run attempt `1`, is the only
 execution that may create the absent exact registry version. It downloads the
 retained artifact and does not rebuild. Every rerun and second workflow run is
@@ -78,10 +85,17 @@ and sibling isolation before mutation.
 | Tag missing, moved, recreated, or conflicting | Fail closed |
 | Registry-only, mismatched, ambiguous, or unverifiable state | Fail closed |
 
-The completion mutation job has `packages: write` as its only write capability.
-Registry credentials are step-scoped. The tag App private key and installation
-token are absent. Package, OCI, object storage, service/application deployment,
-and branch/source effects outside the exact registry version are forbidden.
+| Completion responsibility | Exact permission set |
+| --- | --- |
+| Admission and live verification | `contents: read`, `actions: read`, `packages: read` |
+| Retained-artifact retrieval | `actions: read` |
+| Registry mutation | `packages: write` |
+| Post-publication verification | `contents: read`, `packages: read` |
+
+Registry credentials are step-scoped, and representative package execution is
+credential-free. The tag App private key and installation token are absent.
+Package, OCI, object storage, service/application deployment, and branch/source
+effects outside the exact registry version are forbidden.
 
 ## Executable boundary and regression
 
@@ -96,7 +110,8 @@ duplicate identity authorization, modified recovery authority, missing or
 overlapping profile boundaries, a superseded initial source after later
 recovery authorization, a preparation-only successor claimed as an initial
 failed source, sibling mutation-path overlap for recovery or completion records,
-shared workflows, and release-path overlap.
+shared workflows, release-path overlap, and missing or broadened completion job
+permissions.
 
 ```bash
 python3 scripts/docs/test-protected-package-tag-admission.py
@@ -104,8 +119,8 @@ scripts/docs/check-repository.sh
 git diff --check
 ```
 
-- focused admission suite: 97 tests, `OK`;
-- complete documentation gate: 97 embedded admission tests, `OK`, followed by
+- focused admission suite: 101 tests, `OK`;
+- complete documentation gate: 101 embedded admission tests, `OK`, followed by
   `organization documentation check: OK`; and
 - whitespace/error-marker check: exit 0 with no output.
 
@@ -135,4 +150,7 @@ registry identity from the exact retained artifact under a new one-record
 authorization. Registry-only, conflicting, expired-artifact, rebuilt,
 rerun-mutation, and second-run-mutation states remain fail closed.
 
-Boundary classification: unreleased — corrected in place.
+Boundary classification: released — compatibility required because the
+protected immutable tag `technical-indicators-v0.1.0-next.0` already exists at
+`099edf52740633a200c9d57abf8c7a4310fe1507`, while the matching registry version
+remains absent.

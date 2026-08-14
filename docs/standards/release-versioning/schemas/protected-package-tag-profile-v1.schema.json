@@ -75,7 +75,7 @@
       "required": [
         "intentDirectory",
         "workflow",
-        "minimumPermissions",
+        "jobPermissions",
         "publicationEffects"
       ],
       "properties": {
@@ -85,10 +85,40 @@
         "workflow": {
           "$ref": "#/$defs/workflowPath"
         },
-        "minimumPermissions": {
-          "const": [
-            "packages: write"
-          ]
+        "jobPermissions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "admissionAndLiveVerification",
+            "retainedArtifactRetrieval",
+            "registryMutation",
+            "postPublicationVerification"
+          ],
+          "properties": {
+            "admissionAndLiveVerification": {
+              "const": [
+                "contents: read",
+                "actions: read",
+                "packages: read"
+              ]
+            },
+            "retainedArtifactRetrieval": {
+              "const": [
+                "actions: read"
+              ]
+            },
+            "registryMutation": {
+              "const": [
+                "packages: write"
+              ]
+            },
+            "postPublicationVerification": {
+              "const": [
+                "contents: read",
+                "packages: read"
+              ]
+            }
+          }
         },
         "publicationEffects": {
           "type": "object",

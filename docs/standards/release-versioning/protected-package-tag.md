@@ -343,12 +343,21 @@ and terminal evidence. Verification failure preserves the created exact pair
 and follows verification or correction; it does not authorize another
 same-version mutation.
 
-The completion registry mutation job receives `packages: write` as its only
-write capability and exposes its registry credential only to the native publish
-step. Actions, source, ruleset, artifact, and registry inspection MUST occur in
-read-only validation jobs or steps before mutation. The tag-mutation GitHub App
-credential or equivalent tag-write authority MUST NOT be minted, forwarded,
-referenced, or made available anywhere in the completion workflow.
+The completion workflow MUST use these exact job-scoped permission sets:
+
+| Completion responsibility | Exact permission set |
+| --- | --- |
+| Admission and live verification | `contents: read`, `actions: read`, `packages: read` |
+| Retained-artifact retrieval | `actions: read` |
+| Registry mutation | `packages: write` |
+| Post-publication verification | `contents: read`, `packages: read` |
+
+The registry mutation job exposes its credential only to the native publish
+step. It receives no `contents` or `actions` permission and never performs
+source checkout, Actions inspection, or retained-artifact retrieval. The
+tag-mutation GitHub App credential or equivalent tag-write authority MUST NOT be
+minted, forwarded, referenced, or made available anywhere in the completion
+workflow.
 
 The dependency-free reference checker
 [`check-protected-package-tag-admission.py`](../../../scripts/docs/check-protected-package-tag-admission.py)
@@ -403,13 +412,20 @@ Permissions MUST be explicit and job-scoped:
 | Source and policy validation | `contents: read` |
 | Private package installation or consumer execution | `packages: read` |
 | Native registry publication | `packages: write` |
-| Tag-only completion registry mutation | `packages: write`; no tag credential |
+| Tag-only admission and live verification | `contents: read`, `actions: read`, `packages: read` |
+| Tag-only retained-artifact retrieval | `actions: read` |
+| Tag-only registry mutation | `packages: write`; no tag credential |
+| Tag-only post-publication verification | `contents: read`, `packages: read` |
 
 `packages: write` MUST be absent from validation and consumer jobs. The
 write-capable token or credential MUST be exposed only to the native publication
 step in its publication job. A consumer job MAY also receive `contents: read`
 only when checkout is required. Secrets MUST NOT be written to manifests,
 lockfiles, logs, evidence artifacts, or packed package contents.
+
+Private-registry credentials in post-publication verification MUST be scoped to
+the installation step. Representative package execution MUST run after registry
+credentials and token environment variables are removed.
 
 GitHub Actions permissions are job-scoped, so publication MUST use a dedicated
 job with `packages: write` and only trusted setup, mutation, and verification
