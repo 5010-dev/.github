@@ -882,7 +882,8 @@ class AdmissionTest(unittest.TestCase):
             failed_source=unrelated_source, original_intent_path=original_path
         )
         self.assert_rejected(
-            self.check(head), "changed path is outside release preparation"
+            self.check(head),
+            "failed publication source must be the exact commit that added the original release intent",
         )
 
     def test_rejects_unrelated_commit_after_prior_recovery_as_failed_source(self) -> None:
@@ -996,6 +997,23 @@ class AdmissionTest(unittest.TestCase):
             mutate_sibling=True,
         )
         self.assert_rejected(self.check(head), "no other paths")
+
+    def test_rejects_recovery_directory_overlapping_sibling_mutation(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        profile = json.loads((self.repo / CONTRACT_PATH).read_text(encoding="utf-8"))
+        profile["siblingReleaseUnits"][0]["mutationPaths"].append(
+            ".github/release-recovery-intents/**"
+        )
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("overlap recovery and sibling mutation paths")
+        head = self.prepare_recovery(
+            failed_source=failed_source,
+            original_intent_path=original_path,
+        )
+        self.assert_rejected(
+            self.check(head),
+            "sibling release-unit mutation is forbidden",
+        )
 
     def test_rejects_recovery_when_tag_is_present(self) -> None:
         failed_source, original_path = self.materialize_failed_release()
@@ -1132,6 +1150,26 @@ class AdmissionTest(unittest.TestCase):
         self.assertEqual(
             json.loads(result.stdout)["failedPublication"]["authorization"]["type"],
             "release-intent",
+        )
+
+    def test_rejects_preparation_only_successor_as_initial_failed_source(self) -> None:
+        initial_source, original_path = self.materialize_failed_release()
+        self.write(
+            Path("packages/browser/CHANGELOG.md"),
+            "# Changelog\n\n- Polish release notes\n",
+        )
+        successor = self.commit("polish release notes")
+        self.assertNotEqual(initial_source, successor)
+        self.base = successor
+        head = self.prepare_tag_only_completion(
+            original_intent_path=original_path,
+            failed_source=successor,
+            authorization_type="release-intent",
+            authorization_path=original_path,
+        )
+        self.assert_rejected(
+            self.check(head),
+            "failed publication source must be the exact commit that added the original release intent",
         )
 
     def test_rejects_initial_source_after_later_recovery_authorization(self) -> None:
@@ -1457,6 +1495,25 @@ class AdmissionTest(unittest.TestCase):
         self.assert_rejected(
             self.check(head),
             "tag-only completion and recovery intent directories must be distinct",
+        )
+
+    def test_rejects_completion_directory_overlapping_sibling_mutation(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        profile = json.loads((self.repo / CONTRACT_PATH).read_text(encoding="utf-8"))
+        profile["siblingReleaseUnits"][0]["mutationPaths"].append(
+            ".github/release-tag-only-completion-intents/**"
+        )
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("overlap completion and sibling mutation paths")
+        head = self.prepare_tag_only_completion(
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            authorization_type="release-intent",
+            authorization_path=original_path,
+        )
+        self.assert_rejected(
+            self.check(head),
+            "sibling release-unit mutation is forbidden",
         )
 
     def test_rejects_shared_completion_and_publication_workflow(self) -> None:

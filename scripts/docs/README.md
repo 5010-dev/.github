@@ -53,9 +53,12 @@ byte-identical, addition-only original intent, exact current base/ref, a failed
 source on protected first-parent history that structurally reconstructs the
 original or latest recovery admission and that no prior recovery record names,
 addition-only recovery history, and declared terminal pre-mutation absence of
-tag and registry identities. A different run URL or unrelated later commit
-cannot split one authorization source into another. JSON input must be strict
-UTF-8 without duplicate keys or non-standard numeric constants.
+tag and registry identities. The initial failed source must be the exact commit
+that added the original release intent; a preparation-only successor is not
+authority. Recovery and completion record paths must remain outside every
+declared sibling mutation surface. A different run URL or unrelated later
+commit cannot split one authorization source into another. JSON input must be
+strict UTF-8 without duplicate keys or non-standard numeric constants.
 
 Tag-only completion admission requires one newly added record and no other
 change, an unchanged manifest and original intent, a failed publication source
