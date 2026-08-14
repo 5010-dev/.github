@@ -71,12 +71,14 @@ registry state, inspect authorization-use history, inspect hosting rulesets or
 permissions, or inspect pull-request approvals. The hosting layer owns the
 PR-only protected merge boundary. The repository publication workflow must pass
 the exact merge `before` and `after` commits to this checker and revalidate
-rulesets, required checks, prior-run outcome, record non-reuse, tag and registry
-state, retained-artifact identity and expiry, package closure, permissions, and
-every other publication prerequisite before mutation. A normal rerun or
-arbitrary workflow input is not publication authority. A tag-only completion
-workflow must additionally mutation-disable every rerun and second workflow run
-before credential setup and must never receive tag mutation authority.
+rulesets, required checks, the prior run's repository, declared workflow,
+event/ref, source, attempt, outcome, and tag-only phase evidence, record
+non-reuse, tag and registry state, retained-artifact identity and expiry, package
+closure, permissions, and every other publication prerequisite before mutation.
+A normal rerun or arbitrary workflow input is not publication authority. A
+tag-only completion workflow must additionally mutation-disable every rerun and
+second workflow run before credential setup and must never receive tag mutation
+authority.
 
 The invocation requires the exact base and head commit objects plus their
 ancestry. An adopting checkout MUST fetch sufficient history, normally with

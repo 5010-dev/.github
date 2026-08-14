@@ -296,8 +296,12 @@ publication, repository automation MUST re-read and prove all of the following:
 
 1. the protected source, required checks, exact completion admission, protected
    tag rules, and one-record authorization-use history remain valid;
-2. the named failed run is terminal `failure`, has the exact failed source, and
-   is run attempt `1`;
+2. the named failed run belongs to the selecting repository, was triggered by a
+   `push` to the declared `dev` ref, has the exact failed source, is run attempt
+   `1`, is terminal `failure`, and executed the declared normal publication or
+   pre-mutation recovery workflow selected by the record's authorization type;
+   its trusted job or terminal evidence proves that the exact tag-creation phase
+   completed and registry publication failed before creating the exact version;
 3. the existing immutable tag has the exact derived name and failed-publication
    source and has not moved, been deleted, or been recreated;
 4. the exact registry version is absent without ambiguity;
@@ -348,7 +352,8 @@ referenced, or made available anywhere in the completion workflow.
 
 The dependency-free reference checker
 [`check-protected-package-tag-admission.py`](../../../scripts/docs/check-protected-package-tag-admission.py)
-implements the local Git, JSON, and TOML rules for normal and recovery admission.
+implements the local Git, JSON, and TOML rules for normal, pre-mutation recovery,
+and tag-only completion admission.
 It does not publish, inspect Actions outcome or authorization-use history,
 inspect rulesets or pull-request approvals, query a registry, or replace
 repository-owned workflow checks. This is intentional: the hosting layer owns

@@ -38,6 +38,11 @@ WORKFLOW_RUN_URL_RE = re.compile(
 DIGEST_SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 INTEGRITY_SHA512_RE = re.compile(r"^sha512-[A-Za-z0-9+/]+={0,2}$")
+RFC3339_DATE_TIME_RE = re.compile(
+    r"^(?P<date>[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01]))"
+    r"[Tt](?:[01][0-9]|2[0-3]):[0-5][0-9]:(?:[0-5][0-9]|60)"
+    r"(?:\.[0-9]+)?(?:[Zz]|[+-](?:[01][0-9]|2[0-3]):[0-5][0-9])$"
+)
 SEMVER_RE = re.compile(
     r"^(0|[1-9][0-9]*)\."
     r"(0|[1-9][0-9]*)\."
@@ -159,6 +164,17 @@ def validate_workflow(value: Any, label: str) -> str:
     path = validate_relative(value, label)
     require(WORKFLOW_RE.fullmatch(path) is not None, f"{label} must name a top-level repository workflow")
     return path
+
+
+def validate_rfc3339_date_time(value: Any, label: str) -> str:
+    text = require_string(value, label)
+    match = RFC3339_DATE_TIME_RE.fullmatch(text)
+    require(match is not None, f"{label} must be an RFC 3339 date-time")
+    try:
+        dt.date.fromisoformat(match.group("date"))
+    except ValueError:
+        reject(f"{label} must be an RFC 3339 date-time")
+    return text
 
 
 def validate_contract(document: Any) -> dict[str, Any]:
@@ -636,16 +652,8 @@ def validate_tag_only_completion_intent(
         and not any(ord(character) < 32 or ord(character) == 127 for character in artifact_name),
         f"{label}.retainedArtifact.artifactName must be a plain file name",
     )
-    expires_at = require_string(
+    validate_rfc3339_date_time(
         artifact["expiresAt"], f"{label}.retainedArtifact.expiresAt"
-    )
-    try:
-        expiry = dt.datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
-    except ValueError:
-        reject(f"{label}.retainedArtifact.expiresAt must be an RFC 3339 date-time")
-    require(
-        expiry.tzinfo is not None,
-        f"{label}.retainedArtifact.expiresAt must include a timezone",
     )
     require(
         isinstance(artifact["archiveDigest"], str)

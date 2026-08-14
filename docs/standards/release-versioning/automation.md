@@ -89,12 +89,16 @@ rulesets, or registries.
 Tag-only completion uses a different state machine and a different immutable
 record conforming to `package-release-tag-only-completion-intent/v1`. Before any
 registry mutation, repository automation MUST verify the exact existing tag and
-its source, terminal failed publication run and attempt 1, the original admitted
-release or recovery authorization, the unexpired retained artifact ID and run,
-archive digest, tarball SHA-256, native integrity, embedded source, unchanged
-manifest/version, expected dist-tag, authorization-use history, rulesets, and
-current registry state. It MUST download the retained artifact and MUST NOT
-rebuild or substitute bytes.
+its source; the failed run's selecting-repository identity, protected `dev` push
+event/ref, exact source, attempt 1, terminal failure, and declared normal
+publication or recovery workflow selected by its authorization type; the
+run's trusted job or terminal evidence that the exact tag-creation phase
+completed and registry publication failed before creating the version; the
+original admitted release or recovery authorization; the unexpired retained
+artifact ID and run, archive digest, tarball SHA-256, native integrity, embedded
+source, unchanged manifest/version, expected dist-tag, authorization-use
+history, rulesets, and current registry state. It MUST download the retained
+artifact and MUST NOT rebuild or substitute bytes.
 
 Only the first workflow run created by that newly merged completion record, and
 only its run attempt 1, may create the absent exact registry version. A rerun or
