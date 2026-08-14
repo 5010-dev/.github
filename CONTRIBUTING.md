@@ -224,9 +224,14 @@ If an admitted package publication attempt fails before creating any package
 tag or registry version, the repository MAY preserve the same version only
 through the profile's separate append-only, PR-mediated pre-mutation recovery
 authorization. A normal workflow rerun and the historical release intent are
-not renewed publication authority. Any tag, registry version, partial immutable
-state, or successful publication followed by verification failure remains under
-the immutable-identity correction and verification rules.
+not renewed publication authority. If attempt 1 instead creates the exact
+immutable package tag and then fails before the registry version exists, the
+repository MAY complete only the missing registry identity through the
+profile's separate PR-mediated tag-only completion authorization and the exact
+retained artifact. The tag is verified and never moved, deleted, or recreated;
+a rebuild, manual publish, rerun mutation, or second workflow-run mutation is
+forbidden. Registry-only or conflicting state remains fail closed, while an
+already identical tag/version pair is verification-only.
 
 Organization release units must follow the
 [Release and Versioning Standard](https://github.com/5010-dev/.github/blob/main/docs/standards/release-versioning/README.md).

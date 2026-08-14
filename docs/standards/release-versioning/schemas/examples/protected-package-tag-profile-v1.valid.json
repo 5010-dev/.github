@@ -11,6 +11,28 @@
     "intentDirectory": ".github/release-recovery-intents",
     "workflow": ".github/workflows/publish-browser-package.yml"
   },
+  "tagOnlyCompletion": {
+    "intentDirectory": ".github/release-tag-only-completion-intents",
+    "workflow": ".github/workflows/complete-browser-package.yml",
+    "minimumPermissions": [
+      "packages: write"
+    ],
+    "publicationEffects": {
+      "allowed": [
+        "registry-package-publication"
+      ],
+      "forbidden": [
+        "package-tag-creation",
+        "branch-push",
+        "source-commit",
+        "service-deployment",
+        "application-deployment",
+        "oci-publication",
+        "object-storage-publication",
+        "sibling-release-unit-mutation"
+      ]
+    }
+  },
   "releaseUnit": {
     "id": "example-browser-package",
     "artifactProfile": "registry-package",

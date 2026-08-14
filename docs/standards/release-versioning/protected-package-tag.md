@@ -72,6 +72,9 @@ and declare:
 - the `dev` source ref, release-intent directory, validation workflow,
   publication workflow, distinct recovery-authorization directory, and workflow
   that owns recovery admission;
+- a third, non-overlapping tag-only completion-intent directory and a distinct
+  completion workflow whose only allowed mutation is registry package
+  publication and whose tag mutation is explicitly forbidden;
 - the allowed release-preparation paths and every sibling release-unit mutation
   path;
 - prerelease and final registry channels;
@@ -234,13 +237,114 @@ recovery record is renewed authority, and their protected-history paths remain
 addition-only.
 
 This path rejects tag-only, registry-only, conflicting, or otherwise partial
-immutable state. It also rejects an exact tag/version pair whose publication
-completed but later verification failed. Those states remain under the existing
-immutable-identity verification, correction, and fail-closed recovery rules;
-they do not permit rebuilding, deleting, moving, overwriting, or reusing an
-identity. Recovery authorization never permits a manual tag or package,
-ruleset relaxation, automatic successor version, or sibling release-unit
-effect.
+immutable state. An exact tag-only attempt-1 failure may use only the separate
+completion contract below; it never becomes pre-mutation recovery. An exact
+tag/version pair whose publication completed but later verification failed
+remains under immutable-identity verification or correction. Pre-mutation
+recovery never permits rebuilding, deleting, moving, overwriting, or reusing an
+identity, a manual tag or package, ruleset relaxation, automatic successor
+version, or sibling release-unit effect.
+
+## Tag-only partial-publication completion authorization
+
+A terminal failed publication is tag-only when its admitted attempt 1 created
+the exact derived immutable package tag and terminated before the exact registry
+version existed. The repository MAY complete only the missing registry identity
+through a new protected pull request that adds one immutable record conforming
+to
+[`package-release-tag-only-completion-intent/v1`](./schemas/package-release-tag-only-completion-intent-v1.schema.json).
+This is neither a workflow rerun nor pre-mutation recovery. The tag and the
+original failed publication remain immutable evidence.
+
+The completion record binds:
+
+- release unit, exact version, channel, derived tag, and expected dist-tag;
+- the unchanged original release-intent path;
+- the exact failed publication source, Actions run URL, run attempt `1`,
+  terminal failure, tag-present state, and registry-version-absent state;
+- the exact release intent or pre-mutation recovery record that admitted the
+  failed publication source;
+- the retained Actions artifact ID, name, expiry, archive SHA-256 digest,
+  tarball file name and SHA-256, native package integrity, and embedded source
+  commit;
+- the exact current `dev` ref and full base commit; and
+- reason `tag-only-partial-publication`.
+
+The profile contract MUST declare a tag-only completion directory that is
+distinct and non-overlapping with the normal and pre-mutation recovery intent
+directories. It MUST also declare a distinct completion workflow. The workflow
+MUST NOT be the normal validation, publication, or recovery workflow. Its only
+allowed publication effect is the missing registry package version; tag
+creation, branch or source mutation, sibling release-unit effects, OCI or
+object-storage publication, and service or application deployment remain
+forbidden.
+
+Completion admission succeeds only when the protected `before..after` diff adds
+exactly one record directly under that directory and changes no other path. The
+profile, workflow, native manifest, changelog, original intent, prior recovery
+records, and all prior completion records remain unchanged and append-only. The
+record base equals `before`; the unchanged manifest version, package identity,
+channel, original intent, derived tag, expected dist-tag, failed source, failed
+authorization, retained-artifact source, and record all agree. The failed source
+must be on protected first-parent history and structurally reconstruct the exact
+normal release or latest pre-mutation recovery admission named by the record. A
+release-unit/version identity and failed run may each be named by at most one
+completion record.
+
+The static record fields are reviewed claims, not remote truth. Before
+publication, repository automation MUST re-read and prove all of the following:
+
+1. the protected source, required checks, exact completion admission, protected
+   tag rules, and one-record authorization-use history remain valid;
+2. the named failed run is terminal `failure`, has the exact failed source, and
+   is run attempt `1`;
+3. the existing immutable tag has the exact derived name and failed-publication
+   source and has not moved, been deleted, or been recreated;
+4. the exact registry version is absent without ambiguity;
+5. the retained artifact is unexpired, belongs to that run and source, and its
+   artifact ID, name, archive digest, tarball file name and SHA-256, native
+   integrity, and embedded source exactly match the record; and
+6. the expected dist-tag prerequisite, package identity, registry, credentials,
+   package-only effects, and sibling isolation still hold.
+
+The workflow MUST download that exact retained artifact and MUST NOT rebuild,
+repack, substitute, or otherwise derive replacement bytes. If the artifact is
+missing, expired, unavailable, ambiguous, or mismatched, automation fails closed
+and returns to the central policy owner; it does not rebuild or automatically
+advance the version.
+
+Only the first workflow run triggered by the newly merged completion record,
+and only run attempt `1` of that workflow, may expose the write credential and
+create the absent exact registry version. An Actions rerun or a second workflow
+run MUST be mutation-disabled before credential setup regardless of remote
+state. A rerun or later run MAY perform read-only verification but never
+publication.
+
+Immediately before registry mutation, automation MUST read tag and registry
+together and use exactly this state table:
+
+| Tag state | Exact registry version | Required outcome |
+| --- | --- | --- |
+| Exact derived tag at the failed source | Absent | The first authorized completion run at attempt 1 MAY publish only the retained exact version |
+| Exact derived tag at the failed source | Present with exact package, integrity, source, and dist-tag | Verification-only; do not publish or expose mutation authority |
+| Missing, moved, recreated, or conflicting | Any | Fail closed |
+| Any | Present but package, integrity, source, or dist-tag differs | Fail closed |
+| Registry-only or ambiguous query state | Present or unknown | Fail closed |
+
+After a new publication, the workflow MUST verify private visibility or the
+declared registry visibility, releasing-repository association, exact registry
+version and integrity, expected dist-tag, unchanged unrelated aliases, clean
+exact-version installation and representative execution, package-only effects,
+and terminal evidence. Verification failure preserves the created exact pair
+and follows verification or correction; it does not authorize another
+same-version mutation.
+
+The completion registry mutation job receives `packages: write` as its only
+write capability and exposes its registry credential only to the native publish
+step. Actions, source, ruleset, artifact, and registry inspection MUST occur in
+read-only validation jobs or steps before mutation. The tag-mutation GitHub App
+credential or equivalent tag-write authority MUST NOT be minted, forwarded,
+referenced, or made available anywhere in the completion workflow.
 
 The dependency-free reference checker
 [`check-protected-package-tag-admission.py`](../../../scripts/docs/check-protected-package-tag-admission.py)
@@ -294,6 +398,7 @@ Permissions MUST be explicit and job-scoped:
 | Source and policy validation | `contents: read` |
 | Private package installation or consumer execution | `packages: read` |
 | Native registry publication | `packages: write` |
+| Tag-only completion registry mutation | `packages: write`; no tag credential |
 
 `packages: write` MUST be absent from validation and consumer jobs. The
 write-capable token or credential MUST be exposed only to the native publication
@@ -324,10 +429,13 @@ attempt.
 If both identities already identify the same source, version, package, and
 integrity, a retry performs idempotent verification and records that outcome; it
 does not enter pre-mutation recovery. If either identity is partial or
-conflicting, the workflow fails closed and records the completed phase and owner
-action. A successful immutable publication followed by evidence or consumer
-verification failure likewise keeps the exact pair and uses verification or a
-new correction version rather than same-version publication recovery.
+conflicting, the normal or pre-mutation recovery workflow fails closed and
+records the completed phase and owner action. The sole same-version partial
+completion is the separately admitted tag-only retained-artifact path above.
+Registry-only or conflicting state remains ineligible. A successful immutable
+publication followed by evidence or consumer verification failure likewise
+keeps the exact pair and uses verification or a new correction version rather
+than same-version publication recovery.
 
 Published versions and tags MUST NOT be moved, overwritten, deleted for routine
 recovery, or reused. A prerelease correction uses a new prerelease version. A
@@ -353,6 +461,8 @@ The authorization-semantics correction is recorded separately in the
 [2026-08-13 validation record](./validation/2026-08-13-protected-package-tag-authorization.md).
 The pre-mutation recovery correction and incident boundary are recorded in the
 [2026-08-14 validation record](./validation/2026-08-14-protected-package-tag-pre-mutation-recovery.md).
+The retained-artifact tag-only completion refinement is recorded in the
+[2026-08-14 tag-only completion validation record](./validation/2026-08-14-protected-package-tag-only-completion.md).
 
 ## Out of scope
 

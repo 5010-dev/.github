@@ -26,6 +26,10 @@ EXAMPLE_RECOVERY_INTENT = (
     Path(__file__).resolve().parents[2]
     / "docs/standards/release-versioning/schemas/examples/package-release-recovery-intent-v1.valid.json"
 )
+EXAMPLE_TAG_ONLY_COMPLETION_INTENT = (
+    Path(__file__).resolve().parents[2]
+    / "docs/standards/release-versioning/schemas/examples/package-release-tag-only-completion-intent-v1.valid.json"
+)
 PROFILE_SCHEMA = (
     Path(__file__).resolve().parents[2]
     / "docs/standards/release-versioning/schemas/protected-package-tag-profile-v1.schema.json"
@@ -37,6 +41,10 @@ INTENT_SCHEMA = (
 RECOVERY_INTENT_SCHEMA = (
     Path(__file__).resolve().parents[2]
     / "docs/standards/release-versioning/schemas/package-release-recovery-intent-v1.schema.json"
+)
+TAG_ONLY_COMPLETION_INTENT_SCHEMA = (
+    Path(__file__).resolve().parents[2]
+    / "docs/standards/release-versioning/schemas/package-release-tag-only-completion-intent-v1.schema.json"
 )
 
 
@@ -55,6 +63,7 @@ class AdmissionTest(unittest.TestCase):
         self.write(Path("docs/release-support/record.md"), "release support evidence\n" * 12)
         self.write(Path(".github/workflows/validate-browser-package.yml"), "name: validate\non: pull_request\n")
         self.write(Path(".github/workflows/publish-browser-package.yml"), "name: publish\non: push\n")
+        self.write(Path(".github/workflows/complete-browser-package.yml"), "name: complete\non: push\n")
         self.write(Path("services/calculator/service.txt"), "calculator\n")
         self.base = self.commit("base repository contract")
 
@@ -89,6 +98,45 @@ class AdmissionTest(unittest.TestCase):
         intent["failedAttempt"]["workflowRunUrl"] = (
             f"https://github.com/example/repository/actions/runs/{run_id}"
         )
+        intent["source"]["baseCommit"] = source_base
+        return intent
+
+    def tag_only_completion_intent(
+        self,
+        *,
+        version: str,
+        original_intent_path: str,
+        failed_source: str,
+        source_base: str,
+        authorization_type: str,
+        authorization_path: str,
+        channel: str = "prerelease",
+        run_id: int = 234567890,
+    ) -> dict[str, Any]:
+        intent = json.loads(
+            EXAMPLE_TAG_ONLY_COMPLETION_INTENT.read_text(encoding="utf-8")
+        )
+        intent["channel"] = channel
+        intent["version"] = version
+        intent["originalIntentPath"] = original_intent_path
+        intent["tag"] = f"browser-package-v{version}"
+        intent["distTag"] = "next" if channel == "prerelease" else "latest"
+        intent["failedPublication"]["sourceCommit"] = failed_source
+        intent["failedPublication"]["workflowRunUrl"] = (
+            f"https://github.com/example/repository/actions/runs/{run_id}"
+        )
+        intent["failedPublication"]["authorization"] = {
+            "type": authorization_type,
+            "path": authorization_path,
+        }
+        intent["retainedArtifact"]["artifactId"] = run_id
+        intent["retainedArtifact"]["artifactName"] = (
+            f"example-browser-package-{version}"
+        )
+        intent["retainedArtifact"]["tarballFileName"] = (
+            f"example-browser-package-{version}.tgz"
+        )
+        intent["retainedArtifact"]["embeddedSourceCommit"] = failed_source
         intent["source"]["baseCommit"] = source_base
         return intent
 
@@ -260,6 +308,61 @@ class AdmissionTest(unittest.TestCase):
         if unrelated_change:
             self.write(Path("README.md"), "unrelated recovery change\n")
         return self.commit("authorize package release recovery")
+
+    def prepare_tag_only_completion(
+        self,
+        *,
+        version: str = "1.4.0-next.1",
+        channel: str = "prerelease",
+        original_intent_path: str,
+        failed_source: str,
+        authorization_type: str,
+        authorization_path: str,
+        source_base: str | None = None,
+        run_id: int = 234567890,
+        completion_name: str = "completion-1.json",
+        second_completion: bool = False,
+        unrelated_change: bool = False,
+    ) -> str:
+        completion = self.tag_only_completion_intent(
+            version=version,
+            original_intent_path=original_intent_path,
+            failed_source=failed_source,
+            source_base=source_base or self.base,
+            authorization_type=authorization_type,
+            authorization_path=authorization_path,
+            channel=channel,
+            run_id=run_id,
+        )
+        self.write_json(
+            Path(f".github/release-tag-only-completion-intents/{completion_name}"),
+            completion,
+        )
+        if second_completion:
+            duplicate = json.loads(json.dumps(completion))
+            duplicate["failedPublication"]["workflowRunUrl"] = (
+                "https://github.com/example/repository/actions/runs/345678901"
+            )
+            self.write_json(
+                Path(".github/release-tag-only-completion-intents/completion-2.json"),
+                duplicate,
+            )
+        if unrelated_change:
+            self.write(Path("README.md"), "unrelated tag-only completion change\n")
+        return self.commit("authorize tag-only package completion")
+
+    def materialize_tag_only_recovery_source(
+        self,
+    ) -> tuple[str, str, str]:
+        failed_source, original_path = self.materialize_failed_release()
+        recovery_path = ".github/release-recovery-intents/recovery-1.json"
+        recovery_source = self.prepare_recovery(
+            failed_source=failed_source,
+            original_intent_path=original_path,
+        )
+        self.assertEqual(self.check(recovery_source).returncode, 0)
+        self.base = recovery_source
+        return recovery_source, original_path, recovery_path
 
     def check(self, head: str, *, base: str | None = None, ref: str = "refs/heads/dev") -> subprocess.CompletedProcess[str]:
         return subprocess.run(
@@ -872,7 +975,8 @@ class AdmissionTest(unittest.TestCase):
         )
         head = self.commit("mix release and recovery authorization")
         self.assert_rejected(
-            self.check(head), "release intent and recovery authorization cannot share"
+            self.check(head),
+            "release, recovery, and tag-only completion authorizations cannot share",
         )
 
     def test_rejects_recovery_with_unrelated_change(self) -> None:
@@ -993,6 +1097,371 @@ class AdmissionTest(unittest.TestCase):
             "failure before immutable mutation",
         )
 
+    def test_admits_tag_only_completion_from_recovery_source(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        head = self.prepare_tag_only_completion(
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+        )
+        result = self.check(head)
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        admitted = json.loads(result.stdout)
+        self.assertEqual(
+            admitted["schemaVersion"],
+            "protected-package-tag-tag-only-completion-admission/v1",
+        )
+        self.assertEqual(admitted["authorization"], "tag-only-completion")
+        self.assertEqual(admitted["packageSource"]["commit"], failed_source)
+        self.assertEqual(admitted["authorizationSource"]["commit"], head)
+        self.assertEqual(admitted["distTag"], "next")
+
+    def test_admits_tag_only_completion_from_initial_release_source(self) -> None:
+        failed_source, original_path = self.materialize_failed_release()
+        head = self.prepare_tag_only_completion(
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            authorization_type="release-intent",
+            authorization_path=original_path,
+        )
+        result = self.check(head)
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertEqual(
+            json.loads(result.stdout)["failedPublication"]["authorization"]["type"],
+            "release-intent",
+        )
+
+    def test_rejects_initial_source_after_later_recovery_authorization(self) -> None:
+        initial_source, original_path = self.materialize_failed_release()
+        recovery_source = self.prepare_recovery(
+            failed_source=initial_source,
+            original_intent_path=original_path,
+        )
+        self.assertEqual(self.check(recovery_source).returncode, 0)
+        self.base = recovery_source
+        head = self.prepare_tag_only_completion(
+            original_intent_path=original_path,
+            failed_source=initial_source,
+            authorization_type="release-intent",
+            authorization_path=original_path,
+        )
+        self.assert_rejected(
+            self.check(head),
+            "failed publication source must be the exact source authorized by the latest recovery record",
+        )
+
+    def test_rejects_stale_tag_only_completion_base(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        head = self.prepare_tag_only_completion(
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+            source_base="1" * 40,
+        )
+        self.assert_rejected(self.check(head), "tag-only completion intent is stale")
+
+    def test_rejects_tag_only_completion_run_attempt_two(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        completion = self.tag_only_completion_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+        )
+        completion["failedPublication"]["runAttempt"] = 2
+        self.write_json(
+            Path(".github/release-tag-only-completion-intents/run-attempt-2.json"),
+            completion,
+        )
+        self.assert_rejected(
+            self.check(self.commit("claim second failed publication attempt")),
+            "requires failed publication run attempt 1",
+        )
+
+    def test_rejects_tag_only_completion_without_tag(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        completion = self.tag_only_completion_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+        )
+        completion["failedPublication"]["tagState"] = "absent"
+        self.write_json(
+            Path(".github/release-tag-only-completion-intents/tag-absent.json"),
+            completion,
+        )
+        self.assert_rejected(
+            self.check(self.commit("claim tag-absent completion")),
+            "requires the package tag to be present",
+        )
+
+    def test_rejects_tag_only_completion_with_registry_version(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        completion = self.tag_only_completion_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+        )
+        completion["failedPublication"]["registryVersionState"] = "present"
+        self.write_json(
+            Path(".github/release-tag-only-completion-intents/registry-present.json"),
+            completion,
+        )
+        self.assert_rejected(
+            self.check(self.commit("claim registry-present completion")),
+            "requires the exact registry version to be absent",
+        )
+
+    def test_rejects_tag_only_completion_source_mismatch(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        completion = self.tag_only_completion_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+        )
+        completion["retainedArtifact"]["embeddedSourceCommit"] = "9" * 40
+        self.write_json(
+            Path(".github/release-tag-only-completion-intents/source-mismatch.json"),
+            completion,
+        )
+        self.assert_rejected(
+            self.check(self.commit("claim mismatched retained source")),
+            "retained artifact embedded source does not match",
+        )
+
+    def test_rejects_tag_only_completion_tag_mismatch(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        completion = self.tag_only_completion_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+        )
+        completion["tag"] = "browser-package-v9.9.9"
+        self.write_json(
+            Path(".github/release-tag-only-completion-intents/tag-mismatch.json"),
+            completion,
+        )
+        self.assert_rejected(
+            self.check(self.commit("claim mismatched package tag")),
+            "does not match the derived package tag",
+        )
+
+    def test_rejects_tag_only_completion_dist_tag_mismatch(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        completion = self.tag_only_completion_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+        )
+        completion["distTag"] = "latest"
+        self.write_json(
+            Path(".github/release-tag-only-completion-intents/dist-tag-mismatch.json"),
+            completion,
+        )
+        self.assert_rejected(
+            self.check(self.commit("claim mismatched dist-tag")),
+            "dist-tag does not match the profile channel",
+        )
+
+    def test_rejects_invalid_retained_tarball_sha256(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        completion = self.tag_only_completion_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+        )
+        completion["retainedArtifact"]["tarballSha256"] = "not-a-digest"
+        self.write_json(
+            Path(".github/release-tag-only-completion-intents/bad-sha.json"),
+            completion,
+        )
+        self.assert_rejected(
+            self.check(self.commit("claim invalid tarball digest")),
+            "tarballSha256 must be 64 lowercase hex characters",
+        )
+
+    def test_rejects_invalid_retained_npm_integrity(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        completion = self.tag_only_completion_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+        )
+        completion["retainedArtifact"]["npmIntegrity"] = "sha512-AAAA"
+        self.write_json(
+            Path(".github/release-tag-only-completion-intents/bad-integrity.json"),
+            completion,
+        )
+        self.assert_rejected(
+            self.check(self.commit("claim invalid npm integrity")),
+            "must encode a SHA-512 digest",
+        )
+
+    def test_rejects_tag_only_completion_with_unrelated_change(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        head = self.prepare_tag_only_completion(
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+            unrelated_change=True,
+        )
+        self.assert_rejected(self.check(head), "exactly one record and no other paths")
+
+    def test_rejects_multiple_tag_only_completion_records(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        head = self.prepare_tag_only_completion(
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+            second_completion=True,
+        )
+        self.assert_rejected(self.check(head), "exactly one record")
+
+    def test_rejects_second_completion_authorization_for_identity(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        first_head = self.prepare_tag_only_completion(
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+        )
+        self.assertEqual(self.check(first_head).returncode, 0)
+        self.base = first_head
+        second_head = self.prepare_tag_only_completion(
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+            completion_name="completion-2.json",
+            run_id=345678901,
+        )
+        self.assert_rejected(
+            self.check(second_head),
+            "duplicate tag-only completion authorization exists for the same release-unit and version",
+        )
+
+    def test_rejects_modified_failed_recovery_authorization(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        recovery = json.loads(
+            (self.repo / recovery_path).read_text(encoding="utf-8")
+        )
+        recovery["$schema"] = "rewritten-after-failed-publication"
+        self.write_json(Path(recovery_path), recovery)
+        self.base = self.commit("rewrite failed publication authorization")
+        head = self.prepare_tag_only_completion(
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+        )
+        self.assert_rejected(
+            self.check(head),
+            "failed publication recovery authorization must remain byte-identical",
+        )
+
+    def test_rejects_profile_without_tag_only_completion_contract(self) -> None:
+        profile = self.profile()
+        profile.pop("tagOnlyCompletion")
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("omit tag-only completion contract")
+        head = self.prepare_release()
+        self.assert_rejected(
+            self.check(head), "missing required fields: tagOnlyCompletion"
+        )
+
+    def test_rejects_overlapping_completion_and_recovery_directories(self) -> None:
+        profile = self.profile()
+        profile["tagOnlyCompletion"]["intentDirectory"] = (
+            ".github/release-recovery-intents/completions"
+        )
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("overlap completion and recovery directories")
+        head = self.prepare_release()
+        self.assert_rejected(
+            self.check(head),
+            "tag-only completion and recovery intent directories must be distinct",
+        )
+
+    def test_rejects_shared_completion_and_publication_workflow(self) -> None:
+        profile = self.profile()
+        profile["tagOnlyCompletion"]["workflow"] = (
+            profile["releaseUnit"]["publicationWorkflow"]
+        )
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("share completion and publication workflow")
+        head = self.prepare_release()
+        self.assert_rejected(
+            self.check(head), "tag-only completion workflow must be distinct"
+        )
+
+    def test_rejects_release_paths_that_admit_completion_records(self) -> None:
+        profile = self.profile()
+        profile["releaseUnit"]["releasePreparationPaths"].append(
+            ".github/release-tag-only-completion-intents/*.json"
+        )
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("admit completion records as release preparation")
+        head = self.prepare_release()
+        self.assert_rejected(
+            self.check(head),
+            "must not admit tag-only completion authorization records",
+        )
+
     def test_arbitrary_workflow_inputs_are_not_admission_authority(self) -> None:
         failed_source, original_path = self.materialize_failed_release()
         head = self.prepare_recovery(
@@ -1026,10 +1495,21 @@ class AdmissionTest(unittest.TestCase):
         schema = json.loads(PROFILE_SCHEMA.read_text(encoding="utf-8"))
         intent_schema = json.loads(INTENT_SCHEMA.read_text(encoding="utf-8"))
         recovery_schema = json.loads(RECOVERY_INTENT_SCHEMA.read_text(encoding="utf-8"))
+        completion_schema = json.loads(
+            TAG_ONLY_COMPLETION_INTENT_SCHEMA.read_text(encoding="utf-8")
+        )
         self.assertEqual(schema["properties"]["intentDirectory"]["$ref"], "#/$defs/plainRelativePath")
         self.assertEqual(
             schema["properties"]["recovery"]["properties"]["intentDirectory"]["$ref"],
             "#/$defs/plainRelativePath",
+        )
+        self.assertEqual(
+            schema["properties"]["tagOnlyCompletion"]["properties"]["intentDirectory"]["$ref"],
+            "#/$defs/plainRelativePath",
+        )
+        self.assertEqual(
+            schema["properties"]["tagOnlyCompletion"]["properties"]["minimumPermissions"]["const"],
+            ["packages: write"],
         )
         self.assertEqual(schema["$defs"]["pathPatterns"]["items"]["$ref"], "#/$defs/pathPattern")
         self.assertEqual(schema["properties"]["releaseUnit"]["properties"]["registry"]["pattern"], "^https://")
@@ -1059,6 +1539,22 @@ class AdmissionTest(unittest.TestCase):
         )
         self.assertEqual(
             recovery_schema["properties"]["failedAttempt"]["properties"]["tagState"]["const"],
+            "absent",
+        )
+        self.assertEqual(
+            completion_schema["properties"]["reason"]["const"],
+            "tag-only-partial-publication",
+        )
+        self.assertEqual(
+            completion_schema["properties"]["failedPublication"]["properties"]["runAttempt"]["const"],
+            1,
+        )
+        self.assertEqual(
+            completion_schema["properties"]["failedPublication"]["properties"]["tagState"]["const"],
+            "present",
+        )
+        self.assertEqual(
+            completion_schema["properties"]["failedPublication"]["properties"]["registryVersionState"]["const"],
             "absent",
         )
 

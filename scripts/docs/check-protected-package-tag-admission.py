@@ -2,16 +2,19 @@
 """Fail-closed admission checker for protected package-tag publication.
 
 The checker is intentionally dependency-free. It validates one repository-local
-profile contract and derives normal or pre-mutation recovery publication
-identity from an exact Git diff. It does not publish, inspect Actions or
-authorization-use history, inspect hosting rulesets or pull-request approvals,
-or query a package registry.
+profile contract and derives normal, pre-mutation recovery, or tag-only
+completion publication identity from an exact Git diff. It does not publish,
+inspect Actions or authorization-use history, inspect hosting rulesets or
+pull-request approvals, download retained artifacts, or query a package registry.
 """
 
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import copy
+import datetime as dt
 import fnmatch
 import json
 import re
@@ -32,6 +35,9 @@ WORKFLOW_RE = re.compile(r"^\.github/workflows/[^/]+\.ya?ml$")
 WORKFLOW_RUN_URL_RE = re.compile(
     r"^https://github\.com/[^/\s]+/[^/\s]+/actions/runs/[1-9][0-9]*$"
 )
+DIGEST_SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+INTEGRITY_SHA512_RE = re.compile(r"^sha512-[A-Za-z0-9+/]+={0,2}$")
 SEMVER_RE = re.compile(
     r"^(0|[1-9][0-9]*)\."
     r"(0|[1-9][0-9]*)\."
@@ -60,6 +66,22 @@ EXPECTED_EFFECTS = {
         "object-storage-publication",
         "sibling-release-unit-mutation",
     ],
+}
+EXPECTED_TAG_ONLY_COMPLETION = {
+    "minimumPermissions": ["packages: write"],
+    "publicationEffects": {
+        "allowed": ["registry-package-publication"],
+        "forbidden": [
+            "package-tag-creation",
+            "branch-push",
+            "source-commit",
+            "service-deployment",
+            "application-deployment",
+            "oci-publication",
+            "object-storage-publication",
+            "sibling-release-unit-mutation",
+        ],
+    },
 }
 REGULAR_FILE_MODES = {"100644", "100755"}
 
@@ -147,6 +169,7 @@ def validate_contract(document: Any) -> dict[str, Any]:
         "source",
         "intentDirectory",
         "recovery",
+        "tagOnlyCompletion",
         "releaseUnit",
         "siblingReleaseUnits",
         "channels",
@@ -180,6 +203,37 @@ def validate_contract(document: Any) -> dict[str, Any]:
         "release and recovery intent directories must be distinct and non-overlapping",
     )
 
+    completion = require_object(contract["tagOnlyCompletion"], "tagOnlyCompletion")
+    require_exact_keys(
+        completion,
+        {"intentDirectory", "workflow", "minimumPermissions", "publicationEffects"},
+        "tagOnlyCompletion",
+    )
+    completion["intentDirectory"] = validate_relative(
+        completion["intentDirectory"], "tagOnlyCompletion.intentDirectory"
+    )
+    completion["workflow"] = validate_workflow(
+        completion["workflow"], "tagOnlyCompletion.workflow"
+    )
+    for label, other_directory in (
+        ("release", contract["intentDirectory"]),
+        ("recovery", recovery["intentDirectory"]),
+    ):
+        require(
+            completion["intentDirectory"] != other_directory
+            and not completion["intentDirectory"].startswith(f"{other_directory}/")
+            and not other_directory.startswith(f"{completion['intentDirectory']}/"),
+            f"tag-only completion and {label} intent directories must be distinct and non-overlapping",
+        )
+    require(
+        {
+            "minimumPermissions": completion["minimumPermissions"],
+            "publicationEffects": completion["publicationEffects"],
+        }
+        == EXPECTED_TAG_ONLY_COMPLETION,
+        "tagOnlyCompletion must preserve registry-only effects and package-write-only mutation permission",
+    )
+
     unit = require_object(contract["releaseUnit"], "releaseUnit")
     unit_fields = {
         "id",
@@ -208,6 +262,15 @@ def validate_contract(document: Any) -> dict[str, Any]:
     unit["validationWorkflow"] = validate_workflow(unit["validationWorkflow"], "releaseUnit.validationWorkflow")
     unit["publicationWorkflow"] = validate_workflow(unit["publicationWorkflow"], "releaseUnit.publicationWorkflow")
     require(unit["validationWorkflow"] != unit["publicationWorkflow"], "validation and publication workflows must be separate")
+    require(
+        completion["workflow"]
+        not in {
+            unit["validationWorkflow"],
+            unit["publicationWorkflow"],
+            recovery["workflow"],
+        },
+        "tag-only completion workflow must be distinct from validation, publication, and recovery workflows",
+    )
     unit["releasePreparationPaths"] = validate_patterns(unit["releasePreparationPaths"], "releaseUnit.releasePreparationPaths")
 
     version_source = require_object(unit["versionSource"], "releaseUnit.versionSource")
@@ -299,6 +362,11 @@ def validate_contract(document: Any) -> dict[str, Any]:
     require(
         not any(path_matches(recovery_probe, pattern) for pattern in preparation),
         "releasePreparationPaths must not admit recovery authorization records",
+    )
+    completion_probe = f"{completion['intentDirectory']}/completion.json"
+    require(
+        not any(path_matches(completion_probe, pattern) for pattern in preparation),
+        "releasePreparationPaths must not admit tag-only completion authorization records",
     )
     return contract
 
@@ -413,6 +481,225 @@ def validate_recovery_intent(
     require(
         intent["reason"] == "pre-mutation-no-immutable-identity",
         f"{label}.reason must select pre-mutation no-identity recovery",
+    )
+    return intent
+
+
+def validate_tag_only_completion_intent(
+    document: Any, label: str = "tag-only completion intent"
+) -> dict[str, Any]:
+    intent = require_object(document, label)
+    required = {
+        "schemaVersion",
+        "releaseUnit",
+        "channel",
+        "version",
+        "originalIntentPath",
+        "tag",
+        "distTag",
+        "failedPublication",
+        "retainedArtifact",
+        "source",
+        "reason",
+    }
+    require_exact_keys(intent, required, label, {"$schema"})
+    if "$schema" in intent:
+        require_string(intent["$schema"], f"{label}.$schema")
+    require(
+        intent["schemaVersion"]
+        == "package-release-tag-only-completion-intent/v1",
+        f"{label} has an unsupported schemaVersion",
+    )
+    intent["releaseUnit"] = validate_id(intent["releaseUnit"], f"{label}.releaseUnit")
+    require(intent["channel"] in {"prerelease", "final"}, f"{label}.channel is invalid")
+    version = require_string(intent["version"], f"{label}.version")
+    require(len(version) <= 128, f"{label}.version is too long")
+    match = SEMVER_RE.fullmatch(version)
+    require(match is not None, f"{label}.version is not exact SemVer")
+    if intent["channel"] == "prerelease":
+        require(match.group(4) is not None, f"{label} prerelease channel requires a SemVer prerelease")
+    else:
+        require(match.group(4) is None, f"{label} final channel requires a final SemVer")
+
+    intent["originalIntentPath"] = validate_relative(
+        intent["originalIntentPath"], f"{label}.originalIntentPath"
+    )
+    require(
+        intent["originalIntentPath"].endswith(".json"),
+        f"{label}.originalIntentPath must name a JSON file",
+    )
+    tag = require_string(intent["tag"], f"{label}.tag")
+    require(
+        len(tag) <= 200 and not any(character.isspace() for character in tag),
+        f"{label}.tag must be a non-whitespace Git tag",
+    )
+    dist_tag = require_string(intent["distTag"], f"{label}.distTag")
+    require(
+        len(dist_tag) <= 128 and not any(character.isspace() for character in dist_tag),
+        f"{label}.distTag must be a non-whitespace registry tag",
+    )
+
+    failed = require_object(intent["failedPublication"], f"{label}.failedPublication")
+    require_exact_keys(
+        failed,
+        {
+            "sourceCommit",
+            "workflowRunUrl",
+            "runAttempt",
+            "outcome",
+            "publicationState",
+            "tagState",
+            "registryVersionState",
+            "authorization",
+        },
+        f"{label}.failedPublication",
+    )
+    require(
+        isinstance(failed["sourceCommit"], str)
+        and FULL_SHA_RE.fullmatch(failed["sourceCommit"]) is not None,
+        f"{label}.failedPublication.sourceCommit must be a lowercase full commit SHA",
+    )
+    run_url = require_string(
+        failed["workflowRunUrl"], f"{label}.failedPublication.workflowRunUrl"
+    )
+    require(
+        WORKFLOW_RUN_URL_RE.fullmatch(run_url) is not None,
+        f"{label}.failedPublication.workflowRunUrl must identify an exact GitHub Actions run",
+    )
+    require(
+        isinstance(failed["runAttempt"], int)
+        and not isinstance(failed["runAttempt"], bool)
+        and failed["runAttempt"] == 1,
+        f"{label} requires failed publication run attempt 1",
+    )
+    require(
+        failed["outcome"] == "terminal-failure",
+        f"{label} requires a terminal failed publication",
+    )
+    require(
+        failed["publicationState"] == "tag-only",
+        f"{label} requires tag-only partial publication",
+    )
+    require(failed["tagState"] == "present", f"{label} requires the package tag to be present")
+    require(
+        failed["registryVersionState"] == "absent",
+        f"{label} requires the exact registry version to be absent",
+    )
+    authorization = require_object(
+        failed["authorization"], f"{label}.failedPublication.authorization"
+    )
+    require_exact_keys(
+        authorization,
+        {"type", "path"},
+        f"{label}.failedPublication.authorization",
+    )
+    require(
+        authorization["type"] in {"release-intent", "pre-mutation-recovery"},
+        f"{label}.failedPublication.authorization.type is invalid",
+    )
+    authorization["path"] = validate_relative(
+        authorization["path"], f"{label}.failedPublication.authorization.path"
+    )
+    require(
+        authorization["path"].endswith(".json"),
+        f"{label}.failedPublication.authorization.path must name a JSON file",
+    )
+
+    artifact = require_object(intent["retainedArtifact"], f"{label}.retainedArtifact")
+    require_exact_keys(
+        artifact,
+        {
+            "artifactId",
+            "artifactName",
+            "expiresAt",
+            "archiveDigest",
+            "tarballFileName",
+            "tarballSha256",
+            "npmIntegrity",
+            "embeddedSourceCommit",
+        },
+        f"{label}.retainedArtifact",
+    )
+    require(
+        isinstance(artifact["artifactId"], int)
+        and not isinstance(artifact["artifactId"], bool)
+        and artifact["artifactId"] > 0,
+        f"{label}.retainedArtifact.artifactId must be a positive integer",
+    )
+    artifact_name = require_string(
+        artifact["artifactName"], f"{label}.retainedArtifact.artifactName"
+    )
+    require(
+        len(artifact_name) <= 255
+        and "/" not in artifact_name
+        and "\\" not in artifact_name
+        and not any(ord(character) < 32 or ord(character) == 127 for character in artifact_name),
+        f"{label}.retainedArtifact.artifactName must be a plain file name",
+    )
+    expires_at = require_string(
+        artifact["expiresAt"], f"{label}.retainedArtifact.expiresAt"
+    )
+    try:
+        expiry = dt.datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+    except ValueError:
+        reject(f"{label}.retainedArtifact.expiresAt must be an RFC 3339 date-time")
+    require(
+        expiry.tzinfo is not None,
+        f"{label}.retainedArtifact.expiresAt must include a timezone",
+    )
+    require(
+        isinstance(artifact["archiveDigest"], str)
+        and DIGEST_SHA256_RE.fullmatch(artifact["archiveDigest"]) is not None,
+        f"{label}.retainedArtifact.archiveDigest must be sha256 plus 64 lowercase hex characters",
+    )
+    tarball_name = require_string(
+        artifact["tarballFileName"], f"{label}.retainedArtifact.tarballFileName"
+    )
+    require(
+        5 <= len(tarball_name) <= 255
+        and tarball_name.endswith(".tgz")
+        and "/" not in tarball_name
+        and "\\" not in tarball_name
+        and not any(ord(character) < 32 or ord(character) == 127 for character in tarball_name),
+        f"{label}.retainedArtifact.tarballFileName must be a plain .tgz file name",
+    )
+    require(
+        isinstance(artifact["tarballSha256"], str)
+        and SHA256_RE.fullmatch(artifact["tarballSha256"]) is not None,
+        f"{label}.retainedArtifact.tarballSha256 must be 64 lowercase hex characters",
+    )
+    integrity = require_string(
+        artifact["npmIntegrity"], f"{label}.retainedArtifact.npmIntegrity"
+    )
+    require(
+        INTEGRITY_SHA512_RE.fullmatch(integrity) is not None,
+        f"{label}.retainedArtifact.npmIntegrity must be an npm sha512 integrity",
+    )
+    try:
+        integrity_bytes = base64.b64decode(integrity.removeprefix("sha512-"), validate=True)
+    except (binascii.Error, ValueError):
+        reject(f"{label}.retainedArtifact.npmIntegrity must contain valid base64")
+    require(
+        len(integrity_bytes) == 64,
+        f"{label}.retainedArtifact.npmIntegrity must encode a SHA-512 digest",
+    )
+    require(
+        isinstance(artifact["embeddedSourceCommit"], str)
+        and FULL_SHA_RE.fullmatch(artifact["embeddedSourceCommit"]) is not None,
+        f"{label}.retainedArtifact.embeddedSourceCommit must be a lowercase full commit SHA",
+    )
+
+    source = require_object(intent["source"], f"{label}.source")
+    require_exact_keys(source, {"ref", "baseCommit"}, f"{label}.source")
+    require(source["ref"] == "refs/heads/dev", f"{label}.source.ref must be refs/heads/dev")
+    require(
+        isinstance(source["baseCommit"], str)
+        and FULL_SHA_RE.fullmatch(source["baseCommit"]) is not None,
+        f"{label}.source.baseCommit must be a lowercase full commit SHA",
+    )
+    require(
+        intent["reason"] == "tag-only-partial-publication",
+        f"{label}.reason must select tag-only partial publication",
     )
     return intent
 
@@ -742,6 +1029,13 @@ def admit_release(
             for path in changed_paths
         ),
         "release preparation cannot contain a recovery authorization",
+    )
+    require(
+        not any(
+            is_below(path, contract["tagOnlyCompletion"]["intentDirectory"])
+            for path in changed_paths
+        ),
+        "release preparation cannot contain a tag-only completion authorization",
     )
 
     for entry in entries:
@@ -1148,6 +1442,388 @@ def admit_recovery(
     }
 
 
+def admit_tag_only_completion(
+    repo: Path,
+    contract_path: str,
+    contract: dict[str, Any],
+    base: str,
+    head: str,
+    event_ref: str,
+    entries: list[DiffEntry],
+) -> dict[str, Any]:
+    completion = contract["tagOnlyCompletion"]
+    recovery = contract["recovery"]
+    unit = contract["releaseUnit"]
+    require(
+        len(entries) == 1,
+        "tag-only completion authorization diff must add exactly one record and no other paths",
+    )
+    entry = entries[0]
+    require(
+        entry.status == "A" and len(entry.paths) == 1,
+        "tag-only completion authorization must be newly added; modification, rename, copy, or deletion is reuse",
+    )
+    completion_path = entry.paths[0]
+    require(
+        PurePosixPath(completion_path).parent
+        == PurePosixPath(completion["intentDirectory"]),
+        "tag-only completion authorization must be directly inside tagOnlyCompletion.intentDirectory",
+    )
+    require(
+        completion_path.endswith(".json"),
+        "tag-only completion authorization must be a JSON file",
+    )
+    require_regular_file(repo, head, completion_path, "tag-only completion intent")
+    authorization = validate_tag_only_completion_intent(
+        git_json(repo, head, completion_path, completion_path), completion_path
+    )
+    require(
+        authorization["releaseUnit"] == unit["id"],
+        "tag-only completion intent targets a different release unit",
+    )
+    require(
+        authorization["source"]["ref"] == event_ref,
+        "tag-only completion intent source ref does not match the event ref",
+    )
+    require(
+        authorization["source"]["baseCommit"] == base,
+        "tag-only completion intent is stale: source baseCommit does not equal the event before commit",
+    )
+
+    original_path = authorization["originalIntentPath"]
+    require(
+        PurePosixPath(original_path).parent == PurePosixPath(contract["intentDirectory"]),
+        "original release intent must be directly inside intentDirectory",
+    )
+    require_regular_file(repo, head, original_path, "original release intent")
+    original = validate_intent(
+        git_json(repo, head, original_path, original_path), original_path
+    )
+    require(
+        original["releaseUnit"] == authorization["releaseUnit"],
+        "original release intent release unit does not match tag-only completion",
+    )
+    require(
+        original["channel"] == authorization["channel"],
+        "original release intent channel does not match tag-only completion",
+    )
+    require(
+        original["version"] == authorization["version"],
+        "original release intent version does not match tag-only completion",
+    )
+
+    intent_paths = tree_paths(repo, head, contract["intentDirectory"], "intent directory")
+    matching_originals: list[str] = []
+    for historical_path in intent_paths:
+        validate_relative(historical_path, "historical release intent path", allow_glob=True)
+        require_regular_file(repo, head, historical_path, "historical release intent")
+        historical = validate_intent(
+            git_json(repo, head, historical_path, historical_path), historical_path
+        )
+        if (
+            historical["releaseUnit"] == authorization["releaseUnit"]
+            and historical["version"] == authorization["version"]
+        ):
+            matching_originals.append(historical_path)
+    require(
+        matching_originals == [original_path],
+        "original release intent is missing or ambiguous for the tag-only completion identity",
+    )
+
+    failed = authorization["failedPublication"]
+    failed_source = failed["sourceCommit"]
+    require(
+        git(repo, "rev-parse", "--verify", f"{failed_source}^{{commit}}").strip()
+        == failed_source,
+        "failed publication source does not resolve to the exact commit",
+    )
+    require(
+        is_ancestor(repo, failed_source, base),
+        "failed publication source must be an ancestor of the completion base",
+    )
+    protected_source_history = git_commit_list(
+        repo, "--first-parent", head, label="protected source first-parent history"
+    )
+    require(
+        failed_source in protected_source_history,
+        "failed publication source must be on the protected source first-parent history",
+    )
+    require_regular_file(
+        repo, failed_source, original_path, "failed-publication original release intent"
+    )
+    require(
+        git(repo, "show", f"{failed_source}:{original_path}", binary=True)
+        == git(repo, "show", f"{head}:{original_path}", binary=True),
+        "original release intent must remain byte-identical after the failed publication",
+    )
+    require(
+        not path_change_commits(
+            repo,
+            head,
+            original_path,
+            "original release intent history",
+            start=failed_source,
+        ),
+        "original release intent must remain append-only after the failed publication",
+    )
+
+    failed_authorization = failed["authorization"]
+    failed_authorization_path = failed_authorization["path"]
+    if failed_authorization["type"] == "release-intent":
+        require(
+            failed_authorization_path == original_path,
+            "release-intent failed publication authorization must name originalIntentPath",
+        )
+        validate_initial_publication_source(
+            repo,
+            contract_path,
+            contract,
+            original,
+            original_path,
+            failed_source,
+            event_ref,
+        )
+    else:
+        require(
+            PurePosixPath(failed_authorization_path).parent
+            == PurePosixPath(recovery["intentDirectory"]),
+            "pre-mutation recovery authorization must be directly inside recovery.intentDirectory",
+        )
+        require_regular_file(
+            repo, failed_source, failed_authorization_path, "failed-publication recovery intent"
+        )
+        require_regular_file(
+            repo, head, failed_authorization_path, "current recovery intent"
+        )
+        require(
+            git(repo, "show", f"{failed_source}:{failed_authorization_path}", binary=True)
+            == git(repo, "show", f"{head}:{failed_authorization_path}", binary=True),
+            "failed publication recovery authorization must remain byte-identical",
+        )
+        require(
+            not path_change_commits(
+                repo,
+                head,
+                failed_authorization_path,
+                "failed publication recovery authorization history",
+                start=failed_source,
+            ),
+            "failed publication recovery authorization must remain append-only",
+        )
+        recovery_record = validate_recovery_intent(
+            git_json(
+                repo,
+                failed_source,
+                failed_authorization_path,
+                failed_authorization_path,
+            ),
+            failed_authorization_path,
+        )
+        require(
+            recovery_record["originalIntentPath"] == original_path
+            and recovery_record["releaseUnit"] == authorization["releaseUnit"]
+            and recovery_record["channel"] == authorization["channel"]
+            and recovery_record["version"] == authorization["version"],
+            "failed publication recovery authorization does not match the completion identity",
+        )
+        recovery_base = recovery_record["source"]["baseCommit"]
+        admitted_recovery = admit_recovery(
+            repo,
+            contract_path,
+            contract,
+            recovery_base,
+            failed_source,
+            event_ref,
+            parse_diff(repo, recovery_base, failed_source),
+        )
+        require(
+            admitted_recovery["recoveryIntentPath"] == failed_authorization_path
+            and admitted_recovery["source"]["commit"] == failed_source,
+            "failed publication source is not the exact admitted recovery authorization",
+        )
+
+    matching_recoveries: list[tuple[int, str]] = []
+    recovery_paths = tree_paths(
+        repo, head, recovery["intentDirectory"], "recovery intent directory"
+    )
+    history_positions = {
+        commit: index for index, commit in enumerate(protected_source_history)
+    }
+    for historical_path in recovery_paths:
+        require_regular_file(repo, head, historical_path, "historical recovery intent")
+        historical_recovery = validate_recovery_intent(
+            git_json(repo, head, historical_path, historical_path), historical_path
+        )
+        if (
+            historical_recovery["releaseUnit"] == authorization["releaseUnit"]
+            and historical_recovery["channel"] == authorization["channel"]
+            and historical_recovery["version"] == authorization["version"]
+            and historical_recovery["originalIntentPath"] == original_path
+        ):
+            additions = path_change_commits(
+                repo,
+                head,
+                historical_path,
+                f"historical recovery intent history: {historical_path}",
+            )
+            require(
+                len(additions) == 1 and additions[0] in history_positions,
+                "historical recovery intent addition must be unique on protected source first-parent history",
+            )
+            matching_recoveries.append(
+                (history_positions[additions[0]], historical_path)
+            )
+    if matching_recoveries:
+        _position, latest_recovery_path = min(matching_recoveries)
+        latest_addition = path_change_commits(
+            repo,
+            head,
+            latest_recovery_path,
+            f"latest recovery intent history: {latest_recovery_path}",
+        )[0]
+        require(
+            failed_authorization["type"] == "pre-mutation-recovery"
+            and failed_authorization_path == latest_recovery_path
+            and failed_source == latest_addition,
+            "failed publication source must be the exact source authorized by the latest recovery record",
+        )
+    else:
+        require(
+            failed_authorization["type"] == "release-intent",
+            "release intent must be the failed publication authority when no recovery record exists",
+        )
+
+    base_manifest, base_package_name, base_version = read_native_manifest(
+        repo, base, unit, "tag-only completion base version source"
+    )
+    head_manifest, head_package_name, head_version = read_native_manifest(
+        repo, head, unit, "tag-only completion head version source"
+    )
+    require(
+        base_manifest == head_manifest,
+        "native manifest must remain unchanged during tag-only completion authorization",
+    )
+    require(
+        base_package_name == head_package_name == unit["packageName"],
+        "native manifest package name does not match releaseUnit.packageName",
+    )
+    require(
+        isinstance(base_version, str) and SEMVER_RE.fullmatch(base_version) is not None,
+        "tag-only completion base manifest version is not exact SemVer",
+    )
+    require(
+        base_version == head_version == authorization["version"],
+        "tag-only completion version does not match the unchanged native manifest",
+    )
+
+    rendered_tag = unit["tagPattern"].replace("{version}", authorization["version"])
+    require(
+        authorization["tag"] == rendered_tag,
+        "tag-only completion tag does not match the derived package tag",
+    )
+    tag_status = subprocess.run(
+        ["git", "check-ref-format", f"refs/tags/{rendered_tag}"],
+        cwd=repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode
+    require(tag_status == 0, "derived package tag is not a valid Git tag")
+    expected_dist_tag = contract["channels"][authorization["channel"]]["distTag"]
+    require(
+        authorization["distTag"] == expected_dist_tag,
+        "tag-only completion dist-tag does not match the profile channel",
+    )
+    require(
+        authorization["retainedArtifact"]["embeddedSourceCommit"] == failed_source,
+        "retained artifact embedded source does not match the failed publication source",
+    )
+
+    completion_paths = tree_paths(
+        repo, head, completion["intentDirectory"], "tag-only completion intent directory"
+    )
+    matching_identity: list[str] = []
+    matching_failed_runs: list[str] = []
+    for historical_path in completion_paths:
+        validate_relative(
+            historical_path, "historical tag-only completion path", allow_glob=True
+        )
+        require(
+            PurePosixPath(historical_path).parent
+            == PurePosixPath(completion["intentDirectory"])
+            and historical_path.endswith(".json"),
+            "tag-only completion directory may contain only direct JSON records",
+        )
+        require_regular_file(repo, head, historical_path, "historical tag-only completion intent")
+        historical = validate_tag_only_completion_intent(
+            git_json(repo, head, historical_path, historical_path), historical_path
+        )
+        if (
+            historical["releaseUnit"] == authorization["releaseUnit"]
+            and historical["version"] == authorization["version"]
+        ):
+            matching_identity.append(historical_path)
+        if (
+            historical["failedPublication"]["workflowRunUrl"]
+            == failed["workflowRunUrl"]
+        ):
+            matching_failed_runs.append(historical_path)
+    require(
+        matching_identity == [completion_path],
+        "duplicate tag-only completion authorization exists for the same release-unit and version",
+    )
+    require(
+        matching_failed_runs == [completion_path],
+        "duplicate tag-only completion authorization exists for the same failed publication run",
+    )
+    completion_history = path_change_commits(
+        repo,
+        head,
+        completion["intentDirectory"],
+        "tag-only completion intent directory history",
+    )
+    require(
+        len(completion_history) == len(completion_paths),
+        "tag-only completion intent directory must remain append-only in protected source history",
+    )
+    for historical_path in completion_paths:
+        require(
+            len(
+                path_change_commits(
+                    repo,
+                    head,
+                    historical_path,
+                    f"historical tag-only completion intent history: {historical_path}",
+                )
+            )
+            == 1,
+            f"historical tag-only completion intent must be added once and never modified, renamed, or deleted: {historical_path}",
+        )
+
+    return {
+        "schemaVersion": "protected-package-tag-tag-only-completion-admission/v1",
+        "status": "admitted",
+        "authorization": "tag-only-completion",
+        "releaseUnit": unit["id"],
+        "packageName": unit["packageName"],
+        "registry": unit["registry"],
+        "channel": authorization["channel"],
+        "distTag": expected_dist_tag,
+        "version": authorization["version"],
+        "tag": rendered_tag,
+        "originalIntentPath": original_path,
+        "completionIntentPath": completion_path,
+        "failedPublication": failed,
+        "retainedArtifact": authorization["retainedArtifact"],
+        "packageSource": {"commit": failed_source},
+        "authorizationSource": {
+            "ref": event_ref,
+            "baseCommit": base,
+            "commit": head,
+        },
+    }
+
+
 def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: str) -> dict[str, Any]:
     require(repo.is_dir(), f"repository does not exist: {repo}")
     contract_path = validate_relative(contract_path, "contract path")
@@ -1173,6 +1849,12 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
     for path_key in ("compatibilityContract", "changelog", "validationWorkflow", "publicationWorkflow"):
         require_regular_file(repo, head, unit[path_key], f"releaseUnit.{path_key}")
     require_regular_file(repo, head, contract["recovery"]["workflow"], "recovery.workflow")
+    require_regular_file(
+        repo,
+        head,
+        contract["tagOnlyCompletion"]["workflow"],
+        "tagOnlyCompletion.workflow",
+    )
 
     entries = parse_diff(repo, base, head)
     require(bool(entries), "admission diff is empty")
@@ -1185,6 +1867,10 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
     require(
         contract["recovery"]["workflow"] not in changed_paths,
         "recovery workflow must be established separately from recovery authorization",
+    )
+    require(
+        contract["tagOnlyCompletion"]["workflow"] not in changed_paths,
+        "tag-only completion workflow must be established separately from completion authorization",
     )
 
     release_intent_entries = [
@@ -1200,10 +1886,30 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
             for path in entry.paths
         )
     ]
+    completion_intent_entries = [
+        entry
+        for entry in entries
+        if any(
+            is_below(path, contract["tagOnlyCompletion"]["intentDirectory"])
+            for path in entry.paths
+        )
+    ]
     require(
-        not (release_intent_entries and recovery_intent_entries),
-        "release intent and recovery authorization cannot share one admission diff",
+        sum(
+            bool(group)
+            for group in (
+                release_intent_entries,
+                recovery_intent_entries,
+                completion_intent_entries,
+            )
+        )
+        <= 1,
+        "release, recovery, and tag-only completion authorizations cannot share one admission diff",
     )
+    if completion_intent_entries:
+        return admit_tag_only_completion(
+            repo, contract_path, contract, base, head, event_ref, entries
+        )
     if recovery_intent_entries:
         return admit_recovery(
             repo, contract_path, contract, base, head, event_ref, entries

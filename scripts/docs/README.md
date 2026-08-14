@@ -41,8 +41,9 @@ python3 scripts/docs/check-protected-package-tag-admission.py \
 ```
 
 The checker derives package identity from the repository contract, a newly added
-normal or recovery intent, JSON or TOML native manifest, historical intent, and
-exact Git diff. Normal admission rejects stale, multiple, changed, duplicate,
+normal, recovery, or tag-only completion intent, JSON or TOML native manifest,
+historical intent, and exact Git diff. Normal admission rejects stale, multiple,
+changed, duplicate,
 or conflicting intent; contract/native package identity mismatch;
 non-increasing SemVer precedence; non-version manifest mutation; deletion,
 rename, exact-content copy, type change, non-regular files; paths outside
@@ -56,15 +57,26 @@ tag and registry identities. A different run URL or unrelated later commit
 cannot split one authorization source into another. JSON input must be strict
 UTF-8 without duplicate keys or non-standard numeric constants.
 
+Tag-only completion admission requires one newly added record and no other
+change, an unchanged manifest and original intent, a failed publication source
+on protected first-parent history that reconstructs the named exact release or
+latest recovery admission, one record per release-unit/version and failed run,
+an exact derived tag and dist-tag, and a digest-bound retained artifact whose
+embedded source equals the failed publication source. The checker validates the
+recorded attempt-1 tag-present/registry-absent shape but does not claim that
+remote state is true.
+
 The checker intentionally does not publish, query Actions, remote tag, or
 registry state, inspect authorization-use history, inspect hosting rulesets or
 permissions, or inspect pull-request approvals. The hosting layer owns the
 PR-only protected merge boundary. The repository publication workflow must pass
 the exact merge `before` and `after` commits to this checker and revalidate
 rulesets, required checks, prior-run outcome, record non-reuse, tag and registry
-state, package closure, permissions, and every other publication prerequisite
-before mutation. A normal rerun or arbitrary workflow input is not publication
-authority.
+state, retained-artifact identity and expiry, package closure, permissions, and
+every other publication prerequisite before mutation. A normal rerun or
+arbitrary workflow input is not publication authority. A tag-only completion
+workflow must additionally mutation-disable every rerun and second workflow run
+before credential setup and must never receive tag mutation authority.
 
 The invocation requires the exact base and head commit objects plus their
 ancestry. An adopting checkout MUST fetch sufficient history, normally with

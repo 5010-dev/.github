@@ -167,8 +167,19 @@ its registry version is not a published release and has no immutable release
 identity to correct. It MAY preserve the intended version only through the
 profile's new PR-mediated pre-mutation recovery authorization. The failed
 attempt, original intent, and prior recovery records remain historical evidence;
-a normal rerun is not authorization. If either immutable identity exists, the
-attempt is partial or published and this same-version path is forbidden.
+a normal rerun is not authorization.
+
+A terminal attempt-1 failure that created the exact immutable package tag but
+not the registry version is a tag-only partial publication. It MAY complete
+only the missing exact registry version through the profile's separate
+PR-mediated tag-only completion authorization and the original run's unexpired,
+digest-bound retained artifact. The existing tag is verification-only and MUST
+NOT be moved, deleted, or recreated. The first authorized completion workflow
+run at attempt 1 may publish only while the registry version is absent. If the
+registry version already exists and tag, source, integrity, and dist-tag all
+match, the outcome is verification-only. Any mismatch, registry-only state,
+expired or unavailable artifact, rebuild, ordinary rerun, or second completion
+workflow run MUST NOT mutate and fails closed for owner action.
 
 Database migrations are superseded by later migrations rather than deprecated,
 yanked, or deleted. Research records follow their correction, supersession, and
