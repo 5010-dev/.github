@@ -384,6 +384,10 @@ def validate_contract(document: Any) -> dict[str, Any]:
         not any(path_matches(completion_probe, pattern) for pattern in preparation),
         "releasePreparationPaths must not admit tag-only completion authorization records",
     )
+    reject_sibling_mutation(
+        contract,
+        {intent_probe, recovery_probe, completion_probe},
+    )
     return contract
 
 
@@ -772,6 +776,18 @@ def is_below(path: str, directory: str) -> bool:
     return path.startswith(f"{directory}/")
 
 
+def reject_sibling_mutation(contract: dict[str, Any], paths: set[str]) -> None:
+    for sibling in contract["siblingReleaseUnits"]:
+        for path in sorted(paths):
+            if any(
+                path_matches(path, pattern)
+                for pattern in sibling["mutationPaths"]
+            ):
+                reject(
+                    f"sibling release-unit mutation is forbidden: {sibling['id']} changed {path}"
+                )
+
+
 def git(repo: Path, *args: str, binary: bool = False) -> bytes | str:
     result = subprocess.run(
         ["git", *args],
@@ -1052,10 +1068,7 @@ def admit_release(
             f"release preparation may only add or modify files: {entry.status} {' -> '.join(entry.paths)}",
         )
         require_regular_file(repo, head, entry.paths[0], "release-preparation path")
-    for sibling in contract["siblingReleaseUnits"]:
-        for path in sorted(changed_paths):
-            if any(path_matches(path, pattern) for pattern in sibling["mutationPaths"]):
-                reject(f"sibling release-unit mutation is forbidden: {sibling['id']} changed {path}")
+    reject_sibling_mutation(contract, changed_paths)
     for path in sorted(changed_paths):
         require(
             any(path_matches(path, pattern) for pattern in unit["releasePreparationPaths"]),
@@ -1166,6 +1179,16 @@ def validate_initial_publication_source(
     event_ref: str,
 ) -> None:
     """Prove a claimed first failed source could pass normal exact-diff admission."""
+    intent_additions = path_change_commits(
+        repo,
+        failed_source,
+        original_path,
+        "initial release intent history",
+    )
+    require(
+        intent_additions == [failed_source],
+        "failed publication source must be the exact commit that added the original release intent",
+    )
     original_base = original["source"]["baseCommit"]
     entries = parse_diff(repo, original_base, failed_source)
     admitted = admit_release(
@@ -1210,6 +1233,7 @@ def admit_recovery(
         "recovery authorization must be directly inside recovery.intentDirectory",
     )
     require(recovery_path.endswith(".json"), "recovery authorization must be a JSON file")
+    reject_sibling_mutation(contract, {recovery_path})
     require_regular_file(repo, head, recovery_path, "release recovery intent")
     authorization = validate_recovery_intent(
         git_json(repo, head, recovery_path, recovery_path), recovery_path
@@ -1481,6 +1505,7 @@ def admit_tag_only_completion(
         completion_path.endswith(".json"),
         "tag-only completion authorization must be a JSON file",
     )
+    reject_sibling_mutation(contract, {completion_path})
     require_regular_file(repo, head, completion_path, "tag-only completion intent")
     authorization = validate_tag_only_completion_intent(
         git_json(repo, head, completion_path, completion_path), completion_path

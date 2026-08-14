@@ -94,7 +94,9 @@ non-RFC 3339 artifact expiry, tarball digest and npm-integrity mismatch,
 unrelated and multiple records,
 duplicate identity authorization, modified recovery authority, missing or
 overlapping profile boundaries, a superseded initial source after later
-recovery authorization, shared workflows, and release-path overlap.
+recovery authorization, a preparation-only successor claimed as an initial
+failed source, sibling mutation-path overlap for recovery or completion records,
+shared workflows, and release-path overlap.
 
 ```bash
 python3 scripts/docs/test-protected-package-tag-admission.py
@@ -102,8 +104,8 @@ scripts/docs/check-repository.sh
 git diff --check
 ```
 
-- focused admission suite: 94 tests, `OK`;
-- complete documentation gate: 94 embedded admission tests, `OK`, followed by
+- focused admission suite: 97 tests, `OK`;
+- complete documentation gate: 97 embedded admission tests, `OK`, followed by
   `organization documentation check: OK`; and
 - whitespace/error-marker check: exit 0 with no output.
 
