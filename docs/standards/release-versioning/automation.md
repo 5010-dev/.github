@@ -209,9 +209,11 @@ deterministic release logic remains locally or independently executable.
   `packages: read`; retained-artifact retrieval receives only `actions: read`;
   registry mutation receives only `packages: write`; and post-publication
   verification receives `contents: read` and `packages: read`. The registry
-  credential is exposed only to the exact native publish step. The tag-mutation
-  App credential or equivalent tag authority MUST NOT be minted, forwarded, or
-  referenced anywhere in the completion workflow.
+  credential is exposed only to the exact native publish step. Admission and
+  live verification read tag and registry together before releasing the
+  mutation job; that job re-reads only the registry immediately before publish.
+  The tag-mutation App credential or equivalent tag authority MUST NOT be
+  minted, forwarded, or referenced anywhere in the completion workflow.
 - Secrets MUST be forwarded by name. `secrets: inherit` MUST NOT be the default.
 - OIDC or repository-scoped `GITHUB_TOKEN` SHOULD replace long-lived publication
   credentials when the registry or cloud supports it.

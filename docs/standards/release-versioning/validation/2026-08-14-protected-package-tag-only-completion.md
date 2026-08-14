@@ -57,7 +57,9 @@ Standard `2026.08.6` closes the executable permission profile before downstream
 adoption. It separates admission and live verification, retained-artifact
 retrieval, registry mutation, and post-publication verification into four exact
 job permission sets instead of modeling the mutation permission as the whole
-completion workflow.
+completion workflow. Admission and live verification perform the paired tag and
+registry read before releasing mutation; the write-capable job then re-reads
+only the registry immediately before native publish.
 
 The first workflow run triggered by that record, at run attempt `1`, is the only
 execution that may create the absent exact registry version. It downloads the
@@ -110,8 +112,8 @@ duplicate identity authorization, modified recovery authority, missing or
 overlapping profile boundaries, a superseded initial source after later
 recovery authorization, a preparation-only successor claimed as an initial
 failed source, sibling mutation-path overlap for recovery or completion records,
-shared workflows, release-path overlap, and missing or broadened completion job
-permissions.
+shared workflows, release-path overlap, and missing, reordered, unknown, or
+broadened completion job permissions.
 
 ```bash
 python3 scripts/docs/test-protected-package-tag-admission.py
@@ -119,8 +121,8 @@ scripts/docs/check-repository.sh
 git diff --check
 ```
 
-- focused admission suite: 101 tests, `OK`;
-- complete documentation gate: 101 embedded admission tests, `OK`, followed by
+- focused admission suite: 104 tests, `OK`;
+- complete documentation gate: 104 embedded admission tests, `OK`, followed by
   `organization documentation check: OK`; and
 - whitespace/error-marker check: exit 0 with no output.
 

@@ -1524,6 +1524,37 @@ class AdmissionTest(unittest.TestCase):
         head = self.prepare_release()
         self.assert_rejected(self.check(head), "exact job-scoped permissions")
 
+    def test_rejects_reordered_completion_permissions(self) -> None:
+        profile = self.profile()
+        permissions = profile["tagOnlyCompletion"]["jobPermissions"][
+            "admissionAndLiveVerification"
+        ]
+        permissions[0], permissions[1] = permissions[1], permissions[0]
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("reorder completion permissions")
+        head = self.prepare_release()
+        self.assert_rejected(self.check(head), "exact job-scoped permissions")
+
+    def test_rejects_missing_completion_permission_job(self) -> None:
+        profile = self.profile()
+        profile["tagOnlyCompletion"]["jobPermissions"].pop(
+            "retainedArtifactRetrieval"
+        )
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("omit completion permission job")
+        head = self.prepare_release()
+        self.assert_rejected(self.check(head), "exact job-scoped permissions")
+
+    def test_rejects_unknown_completion_permission_job(self) -> None:
+        profile = self.profile()
+        profile["tagOnlyCompletion"]["jobPermissions"]["unknownJob"] = [
+            "actions: read"
+        ]
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("add unknown completion permission job")
+        head = self.prepare_release()
+        self.assert_rejected(self.check(head), "exact job-scoped permissions")
+
     def test_rejects_overlapping_completion_and_recovery_directories(self) -> None:
         profile = self.profile()
         profile["tagOnlyCompletion"]["intentDirectory"] = (
