@@ -53,11 +53,14 @@ under a new protected authorization.
 6. Permit only the first workflow run triggered by the newly merged completion
    record, and only its run attempt `1`, to mutate. Reruns and second workflow
    runs are mutation-disabled before credential setup under every remote state.
-7. Immediately before mutation, read tag and registry together. An exact tag
-   plus absent exact version permits publishing only the retained bytes. An
-   already exact tag/version/source/integrity/dist-tag pair is
-   verification-only. Every missing, registry-only, conflicting, mismatched,
-   ambiguous, or unverifiable state fails closed.
+7. Immediately before releasing the mutation job, admission and live
+   verification read tag and registry together. An exact tag plus absent exact
+   version permits publishing only the retained bytes. An already exact
+   tag/version/source/integrity/dist-tag pair is verification-only. Every
+   missing, registry-only, conflicting, mismatched, ambiguous, or unverifiable
+   state fails closed. The mutation job depends directly on that gate and
+   re-reads the registry immediately before native publish; it does not receive
+   source-read permission or re-read the protected immutable tag.
 8. Never delete, move, recreate, or overwrite the existing tag. Completion
    receives no tag-mutation credential.
 9. Use a distinct completion workflow with four exact job permission sets.

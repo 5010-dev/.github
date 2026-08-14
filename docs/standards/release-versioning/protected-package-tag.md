@@ -324,8 +324,9 @@ run MUST be mutation-disabled before credential setup regardless of remote
 state. A rerun or later run MAY perform read-only verification but never
 publication.
 
-Immediately before registry mutation, automation MUST read tag and registry
-together and use exactly this state table:
+Immediately before releasing the registry mutation job, admission and live
+verification MUST read tag and registry together and use exactly this state
+table:
 
 | Tag state | Exact registry version | Required outcome |
 | --- | --- | --- |
@@ -334,6 +335,14 @@ together and use exactly this state table:
 | Missing, moved, recreated, or conflicting | Any | Fail closed |
 | Any | Present but package, integrity, source, or dist-tag differs | Fail closed |
 | Registry-only or ambiguous query state | Present or unknown | Fail closed |
+
+The registry mutation job MUST depend directly on that successful read-only job
+in the same serialized workflow run. Using the read capability included in
+`packages: write`, it MUST re-read the exact registry version immediately before
+the native publish step and fail closed unless the version is still absent. It
+does not receive `contents: read` or re-read the tag; the mutation gate relies on
+the exact protected immutable tag verified by its predecessor, while the
+registry re-read closes the inter-job publication window.
 
 After a new publication, the workflow MUST verify private visibility or the
 declared registry visibility, releasing-repository association, exact registry
@@ -427,11 +436,14 @@ Private-registry credentials in post-publication verification MUST be scoped to
 the installation step. Representative package execution MUST run after registry
 credentials and token environment variables are removed.
 
-GitHub Actions permissions are job-scoped, so publication MUST use a dedicated
-job with `packages: write` and only trusted setup, mutation, and verification
-steps. A separately minted registry credential is passed only to the native
-publish step. A hosting-specific tag credential follows the narrower tag rule
-above; it is not a general source-write permission.
+For normal package publication outside tag-only completion, GitHub Actions
+permissions are job-scoped, so publication MUST use a dedicated job with
+`packages: write` and only trusted setup, mutation, and verification steps. A
+separately minted registry credential is passed only to the native publish step.
+Tag-only completion instead follows the exact four-job partition above; its
+post-publication verification never runs in the write-capable mutation job. A
+hosting-specific tag credential follows the narrower tag rule above; it is not
+a general source-write permission.
 
 ## Serialization, immutability, and recovery
 
