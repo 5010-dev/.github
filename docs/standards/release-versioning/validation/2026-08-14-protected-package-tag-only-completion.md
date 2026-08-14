@@ -61,9 +61,13 @@ verification-only and the completion workflow has no tag credential.
 The pre-mutation recovery checker continues rejecting tag-present state. The new
 completion admission accepts only tag-present/registry-absent claims and binds
 the failed source to its exact normal or latest recovery admission. Live
-repository automation must re-read and verify the failed run, immutable tag,
-registry, retained artifact, rulesets, authorization-use history, credentials,
-package closure, dist-tags, and sibling isolation before mutation.
+repository automation must re-read and verify the failed run's selecting
+repository, declared publication or recovery workflow, protected `dev` push
+event/ref, exact source, attempt, outcome, and trusted evidence that its exact
+tag-creation phase completed before registry publication failed. It must verify
+those facts together with the immutable tag, registry, retained artifact,
+rulesets, authorization-use history, credentials, package closure, dist-tags,
+and sibling isolation before mutation.
 
 ## Four-state and permission outcomes
 
@@ -86,7 +90,8 @@ or tag-only completion admission from the exact diff. Completion tests cover
 normal-release and recovery-admitted failed sources, source separation between
 package and authorization commits, stale base, run-attempt mismatch,
 tag-absent/registry-present claims, tag and dist-tag mismatch, retained source,
-tarball digest and npm-integrity mismatch, unrelated and multiple records,
+non-RFC 3339 artifact expiry, tarball digest and npm-integrity mismatch,
+unrelated and multiple records,
 duplicate identity authorization, modified recovery authority, missing or
 overlapping profile boundaries, a superseded initial source after later
 recovery authorization, shared workflows, and release-path overlap.
@@ -97,8 +102,8 @@ scripts/docs/check-repository.sh
 git diff --check
 ```
 
-- focused admission suite: 93 tests, `OK`;
-- complete documentation gate: 93 embedded admission tests, `OK`, followed by
+- focused admission suite: 94 tests, `OK`;
+- complete documentation gate: 94 embedded admission tests, `OK`, followed by
   `organization documentation check: OK`; and
 - whitespace/error-marker check: exit 0 with no output.
 

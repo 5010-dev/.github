@@ -1298,6 +1298,28 @@ class AdmissionTest(unittest.TestCase):
             "dist-tag does not match the profile channel",
         )
 
+    def test_rejects_non_rfc3339_retained_artifact_expiry(self) -> None:
+        failed_source, original_path, recovery_path = (
+            self.materialize_tag_only_recovery_source()
+        )
+        completion = self.tag_only_completion_intent(
+            version="1.4.0-next.1",
+            original_intent_path=original_path,
+            failed_source=failed_source,
+            source_base=self.base,
+            authorization_type="pre-mutation-recovery",
+            authorization_path=recovery_path,
+        )
+        completion["retainedArtifact"]["expiresAt"] = "2026-09-13 00:14:53+00:00"
+        self.write_json(
+            Path(".github/release-tag-only-completion-intents/non-rfc3339-expiry.json"),
+            completion,
+        )
+        self.assert_rejected(
+            self.check(self.commit("claim non-RFC3339 artifact expiry")),
+            "expiresAt must be an RFC 3339 date-time",
+        )
+
     def test_rejects_invalid_retained_tarball_sha256(self) -> None:
         failed_source, original_path, recovery_path = (
             self.materialize_tag_only_recovery_source()

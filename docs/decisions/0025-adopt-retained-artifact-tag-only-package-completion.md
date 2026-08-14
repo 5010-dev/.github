@@ -43,9 +43,13 @@ under a new protected authorization.
    tarball file name and SHA-256, npm integrity, and embedded source commit.
    Rebuild, repack, artifact substitution, and automatic successor creation are
    forbidden.
-5. Require the failed publication to be terminal attempt `1`, the source to be
-   on protected first-parent history, and the named authorization to
-   structurally reconstruct the exact failed publication source.
+5. Require the failed publication to belong to the selecting repository, run as
+   the declared normal publication or pre-mutation recovery workflow selected by
+   its authorization type from a protected `dev` push, terminate in attempt `1`,
+   use a source on protected first-parent history, and name an authorization that
+   structurally reconstructs the exact failed publication source. Trusted job or
+   terminal evidence must prove that the run completed exact tag creation and
+   failed registry publication before creating the version.
 6. Permit only the first workflow run triggered by the newly merged completion
    record, and only its run attempt `1`, to mutate. Reruns and second workflow
    runs are mutation-disabled before credential setup under every remote state.

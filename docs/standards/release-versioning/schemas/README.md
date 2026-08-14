@@ -36,9 +36,13 @@ binds the original intent, exact failed publication source/run/attempt and
 admission record, existing tag, expected dist-tag, current base/ref, and the
 retained artifact ID, expiry, archive digest, tarball SHA-256, npm integrity,
 and embedded source. These are reviewed claims; the repository workflow must
-re-read the run, tag, registry, artifact, authorization-use history, rulesets,
-and credentials and must reject rebuilds, rerun mutation, second-run mutation,
-expired artifacts, registry-only state, or any mismatch.
+re-read the run and prove its selecting-repository identity, declared normal or
+recovery workflow, protected `dev` push event/ref, exact source, attempt, and
+outcome together with trusted job or terminal evidence that tag creation
+completed before registry publication failed. It must also re-read the tag,
+registry, artifact, authorization-use history, rulesets, and credentials and
+reject rebuilds, rerun mutation, second-run mutation, expired artifacts,
+registry-only state, or any mismatch.
 
 Path patterns are segment-aware: `*`, `?`, and bracket expressions match within
 one segment and never match `/`; a complete `**` segment matches zero or more
