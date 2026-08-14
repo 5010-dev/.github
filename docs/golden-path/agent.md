@@ -1,7 +1,7 @@
 # Golden Path Agent-assisted application
 
 - Status: Supported
-- Package: `@5010-dev/golden-path-agent@1.0.0`
+- Package: `@5010-dev/golden-path-agent@1.0.1`
 - Visibility: Private
 - Owner: `5010-dev/engineering-tooling` maintainers
 - Last reviewed: 2026-08-14
@@ -18,17 +18,24 @@ or replace the manual bootstrap, adoption, and retirement journeys.
 
 ## Exact installation and invocation
 
-Install the supported private package at its exact coordinate for both
-supported developer hosts:
+Persist the supported private package at its exact coordinate, then install and
+check both host Skills:
 
 ```bash
-pnpm dlx @5010-dev/golden-path-agent@1.0.0 skill install --host all
+pnpm add --global @5010-dev/golden-path-agent@1.0.1
+golden-path-agent skill install --host all
+golden-path-agent skill check --host all
 ```
 
-Before installing, authenticate the `@5010-dev` scope to GitHub Packages and
-authenticate GitHub CLI `gh` to `github.com` with read access to
-`5010-dev/.github`; follow the exact released package
-[setup instructions](https://github.com/5010-dev/engineering-tooling/blob/a1a7af61fe89434c1288a69b3114ba5725c6576d/README.md#install-the-package).
+Before installing, obtain package `Read`, configure a personal access token
+(classic) with `read:packages`, authorize it for organization SSO when
+applicable, configure the user-level `@5010-dev` npm scope, and confirm that
+pnpm's global bin directory is on `PATH`. GitHub CLI `gh` must be
+authenticated to `github.com` with read access to `5010-dev/.github`.
+Follow the exact released package
+[access, authentication, and setup instructions](https://github.com/5010-dev/engineering-tooling/blob/8dfdac46dc9886e69dc4f33cf0a658c86353d3a3/README.md#package-access-and-authentication).
+Package and `gh` credentials are separate; neither belongs in a consumer
+repository.
 
 Invocation is always explicit:
 
@@ -41,9 +48,9 @@ Implicit invocation is disabled. Installing the host integration does not add
 the package to a consumer manifest or lock, pin a consumer version, or install a
 repository-managed runtime.
 
-Update by replacing the package coordinate in that command with a newer exact
-version and running `skill install --host all` again. Roll back by doing the
-same with a prior exact version.
+Update or roll back by replacing the coordinate in `pnpm add --global` with a
+newer or prior exact version, then rerun `skill install --host all` and
+`skill check --host all`.
 
 Do not use `latest`, a range, or another moving selector. Installation does not
 automatically regenerate repository files or open consumer upgrade pull
@@ -78,16 +85,16 @@ does not make the Agent or its package a source of normative policy.
 
 ## Release identity
 
-The supported `1.0.0` package is identified by the following release evidence:
+The supported `1.0.1` package is identified by the following release evidence:
 
 | Evidence | Identity |
 | --- | --- |
-| Source commit | [`a1a7af61fe89434c1288a69b3114ba5725c6576d`](https://github.com/5010-dev/engineering-tooling/commit/a1a7af61fe89434c1288a69b3114ba5725c6576d) |
-| Source tag | [`golden-path-agent-v1.0.0`](https://github.com/5010-dev/engineering-tooling/tree/golden-path-agent-v1.0.0) |
-| Publication workflow | [`31736789411`](https://github.com/5010-dev/engineering-tooling/actions/runs/31736789411) |
+| Source commit | [`8dfdac46dc9886e69dc4f33cf0a658c86353d3a3`](https://github.com/5010-dev/engineering-tooling/commit/8dfdac46dc9886e69dc4f33cf0a658c86353d3a3) |
+| Source tag | [`golden-path-agent-v1.0.1`](https://github.com/5010-dev/engineering-tooling/tree/golden-path-agent-v1.0.1) |
+| Publication workflow | [`31758196133`](https://github.com/5010-dev/engineering-tooling/actions/runs/31758196133) |
 | Package visibility | Private |
-| Package SHA-256 | `62b0f85b775e929ec225bd90306720fc9e4d165ce664f7cb136ad3f61f96ced9` |
-| Registry SRI | `sha512-Fhi7knxicEuHrsa/UOkcT9dxFrBzf+HVJYMMexl6eA0eXoVu6/jT+kPhQZ8iaB892ZFJEXE3a91RagYz1UboYQ==` |
+| Package SHA-256 | `a52dba9f89ff32eb07d58bf89c6f6724ca4dfce234bae633877f9be41bd801f7` |
+| Registry SRI | `sha512-nrvyu5OC4k4wZN6W9Gnis3T5v4JdTx3PiRjDjvrC1gFFnasMD2PmbeJ1bG4AzQUOJKpQhwfBN6TLm079gPT6jA==` |
 
 These identities document the supported release; they are not a machine
 locator or an automatic update instruction. Public `engineering-tooling`
