@@ -81,7 +81,10 @@ closure, permissions, and every other publication prerequisite before mutation.
 A normal rerun or arbitrary workflow input is not publication authority. A
 tag-only completion workflow must additionally mutation-disable every rerun and
 second workflow run before credential setup and must never receive tag mutation
-authority.
+authority. Its profile fixes separate exact permissions for admission and live
+verification (`contents: read`, `actions: read`, `packages: read`), retained
+artifact retrieval (`actions: read`), registry mutation (`packages: write`),
+and post-publication verification (`contents: read`, `packages: read`).
 
 The invocation requires the exact base and head commit objects plus their
 ancestry. An adopting checkout MUST fetch sufficient history, normally with

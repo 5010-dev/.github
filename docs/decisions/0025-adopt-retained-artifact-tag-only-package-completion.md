@@ -60,11 +60,15 @@ under a new protected authorization.
    ambiguous, or unverifiable state fails closed.
 8. Never delete, move, recreate, or overwrite the existing tag. Completion
    receives no tag-mutation credential.
-9. Use a distinct completion workflow. Its registry mutation job receives
-   `packages: write` as its only write capability, and the credential is exposed
-   only to the native publish step. Tag creation, branch/source mutation,
-   sibling release-unit effects, service/application deployment, OCI
-   publication, and object-storage publication remain forbidden.
+9. Use a distinct completion workflow with four exact job permission sets.
+   Admission and live verification receive `contents: read`, `actions: read`,
+   and `packages: read`; retained-artifact retrieval receives only
+   `actions: read`; registry mutation receives only `packages: write`; and
+   post-publication verification receives `contents: read` and
+   `packages: read`. The registry credential is exposed only to the native
+   publish step. Tag creation, branch/source mutation, sibling release-unit
+   effects, service/application deployment, OCI publication, and object-storage
+   publication remain forbidden.
 10. If the retained artifact expires, disappears, or fails any identity check,
     stop and return to central policy ownership. Do not rebuild or silently
     advance the version.
@@ -123,6 +127,7 @@ available and the registry version was never published. If the retained
 artifact becomes unavailable or invalid, successor handling requires a new
 central decision rather than automatic policy.
 
-Boundary classification: unreleased — corrected in place. The registry package
-does not yet exist, and this decision preserves rather than mutates the existing
-immutable tag.
+Boundary classification: released — compatibility required because the
+protected immutable tag `technical-indicators-v0.1.0-next.0` already exists at
+`099edf52740633a200c9d57abf8c7a4310fe1507`, while the matching registry version
+remains absent.

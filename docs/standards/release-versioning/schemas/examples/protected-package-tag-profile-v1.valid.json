@@ -14,9 +14,23 @@
   "tagOnlyCompletion": {
     "intentDirectory": ".github/release-tag-only-completion-intents",
     "workflow": ".github/workflows/complete-browser-package.yml",
-    "minimumPermissions": [
-      "packages: write"
-    ],
+    "jobPermissions": {
+      "admissionAndLiveVerification": [
+        "contents: read",
+        "actions: read",
+        "packages: read"
+      ],
+      "retainedArtifactRetrieval": [
+        "actions: read"
+      ],
+      "registryMutation": [
+        "packages: write"
+      ],
+      "postPublicationVerification": [
+        "contents: read",
+        "packages: read"
+      ]
+    },
     "publicationEffects": {
       "allowed": [
         "registry-package-publication"

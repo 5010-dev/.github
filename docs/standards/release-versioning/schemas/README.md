@@ -1,7 +1,7 @@
 # Release and Versioning schemas
 
 - Status: Accepted
-- Standard version: `2026.08.5`
+- Standard version: `2026.08.6`
 
 These Draft 2020-12 JSON Schemas support the opt-in
 [protected package-tag publication profile](../protected-package-tag.md):
@@ -43,6 +43,14 @@ completed before registry publication failed. It must also re-read the tag,
 registry, artifact, authorization-use history, rulesets, and credentials and
 reject rebuilds, rerun mutation, second-run mutation, expired artifacts,
 registry-only state, or any mismatch.
+
+The completion profile fixes four exact job-scoped permission sets. Admission
+and live verification receive `contents: read`, `actions: read`, and
+`packages: read`; retained-artifact retrieval receives only `actions: read`;
+registry mutation receives only `packages: write`; and post-publication
+verification receives `contents: read` and `packages: read`. The schema rejects
+missing, combined, reordered, or broadened permission sets rather than treating
+the mutation credential as the whole workflow permission contract.
 
 Path patterns are segment-aware: `*`, `?`, and bracket expressions match within
 one segment and never match `/`; a complete `**` segment matches zero or more
