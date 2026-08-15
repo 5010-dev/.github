@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "package-release-tag-only-completion-recovery-intent/v1",
+  "releaseUnit": "technical-indicators",
+  "channel": "prerelease",
+  "version": "0.1.0-next.0",
+  "originalIntentPath": ".github/release-intents/technical-indicators/0.1.0-next.0.json",
+  "tag": "technical-indicators-v0.1.0-next.0",
+  "distTag": "next",
+  "originalPublication": {
+    "sourceCommit": "099edf52740633a200c9d57abf8c7a4310fe1507",
+    "workflowRunUrl": "https://github.com/5010-dev/fiftyten-indicators-core/actions/runs/31756609971",
+    "runAttempt": 1,
+    "outcome": "terminal-failure",
+    "publicationState": "tag-only",
+    "tagState": "present",
+    "registryVersionState": "absent",
+    "authorization": {
+      "type": "pre-mutation-recovery",
+      "path": ".github/release-recovery-intents/technical-indicators/0.1.0-next.0-6c4a4f45.json"
+    }
+  },
+  "originalCompletionIntent": {
+    "path": ".github/release-tag-only-completion-intents/technical-indicators/0.1.0-next.0.json",
+    "sha256": "915aafe8076d0630fb389ccf590c8c9fad0bfb8b5fb10e9f1ad949134bc6b066"
+  },
+  "failedCompletion": {
+    "sourceCommit": "e2e679715ec19e8ac6ba9a45b08ea9a467d607c5",
+    "workflowRunUrl": "https://github.com/5010-dev/fiftyten-indicators-core/actions/runs/31877967715",
+    "runAttempt": 1,
+    "outcome": "terminal-failure",
+    "failurePhase": "admission-live-verification",
+    "retainedArtifactRetrievalState": "not-started",
+    "registryMutationState": "not-started",
+    "postPublicationVerificationState": "not-started",
+    "tagState": "present",
+    "registryVersionState": "absent",
+    "authorization": {
+      "type": "tag-only-completion",
+      "path": ".github/release-tag-only-completion-intents/technical-indicators/0.1.0-next.0.json"
+    }
+  },
+  "retainedArtifact": {
+    "artifactId": 9202971363,
+    "artifactName": "technical-indicators-0.1.0-next.0",
+    "expiresAt": "2026-09-13T00:14:53Z",
+    "archiveDigest": "sha256:8762d74fcaedf12ef0629e97c9b45935229c42b07829e6c9a5af0ce8d8fc1104",
+    "tarballFileName": "5010-dev-technical-indicators-0.1.0-next.0.tgz",
+    "tarballSha256": "669ee0898bff9b833bb49e22cb8208ff58669efb647089995796ee6b48155acd",
+    "npmIntegrity": "sha512-iL7N79DPpUUGCOBBgLPuGpnEeZOqWbL3Atyg3/VhLNGgd/wsGOg4K5VXK9re202ilriv4SXU6IM0pkoKOqZj4g==",
+    "embeddedSourceCommit": "099edf52740633a200c9d57abf8c7a4310fe1507"
+  },
+  "source": {
+    "ref": "refs/heads/dev",
+    "baseCommit": "e2e679715ec19e8ac6ba9a45b08ea9a467d607c5"
+  },
+  "reason": "pre-mutation-tag-only-completion-failure"
+}

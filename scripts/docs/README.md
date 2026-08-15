@@ -41,7 +41,7 @@ python3 scripts/docs/check-protected-package-tag-admission.py \
 ```
 
 The checker derives package identity from the repository contract, a newly added
-normal, recovery, or tag-only completion intent, JSON or TOML native manifest,
+normal, recovery, tag-only completion, or completion-recovery intent, JSON or TOML native manifest,
 historical intent, and exact Git diff. Normal admission rejects stale, multiple,
 changed, duplicate,
 or conflicting intent; contract/native package identity mismatch;
@@ -69,6 +69,15 @@ embedded source equals the failed publication source. The checker validates the
 recorded attempt-1 tag-present/registry-absent shape but does not claim that
 remote state is true.
 
+Completion-recovery admission requires one newly added direct record and no
+other change. It binds the immutable original completion path and SHA-256,
+original failed-publication and retained-artifact chain, exact failed completion
+source/run/attempt/phase, proof that artifact retrieval and registry mutation did
+not start, unchanged tag-present/registry-absent state, and exact current
+base/ref. The first record must follow the original completion addition; every
+later record must follow the latest recovery addition. Reuse, branching,
+duplicates, stale bases, and multiple-file authorization diffs fail closed.
+
 The checker intentionally does not publish, query Actions, remote tag, or
 registry state, inspect authorization-use history, inspect hosting rulesets or
 permissions, or inspect pull-request approvals. The hosting layer owns the
@@ -82,9 +91,18 @@ A normal rerun or arbitrary workflow input is not publication authority. A
 tag-only completion workflow must additionally mutation-disable every rerun and
 second workflow run before credential setup and must never receive tag mutation
 authority. Its profile fixes separate exact permissions for admission and live
-verification (`contents: read`, `actions: read`, `packages: read`), retained
+verification (`contents: read`, `actions: read`, `pull-requests: read`,
+`packages: read`), retained
 artifact retrieval (`actions: read`), registry mutation (`packages: write`),
 and post-publication verification (`contents: read`, `packages: read`).
+
+Before a completion-recovery authorization PR can merge, the selecting
+repository's foundation PR must execute the profile's zero-mutation live
+permission preflight. It calls every Actions run/job/artifact/history,
+commit-associated pull request, Git tag/ref, and authenticated registry
+version/dist-tag endpoint used by admission with the exact four-read set. The
+preflight fails on HTTP 403 or ambiguity and receives no package-write or tag App
+credential.
 
 The invocation requires the exact base and head commit objects plus their
 ancestry. An adopting checkout MUST fetch sufficient history, normally with

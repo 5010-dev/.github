@@ -20,6 +20,7 @@ index.
 | [ADR-0023](./0023-adopt-protected-package-tag-publication-profile.md) | Accepted | Adopt the opt-in protected package-tag publication profile |
 | [ADR-0024](./0024-separate-dependency-risk-from-routine-automation.md) | Accepted | Separate dependency-risk outcomes from routine-update automation |
 | [ADR-0025](./0025-adopt-retained-artifact-tag-only-package-completion.md) | Accepted | Adopt retained-artifact tag-only package completion |
+| [ADR-0026](./0026-recover-failed-tag-only-completion-with-new-authorization.md) | Accepted | Recover failed tag-only completion with a new authorization |
 
 Organization standards and platform contracts hold the current normative view.
 ADRs explain why those views were accepted.

@@ -30,6 +30,7 @@ required_sources=(
     docs/decisions/0023-adopt-protected-package-tag-publication-profile.md
     docs/decisions/0024-separate-dependency-risk-from-routine-automation.md
     docs/decisions/0025-adopt-retained-artifact-tag-only-package-completion.md
+    docs/decisions/0026-recover-failed-tag-only-completion-with-new-authorization.md
     docs/golden-path/README.md
     docs/golden-path/stack-defaults.md
     docs/golden-path/reference-examples.md
@@ -78,14 +79,18 @@ required_sources=(
     docs/standards/release-versioning/schemas/package-release-intent-v1.schema.json
     docs/standards/release-versioning/schemas/package-release-recovery-intent-v1.schema.json
     docs/standards/release-versioning/schemas/package-release-tag-only-completion-intent-v1.schema.json
+    docs/standards/release-versioning/schemas/package-release-tag-only-completion-recovery-intent-v1.schema.json
     docs/standards/release-versioning/schemas/examples/protected-package-tag-profile-v1.valid.json
     docs/standards/release-versioning/schemas/examples/package-release-intent-v1.valid.json
     docs/standards/release-versioning/schemas/examples/package-release-recovery-intent-v1.valid.json
     docs/standards/release-versioning/schemas/examples/package-release-tag-only-completion-intent-v1.valid.json
+    docs/standards/release-versioning/schemas/examples/package-release-tag-only-completion-recovery-intent-v1.valid.json
     docs/standards/release-versioning/validation/2026-08-12-protected-package-tag-profile.md
     docs/standards/release-versioning/validation/2026-08-13-protected-package-tag-authorization.md
     docs/standards/release-versioning/validation/2026-08-14-protected-package-tag-pre-mutation-recovery.md
     docs/standards/release-versioning/validation/2026-08-14-protected-package-tag-only-completion.md
+    docs/standards/release-versioning/validation/2026-08-15-protected-package-tag-completion-recovery.md
+    docs/standards/release-versioning/validation/fixtures/2026-08-15-core-tag-only-completion-recovery-intent.valid.json
     docs/guides/README.md
     docs/guides/adopting-developer-tooling.md
     docs/guides/bootstrap-new-repository.md

@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-14
+- Last amended: 2026-08-15
 - Owners: `5010-dev/.github` maintainers and selecting repository maintainers
 - Refines: ADR-0023 decisions 10, 15, 16, and 17 for exact tag-only partial publication
 
@@ -65,7 +66,7 @@ under a new protected authorization.
    receives no tag-mutation credential.
 9. Use a distinct completion workflow with four exact job permission sets.
    Admission and live verification receive `contents: read`, `actions: read`,
-   and `packages: read`; retained-artifact retrieval receives only
+   `pull-requests: read`, and `packages: read`; retained-artifact retrieval receives only
    `actions: read`; registry mutation receives only `packages: write`; and
    post-publication verification receives `contents: read` and
    `packages: read`. The registry credential is exposed only to the native
@@ -84,6 +85,10 @@ under a new protected authorization.
     registry mutation authority exists only when the protected one-record
     authorization PR is explicitly merged by an authorized maintainer after
     required checks pass.
+13. A completion run that fails before retained-artifact retrieval and before
+    registry mutation consumes its completion record. It may proceed only under
+    the distinct successor authorization adopted by ADR-0026; rerun and record
+    reuse remain forbidden.
 
 ## Consequences
 

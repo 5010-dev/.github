@@ -11,6 +11,7 @@
     "intentDirectory",
     "recovery",
     "tagOnlyCompletion",
+    "tagOnlyCompletionRecovery",
     "releaseUnit",
     "siblingReleaseUnits",
     "channels",
@@ -76,7 +77,8 @@
         "intentDirectory",
         "workflow",
         "jobPermissions",
-        "publicationEffects"
+        "publicationEffects",
+        "stateOutcomes"
       ],
       "properties": {
         "intentDirectory": {
@@ -99,6 +101,7 @@
               "const": [
                 "contents: read",
                 "actions: read",
+                "pull-requests: read",
                 "packages: read"
               ]
             },
@@ -145,6 +148,223 @@
                 "sibling-release-unit-mutation"
               ]
             }
+          }
+        },
+        "stateOutcomes": {
+          "const": {
+            "exactTagRegistryAbsent": "publish-eligible",
+            "exactPair": "verification-only",
+            "tagMissingMovedOrConflicting": "fail-closed",
+            "registryOnlyMismatchedOrAmbiguous": "fail-closed"
+          }
+        }
+      }
+    },
+    "tagOnlyCompletionRecovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intentDirectory",
+        "workflow",
+        "jobPermissions",
+        "permissionPreflight",
+        "publicationEffects",
+        "stateOutcomes"
+      ],
+      "properties": {
+        "intentDirectory": {
+          "$ref": "#/$defs/plainRelativePath"
+        },
+        "workflow": {
+          "$ref": "#/$defs/workflowPath"
+        },
+        "jobPermissions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "admissionAndLiveVerification",
+            "retainedArtifactRetrieval",
+            "registryMutation",
+            "postPublicationVerification"
+          ],
+          "properties": {
+            "admissionAndLiveVerification": {
+              "const": [
+                "contents: read",
+                "actions: read",
+                "pull-requests: read",
+                "packages: read"
+              ]
+            },
+            "retainedArtifactRetrieval": {
+              "const": [
+                "actions: read"
+              ]
+            },
+            "registryMutation": {
+              "const": [
+                "packages: write"
+              ]
+            },
+            "postPublicationVerification": {
+              "const": [
+                "contents: read",
+                "packages: read"
+              ]
+            }
+          }
+        },
+        "permissionPreflight": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "workflow",
+            "jobPermissions",
+            "endpointPermissions",
+            "credentials",
+            "publicationEffects"
+          ],
+          "properties": {
+            "workflow": {
+              "$ref": "#/$defs/workflowPath"
+            },
+            "jobPermissions": {
+              "const": [
+                "contents: read",
+                "actions: read",
+                "pull-requests: read",
+                "packages: read"
+              ]
+            },
+            "endpointPermissions": {
+              "type": "array",
+              "minItems": 7,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/endpointPermission"
+              },
+              "allOf": [
+                {
+                  "contains": {
+                    "const": {
+                      "endpoint": "actions-run-metadata",
+                      "permission": "actions: read"
+                    }
+                  }
+                },
+                {
+                  "contains": {
+                    "const": {
+                      "endpoint": "actions-job-metadata",
+                      "permission": "actions: read"
+                    }
+                  }
+                },
+                {
+                  "contains": {
+                    "const": {
+                      "endpoint": "actions-artifact-metadata",
+                      "permission": "actions: read"
+                    }
+                  }
+                },
+                {
+                  "contains": {
+                    "const": {
+                      "endpoint": "completion-workflow-run-history",
+                      "permission": "actions: read"
+                    }
+                  }
+                },
+                {
+                  "contains": {
+                    "const": {
+                      "endpoint": "commit-associated-pull-requests",
+                      "permission": "pull-requests: read"
+                    }
+                  }
+                },
+                {
+                  "contains": {
+                    "const": {
+                      "endpoint": "git-tag-ref",
+                      "permission": "contents: read"
+                    }
+                  }
+                },
+                {
+                  "contains": {
+                    "const": {
+                      "endpoint": "registry-version-and-dist-tag",
+                      "permission": "packages: read"
+                    }
+                  }
+                }
+              ]
+            },
+            "credentials": {
+              "const": {
+                "allowed": [
+                  "github-token"
+                ],
+                "forbidden": [
+                  "tag-app-credential",
+                  "registry-write-credential"
+                ]
+              }
+            },
+            "publicationEffects": {
+              "const": {
+                "allowed": [],
+                "forbidden": [
+                  "registry-package-publication",
+                  "package-tag-creation",
+                  "branch-push",
+                  "source-commit",
+                  "artifact-creation",
+                  "service-deployment",
+                  "application-deployment",
+                  "oci-publication",
+                  "object-storage-publication",
+                  "sibling-release-unit-mutation"
+                ]
+              }
+            }
+          }
+        },
+        "publicationEffects": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "allowed",
+            "forbidden"
+          ],
+          "properties": {
+            "allowed": {
+              "const": [
+                "registry-package-publication"
+              ]
+            },
+            "forbidden": {
+              "const": [
+                "package-tag-creation",
+                "branch-push",
+                "source-commit",
+                "service-deployment",
+                "application-deployment",
+                "oci-publication",
+                "object-storage-publication",
+                "sibling-release-unit-mutation"
+              ]
+            }
+          }
+        },
+        "stateOutcomes": {
+          "const": {
+            "exactTagRegistryAbsent": "publish-eligible",
+            "exactPair": "verification-only",
+            "tagMissingMovedOrConflicting": "fail-closed",
+            "registryOnlyMismatchedOrAmbiguous": "fail-closed"
           }
         }
       }
@@ -474,6 +694,30 @@
     "workflowPath": {
       "type": "string",
       "pattern": "^\\.github/workflows/[^/\\u0000-\\u001F\\u007F]+\\.ya?ml$"
+    },
+    "endpointPermission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "endpoint",
+        "permission"
+      ],
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+        },
+        "permission": {
+          "enum": [
+            "contents: read",
+            "actions: read",
+            "pull-requests: read",
+            "packages: read"
+          ]
+        }
+      }
     }
   }
 }

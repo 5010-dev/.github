@@ -108,6 +108,24 @@ dist-tag all match, every run is verification-only. Any mismatch, registry-only
 state, unavailable or expired artifact, ambiguous query, or consumed
 authorization fails closed without mutation.
 
+If that first completion run/attempt `1` fails during admission/live
+verification before retained-artifact retrieval and registry mutation, the
+completion record is consumed. Another same-version attempt requires one new
+PR-merged `package-release-tag-only-completion-recovery-intent/v1` record whose
+exact diff changes no other path. The first record names the immutable original
+completion path and bytes; every later record names the latest recovery source
+and failed run. Rerun, second-run mutation, predecessor reuse, and branched
+successors remain forbidden.
+
+Before any completion-recovery authorization PR can merge, the repository's
+implementation/foundation PR MUST run a zero-mutation live preflight with the
+same read-only admission permissions. It must successfully call the Actions run,
+job, artifact and completion-history endpoints, commit-associated pull requests,
+Git tag/ref, and authenticated registry version/dist-tag queries used by live
+admission. HTTP 403 or ambiguous responses fail the required check. The
+preflight receives no package write or tag App credential and creates no
+artifact or release/deployment effect.
+
 ## Native client distribution
 
 Native client automation MUST treat signed build production, store submission,
@@ -157,6 +175,10 @@ registry, archive, or record operations are permanent.
   then failed before registry publication MAY complete only the absent registry
   version through one unused PR-mediated tag-only completion record and the
   original run's retained artifact. It never rebuilds or mutates the tag.
+- A tag-only completion run that failed before retained-artifact retrieval and
+  registry mutation MAY start another attempt only from a new append-only,
+  PR-mediated completion-recovery record. The original completion is consumed;
+  each later pre-mutation failure requires another direct successor record.
 - After a package version, tag, image digest, accepted native build, immutable
   release, or immutable research record is published or finalized, recovery
   MUST NOT overwrite it. Use the applicable correction, successor, deprecate,
@@ -205,8 +227,8 @@ deterministic release logic remains locally or independently executable.
   `packages: read`, and `packages: write` exists only in the package publication
   job. Validation and consumer jobs MUST NOT receive package write access.
 - A tag-only completion workflow uses four exact job permission sets: admission
-  and live verification receive `contents: read`, `actions: read`, and
-  `packages: read`; retained-artifact retrieval receives only `actions: read`;
+  and live verification receive `contents: read`, `actions: read`,
+  `pull-requests: read`, and `packages: read`; retained-artifact retrieval receives only `actions: read`;
   registry mutation receives only `packages: write`; and post-publication
   verification receives `contents: read` and `packages: read`. The registry
   credential is exposed only to the exact native publish step. Admission and
@@ -214,6 +236,12 @@ deterministic release logic remains locally or independently executable.
   mutation job; that job re-reads only the registry immediately before publish.
   The tag-mutation App credential or equivalent tag authority MUST NOT be
   minted, forwarded, or referenced anywhere in the completion workflow.
+- The completion permission preflight uses only that same four-read admission
+  set and executes in the repository validation workflow. Its endpoint inventory
+  maps Actions run/job/artifact/history to `actions: read`, commit-associated
+  pull requests to `pull-requests: read`, Git tag/ref to `contents: read`, and
+  authenticated registry version/dist-tag queries to `packages: read`. Any write
+  permission, tag App credential, or mutation effect is non-conformant.
 - Secrets MUST be forwarded by name. `secrets: inherit` MUST NOT be the default.
 - OIDC or repository-scoped `GITHUB_TOKEN` SHOULD replace long-lived publication
   credentials when the registry or cloud supports it.
