@@ -232,6 +232,11 @@ retained artifact. The tag is verified and never moved, deleted, or recreated;
 a rebuild, manual publish, rerun mutation, or second workflow-run mutation is
 forbidden. Registry-only or conflicting state remains fail closed, while an
 already identical tag/version pair is verification-only.
+If that completion run itself fails before retained-artifact retrieval and
+registry mutation, its authority is consumed. Another attempt requires the
+profile's separate append-only completion-recovery record and a successful
+zero-mutation live permission preflight; rerun and record reuse remain
+forbidden.
 
 Organization release units must follow the
 [Release and Versioning Standard](https://github.com/5010-dev/.github/blob/main/docs/standards/release-versioning/README.md).

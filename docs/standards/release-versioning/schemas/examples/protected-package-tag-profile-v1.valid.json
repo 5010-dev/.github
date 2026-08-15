@@ -18,6 +18,7 @@
       "admissionAndLiveVerification": [
         "contents: read",
         "actions: read",
+        "pull-requests: read",
         "packages: read"
       ],
       "retainedArtifactRetrieval": [
@@ -45,6 +46,118 @@
         "object-storage-publication",
         "sibling-release-unit-mutation"
       ]
+    },
+    "stateOutcomes": {
+      "exactTagRegistryAbsent": "publish-eligible",
+      "exactPair": "verification-only",
+      "tagMissingMovedOrConflicting": "fail-closed",
+      "registryOnlyMismatchedOrAmbiguous": "fail-closed"
+    }
+  },
+  "tagOnlyCompletionRecovery": {
+    "intentDirectory": ".github/release-tag-only-completion-recovery-intents",
+    "workflow": ".github/workflows/recover-browser-package-completion.yml",
+    "jobPermissions": {
+      "admissionAndLiveVerification": [
+        "contents: read",
+        "actions: read",
+        "pull-requests: read",
+        "packages: read"
+      ],
+      "retainedArtifactRetrieval": [
+        "actions: read"
+      ],
+      "registryMutation": [
+        "packages: write"
+      ],
+      "postPublicationVerification": [
+        "contents: read",
+        "packages: read"
+      ]
+    },
+    "permissionPreflight": {
+      "workflow": ".github/workflows/validate-browser-package.yml",
+      "jobPermissions": [
+        "contents: read",
+        "actions: read",
+        "pull-requests: read",
+        "packages: read"
+      ],
+      "endpointPermissions": [
+        {
+          "endpoint": "actions-run-metadata",
+          "permission": "actions: read"
+        },
+        {
+          "endpoint": "actions-job-metadata",
+          "permission": "actions: read"
+        },
+        {
+          "endpoint": "actions-artifact-metadata",
+          "permission": "actions: read"
+        },
+        {
+          "endpoint": "completion-workflow-run-history",
+          "permission": "actions: read"
+        },
+        {
+          "endpoint": "commit-associated-pull-requests",
+          "permission": "pull-requests: read"
+        },
+        {
+          "endpoint": "git-tag-ref",
+          "permission": "contents: read"
+        },
+        {
+          "endpoint": "registry-version-and-dist-tag",
+          "permission": "packages: read"
+        }
+      ],
+      "credentials": {
+        "allowed": [
+          "github-token"
+        ],
+        "forbidden": [
+          "tag-app-credential",
+          "registry-write-credential"
+        ]
+      },
+      "publicationEffects": {
+        "allowed": [],
+        "forbidden": [
+          "registry-package-publication",
+          "package-tag-creation",
+          "branch-push",
+          "source-commit",
+          "artifact-creation",
+          "service-deployment",
+          "application-deployment",
+          "oci-publication",
+          "object-storage-publication",
+          "sibling-release-unit-mutation"
+        ]
+      }
+    },
+    "publicationEffects": {
+      "allowed": [
+        "registry-package-publication"
+      ],
+      "forbidden": [
+        "package-tag-creation",
+        "branch-push",
+        "source-commit",
+        "service-deployment",
+        "application-deployment",
+        "oci-publication",
+        "object-storage-publication",
+        "sibling-release-unit-mutation"
+      ]
+    },
+    "stateOutcomes": {
+      "exactTagRegistryAbsent": "publish-eligible",
+      "exactPair": "verification-only",
+      "tagMissingMovedOrConflicting": "fail-closed",
+      "registryOnlyMismatchedOrAmbiguous": "fail-closed"
     }
   },
   "releaseUnit": {

@@ -2,8 +2,8 @@
 """Fail-closed admission checker for protected package-tag publication.
 
 The checker is intentionally dependency-free. It validates one repository-local
-profile contract and derives normal, pre-mutation recovery, or tag-only
-completion publication identity from an exact Git diff. It does not publish,
+profile contract and derives normal, pre-mutation recovery, tag-only completion,
+or pre-mutation completion-recovery identity from an exact Git diff. It does not publish,
 inspect Actions or authorization-use history, inspect hosting rulesets or
 pull-request approvals, download retained artifacts, or query a package registry.
 """
@@ -16,6 +16,7 @@ import binascii
 import copy
 import datetime as dt
 import fnmatch
+import hashlib
 import json
 import re
 import subprocess
@@ -77,6 +78,7 @@ EXPECTED_TAG_ONLY_COMPLETION = {
         "admissionAndLiveVerification": [
             "contents: read",
             "actions: read",
+            "pull-requests: read",
             "packages: read",
         ],
         "retainedArtifactRetrieval": ["actions: read"],
@@ -99,6 +101,62 @@ EXPECTED_TAG_ONLY_COMPLETION = {
             "sibling-release-unit-mutation",
         ],
     },
+    "stateOutcomes": {
+        "exactTagRegistryAbsent": "publish-eligible",
+        "exactPair": "verification-only",
+        "tagMissingMovedOrConflicting": "fail-closed",
+        "registryOnlyMismatchedOrAmbiguous": "fail-closed",
+    },
+}
+EXPECTED_COMPLETION_PERMISSION_PREFLIGHT = {
+    "jobPermissions": [
+        "contents: read",
+        "actions: read",
+        "pull-requests: read",
+        "packages: read",
+    ],
+    "endpointPermissions": [
+        {"endpoint": "actions-run-metadata", "permission": "actions: read"},
+        {"endpoint": "actions-job-metadata", "permission": "actions: read"},
+        {"endpoint": "actions-artifact-metadata", "permission": "actions: read"},
+        {
+            "endpoint": "completion-workflow-run-history",
+            "permission": "actions: read",
+        },
+        {
+            "endpoint": "commit-associated-pull-requests",
+            "permission": "pull-requests: read",
+        },
+        {"endpoint": "git-tag-ref", "permission": "contents: read"},
+        {
+            "endpoint": "registry-version-and-dist-tag",
+            "permission": "packages: read",
+        },
+    ],
+    "credentials": {
+        "allowed": ["github-token"],
+        "forbidden": ["tag-app-credential", "registry-write-credential"],
+    },
+    "publicationEffects": {
+        "allowed": [],
+        "forbidden": [
+            "registry-package-publication",
+            "package-tag-creation",
+            "branch-push",
+            "source-commit",
+            "artifact-creation",
+            "service-deployment",
+            "application-deployment",
+            "oci-publication",
+            "object-storage-publication",
+            "sibling-release-unit-mutation",
+        ],
+    },
+}
+EXPECTED_TAG_ONLY_COMPLETION_RECOVERY = {
+    "jobPermissions": EXPECTED_TAG_ONLY_COMPLETION["jobPermissions"],
+    "publicationEffects": EXPECTED_TAG_ONLY_COMPLETION["publicationEffects"],
+    "stateOutcomes": EXPECTED_TAG_ONLY_COMPLETION["stateOutcomes"],
 }
 REGULAR_FILE_MODES = {"100644", "100755"}
 
@@ -198,6 +256,7 @@ def validate_contract(document: Any) -> dict[str, Any]:
         "intentDirectory",
         "recovery",
         "tagOnlyCompletion",
+        "tagOnlyCompletionRecovery",
         "releaseUnit",
         "siblingReleaseUnits",
         "channels",
@@ -234,7 +293,13 @@ def validate_contract(document: Any) -> dict[str, Any]:
     completion = require_object(contract["tagOnlyCompletion"], "tagOnlyCompletion")
     require_exact_keys(
         completion,
-        {"intentDirectory", "workflow", "jobPermissions", "publicationEffects"},
+        {
+            "intentDirectory",
+            "workflow",
+            "jobPermissions",
+            "publicationEffects",
+            "stateOutcomes",
+        },
         "tagOnlyCompletion",
     )
     completion["intentDirectory"] = validate_relative(
@@ -257,9 +322,138 @@ def validate_contract(document: Any) -> dict[str, Any]:
         {
             "jobPermissions": completion["jobPermissions"],
             "publicationEffects": completion["publicationEffects"],
+            "stateOutcomes": completion["stateOutcomes"],
         }
         == EXPECTED_TAG_ONLY_COMPLETION,
         "tagOnlyCompletion must preserve exact job-scoped permissions and registry-only effects",
+    )
+
+    completion_recovery = require_object(
+        contract["tagOnlyCompletionRecovery"], "tagOnlyCompletionRecovery"
+    )
+    require_exact_keys(
+        completion_recovery,
+        {
+            "intentDirectory",
+            "workflow",
+            "jobPermissions",
+            "permissionPreflight",
+            "publicationEffects",
+            "stateOutcomes",
+        },
+        "tagOnlyCompletionRecovery",
+    )
+    completion_recovery["intentDirectory"] = validate_relative(
+        completion_recovery["intentDirectory"],
+        "tagOnlyCompletionRecovery.intentDirectory",
+    )
+    completion_recovery["workflow"] = validate_workflow(
+        completion_recovery["workflow"], "tagOnlyCompletionRecovery.workflow"
+    )
+    for label, other_directory in (
+        ("release", contract["intentDirectory"]),
+        ("recovery", recovery["intentDirectory"]),
+        ("tag-only completion", completion["intentDirectory"]),
+    ):
+        require(
+            completion_recovery["intentDirectory"] != other_directory
+            and not completion_recovery["intentDirectory"].startswith(
+                f"{other_directory}/"
+            )
+            and not other_directory.startswith(
+                f"{completion_recovery['intentDirectory']}/"
+            ),
+            f"tag-only completion recovery and {label} intent directories must be distinct and non-overlapping",
+        )
+    require(
+        {
+            "jobPermissions": completion_recovery["jobPermissions"],
+            "publicationEffects": completion_recovery["publicationEffects"],
+            "stateOutcomes": completion_recovery["stateOutcomes"],
+        }
+        == EXPECTED_TAG_ONLY_COMPLETION_RECOVERY,
+        "tagOnlyCompletionRecovery must preserve exact job-scoped permissions, state outcomes, and registry-only effects",
+    )
+    preflight = require_object(
+        completion_recovery["permissionPreflight"],
+        "tagOnlyCompletionRecovery.permissionPreflight",
+    )
+    require_exact_keys(
+        preflight,
+        {
+            "workflow",
+            "jobPermissions",
+            "endpointPermissions",
+            "credentials",
+            "publicationEffects",
+        },
+        "tagOnlyCompletionRecovery.permissionPreflight",
+    )
+    preflight["workflow"] = validate_workflow(
+        preflight["workflow"],
+        "tagOnlyCompletionRecovery.permissionPreflight.workflow",
+    )
+    require(
+        {
+            key: preflight[key]
+            for key in (
+                "jobPermissions",
+                "credentials",
+                "publicationEffects",
+            )
+        }
+        == {
+            key: EXPECTED_COMPLETION_PERMISSION_PREFLIGHT[key]
+            for key in (
+                "jobPermissions",
+                "credentials",
+                "publicationEffects",
+            )
+        },
+        "completion permission preflight must preserve the exact read-only permissions and zero-mutation boundary",
+    )
+    endpoint_permissions = preflight["endpointPermissions"]
+    require(
+        isinstance(endpoint_permissions, list) and bool(endpoint_permissions),
+        "completion permission preflight endpoint inventory must be a non-empty array",
+    )
+    endpoint_names: set[str] = set()
+    allowed_preflight_permissions = set(preflight["jobPermissions"])
+    for index, raw_endpoint in enumerate(endpoint_permissions):
+        endpoint = require_object(
+            raw_endpoint,
+            f"tagOnlyCompletionRecovery.permissionPreflight.endpointPermissions[{index}]",
+        )
+        require_exact_keys(
+            endpoint,
+            {"endpoint", "permission"},
+            f"tagOnlyCompletionRecovery.permissionPreflight.endpointPermissions[{index}]",
+        )
+        endpoint_name = require_string(
+            endpoint["endpoint"],
+            f"tagOnlyCompletionRecovery.permissionPreflight.endpointPermissions[{index}].endpoint",
+        )
+        require(
+            len(endpoint_name) <= 128 and ID_RE.fullmatch(endpoint_name) is not None,
+            "completion permission preflight endpoint names must be lowercase kebab-case",
+        )
+        require(
+            endpoint_name not in endpoint_names,
+            "completion permission preflight endpoint inventory must not contain duplicates",
+        )
+        endpoint_names.add(endpoint_name)
+        require(
+            endpoint["permission"] in allowed_preflight_permissions,
+            "completion permission preflight endpoints may use only declared read permissions",
+        )
+    require(
+        all(
+            required_endpoint in endpoint_permissions
+            for required_endpoint in EXPECTED_COMPLETION_PERMISSION_PREFLIGHT[
+                "endpointPermissions"
+            ]
+        ),
+        "completion permission preflight must include every required endpoint-to-permission mapping",
     )
 
     unit = require_object(contract["releaseUnit"], "releaseUnit")
@@ -298,6 +492,20 @@ def validate_contract(document: Any) -> dict[str, Any]:
             recovery["workflow"],
         },
         "tag-only completion workflow must be distinct from validation, publication, and recovery workflows",
+    )
+    require(
+        completion_recovery["workflow"]
+        not in {
+            unit["validationWorkflow"],
+            unit["publicationWorkflow"],
+            recovery["workflow"],
+            completion["workflow"],
+        },
+        "tag-only completion recovery workflow must be distinct from validation, publication, recovery, and completion workflows",
+    )
+    require(
+        preflight["workflow"] == unit["validationWorkflow"],
+        "completion permission preflight must run in the repository validation workflow",
     )
     unit["releasePreparationPaths"] = validate_patterns(unit["releasePreparationPaths"], "releaseUnit.releasePreparationPaths")
 
@@ -396,9 +604,24 @@ def validate_contract(document: Any) -> dict[str, Any]:
         not any(path_matches(completion_probe, pattern) for pattern in preparation),
         "releasePreparationPaths must not admit tag-only completion authorization records",
     )
+    completion_recovery_probe = (
+        f"{completion_recovery['intentDirectory']}/completion-recovery.json"
+    )
+    require(
+        not any(
+            path_matches(completion_recovery_probe, pattern)
+            for pattern in preparation
+        ),
+        "releasePreparationPaths must not admit tag-only completion recovery authorization records",
+    )
     reject_sibling_mutation(
         contract,
-        {intent_probe, recovery_probe, completion_probe},
+        {
+            intent_probe,
+            recovery_probe,
+            completion_probe,
+            completion_recovery_probe,
+        },
     )
     return contract
 
@@ -724,6 +947,172 @@ def validate_tag_only_completion_intent(
     require(
         intent["reason"] == "tag-only-partial-publication",
         f"{label}.reason must select tag-only partial publication",
+    )
+    return intent
+
+
+def validate_tag_only_completion_recovery_intent(
+    document: Any, label: str = "tag-only completion recovery intent"
+) -> dict[str, Any]:
+    intent = require_object(document, label)
+    required = {
+        "schemaVersion",
+        "releaseUnit",
+        "channel",
+        "version",
+        "originalIntentPath",
+        "tag",
+        "distTag",
+        "originalPublication",
+        "originalCompletionIntent",
+        "failedCompletion",
+        "retainedArtifact",
+        "source",
+        "reason",
+    }
+    require_exact_keys(intent, required, label, {"$schema"})
+    if "$schema" in intent:
+        require_string(intent["$schema"], f"{label}.$schema")
+    require(
+        intent["schemaVersion"]
+        == "package-release-tag-only-completion-recovery-intent/v1",
+        f"{label} has an unsupported schemaVersion",
+    )
+
+    shared = validate_tag_only_completion_intent(
+        {
+            "schemaVersion": "package-release-tag-only-completion-intent/v1",
+            "releaseUnit": intent["releaseUnit"],
+            "channel": intent["channel"],
+            "version": intent["version"],
+            "originalIntentPath": intent["originalIntentPath"],
+            "tag": intent["tag"],
+            "distTag": intent["distTag"],
+            "failedPublication": intent["originalPublication"],
+            "retainedArtifact": intent["retainedArtifact"],
+            "source": intent["source"],
+            "reason": "tag-only-partial-publication",
+        },
+        f"{label} shared completion identity",
+    )
+    for key in (
+        "releaseUnit",
+        "channel",
+        "version",
+        "originalIntentPath",
+        "tag",
+        "distTag",
+        "retainedArtifact",
+        "source",
+    ):
+        intent[key] = shared[key]
+    intent["originalPublication"] = shared["failedPublication"]
+
+    original_completion = require_object(
+        intent["originalCompletionIntent"], f"{label}.originalCompletionIntent"
+    )
+    require_exact_keys(
+        original_completion,
+        {"path", "sha256"},
+        f"{label}.originalCompletionIntent",
+    )
+    original_completion["path"] = validate_relative(
+        original_completion["path"], f"{label}.originalCompletionIntent.path"
+    )
+    require(
+        original_completion["path"].endswith(".json"),
+        f"{label}.originalCompletionIntent.path must name a JSON file",
+    )
+    require(
+        isinstance(original_completion["sha256"], str)
+        and SHA256_RE.fullmatch(original_completion["sha256"]) is not None,
+        f"{label}.originalCompletionIntent.sha256 must be 64 lowercase hex characters",
+    )
+
+    failed = require_object(intent["failedCompletion"], f"{label}.failedCompletion")
+    require_exact_keys(
+        failed,
+        {
+            "sourceCommit",
+            "workflowRunUrl",
+            "runAttempt",
+            "outcome",
+            "failurePhase",
+            "retainedArtifactRetrievalState",
+            "registryMutationState",
+            "postPublicationVerificationState",
+            "tagState",
+            "registryVersionState",
+            "authorization",
+        },
+        f"{label}.failedCompletion",
+    )
+    require(
+        isinstance(failed["sourceCommit"], str)
+        and FULL_SHA_RE.fullmatch(failed["sourceCommit"]) is not None,
+        f"{label}.failedCompletion.sourceCommit must be a lowercase full commit SHA",
+    )
+    run_url = require_string(
+        failed["workflowRunUrl"], f"{label}.failedCompletion.workflowRunUrl"
+    )
+    require(
+        WORKFLOW_RUN_URL_RE.fullmatch(run_url) is not None,
+        f"{label}.failedCompletion.workflowRunUrl must identify an exact GitHub Actions run",
+    )
+    require(
+        isinstance(failed["runAttempt"], int)
+        and not isinstance(failed["runAttempt"], bool)
+        and failed["runAttempt"] == 1,
+        f"{label} requires failed completion run attempt 1",
+    )
+    require(
+        failed["outcome"] == "terminal-failure",
+        f"{label} requires a terminal failed completion",
+    )
+    require(
+        failed["failurePhase"] == "admission-live-verification",
+        f"{label} requires failure during admission/live verification",
+    )
+    for state_field in (
+        "retainedArtifactRetrievalState",
+        "registryMutationState",
+        "postPublicationVerificationState",
+    ):
+        require(
+            failed[state_field] == "not-started",
+            f"{label} requires {state_field} to remain not-started",
+        )
+    require(
+        failed["tagState"] == "present",
+        f"{label} requires the immutable package tag to remain present",
+    )
+    require(
+        failed["registryVersionState"] == "absent",
+        f"{label} requires the exact registry version to remain absent",
+    )
+    authorization = require_object(
+        failed["authorization"], f"{label}.failedCompletion.authorization"
+    )
+    require_exact_keys(
+        authorization,
+        {"type", "path"},
+        f"{label}.failedCompletion.authorization",
+    )
+    require(
+        authorization["type"]
+        in {"tag-only-completion", "tag-only-completion-recovery"},
+        f"{label}.failedCompletion.authorization.type is invalid",
+    )
+    authorization["path"] = validate_relative(
+        authorization["path"], f"{label}.failedCompletion.authorization.path"
+    )
+    require(
+        authorization["path"].endswith(".json"),
+        f"{label}.failedCompletion.authorization.path must name a JSON file",
+    )
+    require(
+        intent["reason"] == "pre-mutation-tag-only-completion-failure",
+        f"{label}.reason must select pre-mutation tag-only completion failure",
     )
     return intent
 
@@ -1869,6 +2258,375 @@ def admit_tag_only_completion(
     }
 
 
+def admit_tag_only_completion_recovery(
+    repo: Path,
+    contract_path: str,
+    contract: dict[str, Any],
+    base: str,
+    head: str,
+    event_ref: str,
+    entries: list[DiffEntry],
+) -> dict[str, Any]:
+    completion = contract["tagOnlyCompletion"]
+    recovery = contract["tagOnlyCompletionRecovery"]
+    unit = contract["releaseUnit"]
+    require(
+        len(entries) == 1,
+        "tag-only completion recovery authorization diff must add exactly one recovery record and no other paths",
+    )
+    entry = entries[0]
+    require(
+        entry.status == "A" and len(entry.paths) == 1,
+        "tag-only completion recovery authorization must be newly added; modification, rename, copy, or deletion is reuse",
+    )
+    recovery_path = entry.paths[0]
+    require(
+        PurePosixPath(recovery_path).parent
+        == PurePosixPath(recovery["intentDirectory"]),
+        "tag-only completion recovery authorization must be directly inside tagOnlyCompletionRecovery.intentDirectory",
+    )
+    require(
+        recovery_path.endswith(".json"),
+        "tag-only completion recovery authorization must be a JSON file",
+    )
+    reject_sibling_mutation(contract, {recovery_path})
+    require_regular_file(
+        repo, head, recovery_path, "tag-only completion recovery intent"
+    )
+    authorization = validate_tag_only_completion_recovery_intent(
+        git_json(repo, head, recovery_path, recovery_path), recovery_path
+    )
+    require(
+        authorization["releaseUnit"] == unit["id"],
+        "tag-only completion recovery intent targets a different release unit",
+    )
+    require(
+        authorization["source"]["ref"] == event_ref,
+        "tag-only completion recovery intent source ref does not match the event ref",
+    )
+    require(
+        authorization["source"]["baseCommit"] == base,
+        "tag-only completion recovery intent is stale: source baseCommit does not equal the event before commit",
+    )
+
+    original_completion_path = authorization["originalCompletionIntent"]["path"]
+    require(
+        PurePosixPath(original_completion_path).parent
+        == PurePosixPath(completion["intentDirectory"]),
+        "original tag-only completion intent must be directly inside tagOnlyCompletion.intentDirectory",
+    )
+    require_regular_file(
+        repo, head, original_completion_path, "original tag-only completion intent"
+    )
+    original_completion_bytes = git(
+        repo, "show", f"{head}:{original_completion_path}", binary=True
+    )
+    require(
+        hashlib.sha256(original_completion_bytes).hexdigest()
+        == authorization["originalCompletionIntent"]["sha256"],
+        "original tag-only completion intent bytes do not match the bound SHA-256",
+    )
+    original_completion = validate_tag_only_completion_intent(
+        git_json(
+            repo,
+            head,
+            original_completion_path,
+            original_completion_path,
+        ),
+        original_completion_path,
+    )
+    require(
+        authorization["releaseUnit"] == original_completion["releaseUnit"]
+        and authorization["channel"] == original_completion["channel"]
+        and authorization["version"] == original_completion["version"]
+        and authorization["originalIntentPath"]
+        == original_completion["originalIntentPath"]
+        and authorization["tag"] == original_completion["tag"]
+        and authorization["distTag"] == original_completion["distTag"],
+        "original tag-only completion intent does not match the recovery identity",
+    )
+    require(
+        authorization["originalPublication"]
+        == original_completion["failedPublication"],
+        "original failed publication chain does not match the completion intent",
+    )
+    require(
+        authorization["retainedArtifact"]
+        == original_completion["retainedArtifact"],
+        "retained artifact chain does not match the completion intent",
+    )
+
+    original_completion_history = path_change_commits(
+        repo,
+        head,
+        original_completion_path,
+        "original tag-only completion intent history",
+    )
+    require(
+        len(original_completion_history) == 1,
+        "original tag-only completion intent must be added once and remain append-only",
+    )
+    original_completion_source = original_completion_history[0]
+    original_completion_base = original_completion["source"]["baseCommit"]
+    original_admission = admit_tag_only_completion(
+        repo,
+        contract_path,
+        contract,
+        original_completion_base,
+        original_completion_source,
+        event_ref,
+        parse_diff(repo, original_completion_base, original_completion_source),
+    )
+    require(
+        original_admission["completionIntentPath"] == original_completion_path,
+        "original completion source is not the exact admitted tag-only completion authorization",
+    )
+
+    failed = authorization["failedCompletion"]
+    failed_source = failed["sourceCommit"]
+    require(
+        git(repo, "rev-parse", "--verify", f"{failed_source}^{{commit}}").strip()
+        == failed_source,
+        "failed completion source does not resolve to the exact commit",
+    )
+    require(
+        is_ancestor(repo, failed_source, base),
+        "failed completion source must be an ancestor of the recovery base",
+    )
+    protected_source_history = git_commit_list(
+        repo, "--first-parent", head, label="protected source first-parent history"
+    )
+    require(
+        failed_source in protected_source_history,
+        "failed completion source must be on the protected source first-parent history",
+    )
+
+    predecessor = failed["authorization"]
+    predecessor_path = predecessor["path"]
+    if predecessor["type"] == "tag-only-completion":
+        require(
+            predecessor_path == original_completion_path,
+            "initial completion recovery must name the immutable original completion intent",
+        )
+        require(
+            failed_source == original_completion_source,
+            "failed completion source must be the exact original completion authorization source",
+        )
+    else:
+        require(
+            PurePosixPath(predecessor_path).parent
+            == PurePosixPath(recovery["intentDirectory"]),
+            "predecessor completion recovery must be directly inside tagOnlyCompletionRecovery.intentDirectory",
+        )
+        require_regular_file(
+            repo,
+            failed_source,
+            predecessor_path,
+            "failed completion predecessor recovery intent",
+        )
+        require_regular_file(
+            repo, head, predecessor_path, "current predecessor recovery intent"
+        )
+        require(
+            git(repo, "show", f"{failed_source}:{predecessor_path}", binary=True)
+            == git(repo, "show", f"{head}:{predecessor_path}", binary=True),
+            "predecessor completion recovery intent must remain byte-identical",
+        )
+        require(
+            not path_change_commits(
+                repo,
+                head,
+                predecessor_path,
+                "predecessor completion recovery intent history",
+                start=failed_source,
+            ),
+            "predecessor completion recovery intent must remain append-only",
+        )
+        predecessor_record = validate_tag_only_completion_recovery_intent(
+            git_json(repo, failed_source, predecessor_path, predecessor_path),
+            predecessor_path,
+        )
+        require(
+            predecessor_record["releaseUnit"] == authorization["releaseUnit"]
+            and predecessor_record["channel"] == authorization["channel"]
+            and predecessor_record["version"] == authorization["version"]
+            and predecessor_record["originalCompletionIntent"]
+            == authorization["originalCompletionIntent"]
+            and predecessor_record["originalPublication"]
+            == authorization["originalPublication"]
+            and predecessor_record["retainedArtifact"]
+            == authorization["retainedArtifact"],
+            "predecessor completion recovery does not match the immutable recovery chain",
+        )
+        predecessor_base = predecessor_record["source"]["baseCommit"]
+        admitted_predecessor = admit_tag_only_completion_recovery(
+            repo,
+            contract_path,
+            contract,
+            predecessor_base,
+            failed_source,
+            event_ref,
+            parse_diff(repo, predecessor_base, failed_source),
+        )
+        require(
+            admitted_predecessor["completionRecoveryIntentPath"]
+            == predecessor_path,
+            "failed completion source is not the exact admitted predecessor recovery authorization",
+        )
+
+    base_manifest, base_package_name, base_version = read_native_manifest(
+        repo, base, unit, "tag-only completion recovery base version source"
+    )
+    head_manifest, head_package_name, head_version = read_native_manifest(
+        repo, head, unit, "tag-only completion recovery head version source"
+    )
+    require(
+        base_manifest == head_manifest,
+        "native manifest must remain unchanged during tag-only completion recovery authorization",
+    )
+    require(
+        base_package_name == head_package_name == unit["packageName"],
+        "native manifest package name does not match releaseUnit.packageName",
+    )
+    require(
+        isinstance(base_version, str) and SEMVER_RE.fullmatch(base_version) is not None,
+        "tag-only completion recovery base manifest version is not exact SemVer",
+    )
+    require(
+        base_version == head_version == authorization["version"],
+        "tag-only completion recovery version does not match the unchanged native manifest",
+    )
+    rendered_tag = unit["tagPattern"].replace("{version}", authorization["version"])
+    require(
+        authorization["tag"] == rendered_tag,
+        "tag-only completion recovery tag does not match the derived package tag",
+    )
+    expected_dist_tag = contract["channels"][authorization["channel"]]["distTag"]
+    require(
+        authorization["distTag"] == expected_dist_tag,
+        "tag-only completion recovery dist-tag does not match the profile channel",
+    )
+
+    recovery_paths = tree_paths(
+        repo,
+        head,
+        recovery["intentDirectory"],
+        "tag-only completion recovery intent directory",
+    )
+    historical_recoveries: list[tuple[str, dict[str, Any], str]] = []
+    matching_failed_runs: list[str] = []
+    for historical_path in recovery_paths:
+        validate_relative(
+            historical_path,
+            "historical tag-only completion recovery path",
+            allow_glob=True,
+        )
+        require(
+            PurePosixPath(historical_path).parent
+            == PurePosixPath(recovery["intentDirectory"])
+            and historical_path.endswith(".json"),
+            "tag-only completion recovery directory may contain only direct JSON records",
+        )
+        require_regular_file(
+            repo, head, historical_path, "historical tag-only completion recovery intent"
+        )
+        historical = validate_tag_only_completion_recovery_intent(
+            git_json(repo, head, historical_path, historical_path), historical_path
+        )
+        additions = path_change_commits(
+            repo,
+            head,
+            historical_path,
+            f"historical tag-only completion recovery intent history: {historical_path}",
+        )
+        require(
+            len(additions) == 1,
+            f"historical tag-only completion recovery intent must be added once and never modified, renamed, or deleted: {historical_path}",
+        )
+        if (
+            historical["releaseUnit"] == authorization["releaseUnit"]
+            and historical["channel"] == authorization["channel"]
+            and historical["version"] == authorization["version"]
+            and historical["originalCompletionIntent"]
+            == authorization["originalCompletionIntent"]
+        ):
+            historical_recoveries.append((historical_path, historical, additions[0]))
+        if (
+            historical["failedCompletion"]["workflowRunUrl"]
+            == failed["workflowRunUrl"]
+        ):
+            matching_failed_runs.append(historical_path)
+    require(
+        matching_failed_runs == [recovery_path],
+        "duplicate completion recovery authorization exists for the same failed completion run",
+    )
+    recovery_history = path_change_commits(
+        repo,
+        head,
+        recovery["intentDirectory"],
+        "tag-only completion recovery intent directory history",
+    )
+    require(
+        len(recovery_history) == len(recovery_paths),
+        "tag-only completion recovery intent directory must remain append-only in protected source history",
+    )
+
+    prior_recoveries = [
+        item for item in historical_recoveries if item[0] != recovery_path
+    ]
+    if prior_recoveries:
+        history_positions = {
+            commit: index for index, commit in enumerate(protected_source_history)
+        }
+        require(
+            all(addition in history_positions for _path, _record, addition in prior_recoveries),
+            "historical completion recovery additions must be on protected source first-parent history",
+        )
+        latest_path, _latest_record, latest_addition = min(
+            prior_recoveries, key=lambda item: history_positions[item[2]]
+        )
+        require(
+            predecessor["type"] == "tag-only-completion-recovery"
+            and predecessor_path == latest_path
+            and failed_source == latest_addition,
+            "failed completion must be the exact source authorized by the latest completion recovery record",
+        )
+    else:
+        require(
+            predecessor["type"] == "tag-only-completion"
+            and predecessor_path == original_completion_path
+            and failed_source == original_completion_source,
+            "initial completion recovery must follow the exact original completion authorization",
+        )
+
+    return {
+        "schemaVersion": "protected-package-tag-completion-recovery-admission/v1",
+        "status": "admitted",
+        "authorization": "tag-only-completion-recovery",
+        "releaseUnit": unit["id"],
+        "packageName": unit["packageName"],
+        "registry": unit["registry"],
+        "channel": authorization["channel"],
+        "distTag": expected_dist_tag,
+        "version": authorization["version"],
+        "tag": rendered_tag,
+        "originalIntentPath": authorization["originalIntentPath"],
+        "originalCompletionIntent": authorization["originalCompletionIntent"],
+        "completionRecoveryIntentPath": recovery_path,
+        "originalPublication": authorization["originalPublication"],
+        "failedCompletion": failed,
+        "retainedArtifact": authorization["retainedArtifact"],
+        "packageSource": {
+            "commit": authorization["originalPublication"]["sourceCommit"]
+        },
+        "authorizationSource": {
+            "ref": event_ref,
+            "baseCommit": base,
+            "commit": head,
+        },
+    }
+
+
 def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: str) -> dict[str, Any]:
     require(repo.is_dir(), f"repository does not exist: {repo}")
     contract_path = validate_relative(contract_path, "contract path")
@@ -1900,6 +2658,12 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
         contract["tagOnlyCompletion"]["workflow"],
         "tagOnlyCompletion.workflow",
     )
+    require_regular_file(
+        repo,
+        head,
+        contract["tagOnlyCompletionRecovery"]["workflow"],
+        "tagOnlyCompletionRecovery.workflow",
+    )
 
     entries = parse_diff(repo, base, head)
     require(bool(entries), "admission diff is empty")
@@ -1916,6 +2680,10 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
     require(
         contract["tagOnlyCompletion"]["workflow"] not in changed_paths,
         "tag-only completion workflow must be established separately from completion authorization",
+    )
+    require(
+        contract["tagOnlyCompletionRecovery"]["workflow"] not in changed_paths,
+        "tag-only completion recovery workflow must be established separately from recovery authorization",
     )
 
     release_intent_entries = [
@@ -1939,6 +2707,17 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
             for path in entry.paths
         )
     ]
+    completion_recovery_intent_entries = [
+        entry
+        for entry in entries
+        if any(
+            is_below(
+                path,
+                contract["tagOnlyCompletionRecovery"]["intentDirectory"],
+            )
+            for path in entry.paths
+        )
+    ]
     require(
         sum(
             bool(group)
@@ -1946,11 +2725,16 @@ def admission(repo: Path, contract_path: str, base: str, head: str, event_ref: s
                 release_intent_entries,
                 recovery_intent_entries,
                 completion_intent_entries,
+                completion_recovery_intent_entries,
             )
         )
         <= 1,
-        "release, recovery, and tag-only completion authorizations cannot share one admission diff",
+        "release, recovery, tag-only completion, and completion recovery authorizations cannot share one admission diff",
     )
+    if completion_recovery_intent_entries:
+        return admit_tag_only_completion_recovery(
+            repo, contract_path, contract, base, head, event_ref, entries
+        )
     if completion_intent_entries:
         return admit_tag_only_completion(
             repo, contract_path, contract, base, head, event_ref, entries

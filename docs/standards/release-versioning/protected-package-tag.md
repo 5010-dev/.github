@@ -75,6 +75,9 @@ and declare:
 - a third, non-overlapping tag-only completion-intent directory and a distinct
   completion workflow whose only allowed mutation is registry package
   publication and whose tag mutation is explicitly forbidden;
+- a fourth, non-overlapping tag-only completion-recovery directory, distinct
+  workflow, exact successor chain, and executable permission preflight for a
+  completion failure that stopped before artifact retrieval and mutation;
 - the allowed release-preparation paths and every sibling release-unit mutation
   path;
 - prerelease and final registry channels;
@@ -356,7 +359,7 @@ The completion workflow MUST use these exact job-scoped permission sets:
 
 | Completion responsibility | Exact permission set |
 | --- | --- |
-| Admission and live verification | `contents: read`, `actions: read`, `packages: read` |
+| Admission and live verification | `contents: read`, `actions: read`, `pull-requests: read`, `packages: read` |
 | Retained-artifact retrieval | `actions: read` |
 | Registry mutation | `packages: write` |
 | Post-publication verification | `contents: read`, `packages: read` |
@@ -368,10 +371,80 @@ tag-mutation GitHub App credential or equivalent tag-write authority MUST NOT be
 minted, forwarded, referenced, or made available anywhere in the completion
 workflow.
 
+### Pre-mutation failure of tag-only completion
+
+A completion authorization is consumed when its first workflow run/attempt `1`
+terminates during admission/live verification before retained-artifact retrieval
+and before registry mutation. The workflow MUST NOT rerun or reuse that record.
+When the original tag-only state and retained artifact remain exact, a selecting
+repository MAY request a new attempt only through a protected pull request that
+adds one immutable
+[`package-release-tag-only-completion-recovery-intent/v1`](./schemas/package-release-tag-only-completion-recovery-intent-v1.schema.json)
+record and no other path.
+
+The recovery record binds:
+
+- release unit, channel, version, derived tag, and expected dist-tag;
+- the unchanged original release-intent path;
+- the original failed publication source/run/attempt, its exact release or
+  pre-mutation-recovery authorization, and the retained-artifact chain;
+- the immutable original completion-intent path and SHA-256 of its exact bytes;
+- the failed completion source, exact Actions run URL, attempt `1`, terminal
+  failure, and failure phase `admission-live-verification`;
+- not-started retained-artifact retrieval, registry mutation, and
+  post-publication verification;
+- the unchanged tag-present and registry-version-absent state;
+- the current protected `dev` ref and full base commit; and
+- reason `pre-mutation-tag-only-completion-failure`.
+
+The first recovery record names the original completion record as its immediate
+authorization. A later record names only the latest completion-recovery record
+whose exact addition commit started the newly failed run. All records and the
+original completion remain byte-identical and addition-only on protected
+first-parent history. A reused predecessor, duplicate failed run, stale base,
+branching successor, multiple-record diff, unrelated change, or sibling effect
+fails static admission.
+
+Only the first workflow run selected by the newly merged recovery record, and
+only run attempt `1`, may regain registry-only mutation authority after all live
+state and provenance are revalidated. Every rerun and second workflow run from
+the original completion or any prior recovery record remains mutation-disabled
+before credential setup. An exact tag plus absent registry version may be
+publish-eligible; an already exact pair is verification-only; every missing,
+moved, registry-only, conflicting, expired, mismatched, or ambiguous state fails
+closed.
+
+Before the implementation/foundation PR can make any completion-recovery record
+mergeable, its required validation workflow MUST execute a zero-mutation live
+permission preflight with exactly `contents: read`, `actions: read`,
+`pull-requests: read`, and `packages: read`. It invokes every endpoint used by
+live admission and fails on HTTP 403 or ambiguity:
+
+| Live admission query | Required permission |
+| --- | --- |
+| Actions run metadata | `actions: read` |
+| Actions job metadata | `actions: read` |
+| Actions artifact metadata | `actions: read` |
+| Completion workflow-run history | `actions: read` |
+| Commit-associated pull requests | `pull-requests: read` |
+| Git tag/ref | `contents: read` |
+| Authenticated registry version and dist-tag | `packages: read` |
+
+The preflight receives no `packages: write` permission, registry write
+credential, or tag App credential. It creates no package, tag, branch, source,
+artifact, deployment, OCI object, object-storage object, or sibling release-unit
+effect. A static workflow or profile assertion is not preflight evidence.
+
+The recovery workflow uses the same four exact job permission sets as corrected
+completion. It never receives `contents: write`, tag authority, manual-dispatch
+authority, or broader production effects. Manual npm publication, rebuild,
+repack, tag deletion/movement/recreation, successor-version escape, ruleset
+relaxation, and destructive rollback remain forbidden.
+
 The dependency-free reference checker
 [`check-protected-package-tag-admission.py`](../../../scripts/docs/check-protected-package-tag-admission.py)
 implements the local Git, JSON, and TOML rules for normal, pre-mutation recovery,
-and tag-only completion admission.
+tag-only completion, and tag-only completion-recovery admission.
 It does not publish, inspect Actions outcome or authorization-use history,
 inspect rulesets or pull-request approvals, query a registry, or replace
 repository-owned workflow checks. This is intentional: the hosting layer owns
@@ -421,7 +494,7 @@ Permissions MUST be explicit and job-scoped:
 | Source and policy validation | `contents: read` |
 | Private package installation or consumer execution | `packages: read` |
 | Native registry publication | `packages: write` |
-| Tag-only admission and live verification | `contents: read`, `actions: read`, `packages: read` |
+| Tag-only admission and live verification | `contents: read`, `actions: read`, `pull-requests: read`, `packages: read` |
 | Tag-only retained-artifact retrieval | `actions: read` |
 | Tag-only registry mutation | `packages: write`; no tag credential |
 | Tag-only post-publication verification | `contents: read`, `packages: read` |
@@ -496,6 +569,9 @@ The pre-mutation recovery correction and incident boundary are recorded in the
 [2026-08-14 validation record](./validation/2026-08-14-protected-package-tag-pre-mutation-recovery.md).
 The retained-artifact tag-only completion refinement is recorded in the
 [2026-08-14 tag-only completion validation record](./validation/2026-08-14-protected-package-tag-only-completion.md).
+The admission permission correction and consumed-completion recovery are
+recorded in the
+[2026-08-15 completion-recovery validation record](./validation/2026-08-15-protected-package-tag-completion-recovery.md).
 
 ## Out of scope
 
