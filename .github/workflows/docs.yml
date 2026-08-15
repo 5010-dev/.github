@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - ".gitignore"
       - "**/*.md"
       - "**/*.json"
       - "docs/golden-path/examples/**"
@@ -15,6 +16,7 @@ on:
     branches:
       - main
     paths:
+      - ".gitignore"
       - "**/*.md"
       - "**/*.json"
       - "docs/golden-path/examples/**"
