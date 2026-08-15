@@ -116,6 +116,7 @@
         "sourceCommit",
         "workflowRunUrl",
         "runAttempt",
+        "authorizationRunOrdinal",
         "outcome",
         "failurePhase",
         "retainedArtifactRetrievalState",
@@ -133,6 +134,11 @@
           "$ref": "#/$defs/workflowRunUrl"
         },
         "runAttempt": {
+          "type": "integer",
+          "const": 1
+        },
+        "authorizationRunOrdinal": {
+          "description": "One-based ordinal among workflow runs selected by this exact predecessor authorization and source commit.",
           "type": "integer",
           "const": 1
         },

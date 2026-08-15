@@ -51,7 +51,10 @@
       "exactTagRegistryAbsent": "publish-eligible",
       "exactPair": "verification-only",
       "tagMissingMovedOrConflicting": "fail-closed",
-      "registryOnlyMismatchedOrAmbiguous": "fail-closed"
+      "registryOnlyMismatchedOrAmbiguous": "fail-closed",
+      "artifactMissing": "fail-closed",
+      "artifactExpired": "fail-closed",
+      "artifactMismatched": "fail-closed"
     }
   },
   "tagOnlyCompletionRecovery": {
@@ -157,7 +160,12 @@
       "exactTagRegistryAbsent": "publish-eligible",
       "exactPair": "verification-only",
       "tagMissingMovedOrConflicting": "fail-closed",
-      "registryOnlyMismatchedOrAmbiguous": "fail-closed"
+      "registryOnlyMismatchedOrAmbiguous": "fail-closed",
+      "artifactMissing": "fail-closed",
+      "artifactExpired": "fail-closed",
+      "artifactMismatched": "fail-closed",
+      "predecessorFirstRunAttemptOne": "recovery-eligible",
+      "predecessorRerunOrLaterRun": "fail-closed"
     }
   },
   "releaseUnit": {

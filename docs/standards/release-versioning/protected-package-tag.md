@@ -389,8 +389,9 @@ The recovery record binds:
 - the original failed publication source/run/attempt, its exact release or
   pre-mutation-recovery authorization, and the retained-artifact chain;
 - the immutable original completion-intent path and SHA-256 of its exact bytes;
-- the failed completion source, exact Actions run URL, attempt `1`, terminal
-  failure, and failure phase `admission-live-verification`;
+- the failed completion source, exact Actions run URL, authorization-run ordinal
+  `1`, attempt `1`, terminal failure, and failure phase
+  `admission-live-verification`;
 - not-started retained-artifact retrieval, registry mutation, and
   post-publication verification;
 - the unchanged tag-present and registry-version-absent state;
@@ -405,11 +406,15 @@ first-parent history. A reused predecessor, duplicate failed run, stale base,
 branching successor, multiple-record diff, unrelated change, or sibling effect
 fails static admission.
 
-Only the first workflow run selected by the newly merged recovery record, and
-only run attempt `1`, may regain registry-only mutation authority after all live
-state and provenance are revalidated. Every rerun and second workflow run from
-the original completion or any prior recovery record remains mutation-disabled
-before credential setup. An exact tag plus absent registry version may be
+Only the first distinct workflow run selected by the newly merged recovery
+record, and only run attempt `1`, may regain registry-only mutation authority
+after all live state and provenance are revalidated. Live workflow history MUST
+group runs by the exact predecessor authorization path, declared workflow,
+source commit, protected event, and ref and prove authorization-run ordinal `1`;
+`run_attempt == 1` alone is insufficient because a later distinct run also
+starts at attempt `1`. Every rerun and later workflow run from the original
+completion or any prior recovery record remains mutation-disabled before
+credential setup. An exact tag plus absent registry version may be
 publish-eligible; an already exact pair is verification-only; every missing,
 moved, registry-only, conflicting, expired, mismatched, or ambiguous state fails
 closed.

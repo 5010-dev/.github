@@ -235,8 +235,10 @@ already identical tag/version pair is verification-only.
 If that completion run itself fails before retained-artifact retrieval and
 registry mutation, its authority is consumed. Another attempt requires the
 profile's separate append-only completion-recovery record and a successful
-zero-mutation live permission preflight; rerun and record reuse remain
-forbidden.
+zero-mutation live permission preflight. The failed predecessor must be the
+first distinct workflow run selected by that exact authorization and source,
+at run attempt `1`; attempt number alone is insufficient. Rerun, later-run, and
+record reuse remain forbidden.
 
 Organization release units must follow the
 [Release and Versioning Standard](https://github.com/5010-dev/.github/blob/main/docs/standards/release-versioning/README.md).

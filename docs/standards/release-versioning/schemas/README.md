@@ -55,11 +55,14 @@ the mutation credential as the whole workflow permission contract.
 
 A completion-recovery record binds the immutable original completion path and
 SHA-256, original publication and retained-artifact chain, exact failed
-completion source/run/attempt/phase, proof that retrieval and mutation never
-started, unchanged tag-present/registry-absent state, and the current protected
-base/ref. The first successor names the original completion record; each later
-successor names the latest recovery record. The checker rejects reuse, branching,
-duplicate failed runs, stale bases, and any multi-path authorization diff.
+completion source/run, authorization-run ordinal `1`, attempt `1`, phase, proof
+that retrieval and mutation never started, unchanged
+tag-present/registry-absent state, and the current protected base/ref. The first
+successor names the original completion record; each later successor names the
+latest recovery record. The checker rejects reuse, branching, duplicate failed
+runs, stale bases, and any multi-path authorization diff. Repository automation
+must derive the ordinal from live workflow history; attempt `1` alone does not
+distinguish the authorization's first run from a later distinct run.
 
 Before any completion-recovery authorization PR can merge, the selecting
 repository's foundation change must execute a live zero-mutation permission
@@ -101,6 +104,15 @@ shape where possible. Admission remains the narrower normative acceptor for
 cross-field inequalities, unique sibling IDs, native-manifest equivalence,
 repository file modes, exact Git history, and diff-derived constraints that JSON
 Schema cannot establish alone.
+
+The canonical documentation gate compiles every schema as Draft 2020-12 and
+validates all illustrative examples plus the incident fixture with the pinned
+Ajv dependencies:
+
+```bash
+npm ci --prefix scripts/docs --ignore-scripts --no-audit --no-fund
+npm run check:schemas --prefix scripts/docs
+```
 
 Schema and checker compatibility is `v1`. Correct them in place before a real
 released consumer depends on their current shape. Once a repository pins a

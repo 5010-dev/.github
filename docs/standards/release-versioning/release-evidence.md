@@ -62,6 +62,14 @@ distinguish a new registry publication from verification-only exact state and
 MUST prove that no rebuild, tag mutation, rerun mutation, second-run mutation,
 sibling effect, or tag credential occurred.
 
+A completion-recovery record MUST additionally preserve the immutable original
+completion path and bytes, the direct predecessor authorization path, exact
+failed run, authorization-run ordinal `1`, run attempt `1`, terminal
+pre-mutation phase outcomes, and live workflow-history evidence used to derive
+that ordinal. Evidence MUST distinguish the predecessor's first distinct run
+from a rerun and from a later distinct run whose attempt number also equals
+`1`.
+
 A native client release record MUST additionally identify the application or
 bundle, platform-native display version and build identifier, signed build or
 archive, distribution channel, supported platform range, and applicable store

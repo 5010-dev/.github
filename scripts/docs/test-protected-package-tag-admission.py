@@ -1672,6 +1672,30 @@ class AdmissionTest(unittest.TestCase):
             "requires failed completion run attempt 1",
         )
 
+    def test_rejects_second_workflow_run_from_consumed_completion(self) -> None:
+        failed_completion_source, completion_path = (
+            self.materialize_failed_tag_only_completion()
+        )
+        recovery = self.tag_only_completion_recovery_intent(
+            original_completion_path=completion_path,
+            failed_completion_source=failed_completion_source,
+            source_base=self.base,
+            predecessor_type="tag-only-completion",
+            predecessor_path=completion_path,
+            failed_run_id=456789012,
+        )
+        recovery["failedCompletion"]["authorizationRunOrdinal"] = 2
+        self.write_json(
+            Path(
+                ".github/release-tag-only-completion-recovery-intents/second-run.json"
+            ),
+            recovery,
+        )
+        self.assert_rejected(
+            self.check(self.commit("claim second workflow run from consumed record")),
+            "predecessor authorization's first workflow run",
+        )
+
     def test_rejects_completion_recovery_after_artifact_retrieval_started(self) -> None:
         failed_completion_source, completion_path = (
             self.materialize_failed_tag_only_completion()
@@ -1764,6 +1788,75 @@ class AdmissionTest(unittest.TestCase):
             "immutable package tag to remain present",
         )
 
+    def test_rejects_completion_recovery_when_tag_moved(self) -> None:
+        failed_completion_source, completion_path = (
+            self.materialize_failed_tag_only_completion()
+        )
+        recovery = self.tag_only_completion_recovery_intent(
+            original_completion_path=completion_path,
+            failed_completion_source=failed_completion_source,
+            source_base=self.base,
+            predecessor_type="tag-only-completion",
+            predecessor_path=completion_path,
+        )
+        recovery["failedCompletion"]["tagState"] = "moved"
+        self.write_json(
+            Path(
+                ".github/release-tag-only-completion-recovery-intents/tag-moved.json"
+            ),
+            recovery,
+        )
+        self.assert_rejected(
+            self.check(self.commit("claim moved immutable tag")),
+            "immutable package tag to remain present",
+        )
+
+    def test_rejects_completion_recovery_when_tag_is_conflicting(self) -> None:
+        failed_completion_source, completion_path = (
+            self.materialize_failed_tag_only_completion()
+        )
+        recovery = self.tag_only_completion_recovery_intent(
+            original_completion_path=completion_path,
+            failed_completion_source=failed_completion_source,
+            source_base=self.base,
+            predecessor_type="tag-only-completion",
+            predecessor_path=completion_path,
+        )
+        recovery["failedCompletion"]["tagState"] = "conflicting"
+        self.write_json(
+            Path(
+                ".github/release-tag-only-completion-recovery-intents/tag-conflicting.json"
+            ),
+            recovery,
+        )
+        self.assert_rejected(
+            self.check(self.commit("claim conflicting immutable tag")),
+            "immutable package tag to remain present",
+        )
+
+    def test_rejects_mismatched_completion_recovery_artifact(self) -> None:
+        failed_completion_source, completion_path = (
+            self.materialize_failed_tag_only_completion()
+        )
+        recovery = self.tag_only_completion_recovery_intent(
+            original_completion_path=completion_path,
+            failed_completion_source=failed_completion_source,
+            source_base=self.base,
+            predecessor_type="tag-only-completion",
+            predecessor_path=completion_path,
+        )
+        recovery["retainedArtifact"]["artifactId"] += 1
+        self.write_json(
+            Path(
+                ".github/release-tag-only-completion-recovery-intents/artifact-mismatch.json"
+            ),
+            recovery,
+        )
+        self.assert_rejected(
+            self.check(self.commit("substitute retained artifact identity")),
+            "retained artifact chain does not match",
+        )
+
     def test_rejects_modified_original_completion_intent(self) -> None:
         failed_completion_source, completion_path = (
             self.materialize_failed_tag_only_completion()
@@ -1819,6 +1912,70 @@ class AdmissionTest(unittest.TestCase):
         )
         self.assert_rejected(
             self.check(branched), "latest completion recovery record"
+        )
+
+    def test_rejects_duplicate_failed_run_in_later_recovery(self) -> None:
+        failed_completion_source, completion_path = (
+            self.materialize_failed_tag_only_completion()
+        )
+        first_path = (
+            ".github/release-tag-only-completion-recovery-intents/"
+            "completion-recovery-1.json"
+        )
+        first_source = self.prepare_tag_only_completion_recovery(
+            original_completion_path=completion_path,
+            failed_completion_source=failed_completion_source,
+            predecessor_type="tag-only-completion",
+            predecessor_path=completion_path,
+            failed_run_id=345678901,
+        )
+        self.assertEqual(self.check(first_source).returncode, 0)
+        self.base = first_source
+        duplicate_source = self.prepare_tag_only_completion_recovery(
+            original_completion_path=completion_path,
+            failed_completion_source=first_source,
+            predecessor_type="tag-only-completion-recovery",
+            predecessor_path=first_path,
+            failed_run_id=345678901,
+            recovery_name="completion-recovery-2.json",
+        )
+        self.assert_rejected(
+            self.check(duplicate_source),
+            "duplicate completion recovery authorization exists for the same failed completion run",
+        )
+
+    def test_rejects_modified_predecessor_completion_recovery(self) -> None:
+        failed_completion_source, completion_path = (
+            self.materialize_failed_tag_only_completion()
+        )
+        first_path = (
+            ".github/release-tag-only-completion-recovery-intents/"
+            "completion-recovery-1.json"
+        )
+        first_source = self.prepare_tag_only_completion_recovery(
+            original_completion_path=completion_path,
+            failed_completion_source=failed_completion_source,
+            predecessor_type="tag-only-completion",
+            predecessor_path=completion_path,
+        )
+        self.assertEqual(self.check(first_source).returncode, 0)
+        predecessor = json.loads(
+            (self.repo / first_path).read_text(encoding="utf-8")
+        )
+        predecessor["$schema"] = "rewritten-completion-recovery-intent"
+        self.write_json(Path(first_path), predecessor)
+        self.base = self.commit("rewrite predecessor completion recovery")
+        successor = self.prepare_tag_only_completion_recovery(
+            original_completion_path=completion_path,
+            failed_completion_source=first_source,
+            predecessor_type="tag-only-completion-recovery",
+            predecessor_path=first_path,
+            failed_run_id=456789012,
+            recovery_name="completion-recovery-2.json",
+        )
+        self.assert_rejected(
+            self.check(successor),
+            "predecessor completion recovery intent must remain byte-identical",
         )
 
     def test_rejects_completion_recovery_with_unrelated_change(self) -> None:
@@ -2055,6 +2212,54 @@ class AdmissionTest(unittest.TestCase):
             self.check(self.prepare_release()), "state outcomes"
         )
 
+    def test_rejects_publish_eligible_missing_artifact_outcome(self) -> None:
+        profile = self.profile()
+        profile["tagOnlyCompletionRecovery"]["stateOutcomes"][
+            "artifactMissing"
+        ] = "publish-eligible"
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("allow publication with missing artifact")
+        self.assert_rejected(self.check(self.prepare_release()), "state outcomes")
+
+    def test_rejects_publish_eligible_expired_artifact_outcome(self) -> None:
+        profile = self.profile()
+        profile["tagOnlyCompletionRecovery"]["stateOutcomes"][
+            "artifactExpired"
+        ] = "publish-eligible"
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("allow publication with expired artifact")
+        self.assert_rejected(self.check(self.prepare_release()), "state outcomes")
+
+    def test_rejects_publish_eligible_mismatched_artifact_outcome(self) -> None:
+        profile = self.profile()
+        profile["tagOnlyCompletionRecovery"]["stateOutcomes"][
+            "artifactMismatched"
+        ] = "publish-eligible"
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("allow publication with mismatched artifact")
+        self.assert_rejected(self.check(self.prepare_release()), "state outcomes")
+
+    def test_rejects_recovery_eligible_predecessor_later_run_outcome(self) -> None:
+        profile = self.profile()
+        profile["tagOnlyCompletionRecovery"]["stateOutcomes"][
+            "predecessorRerunOrLaterRun"
+        ] = "recovery-eligible"
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("allow predecessor rerun recovery")
+        self.assert_rejected(self.check(self.prepare_release()), "state outcomes")
+
+    def test_rejects_completion_recovery_deployment_effect(self) -> None:
+        profile = self.profile()
+        effects = profile["tagOnlyCompletionRecovery"]["publicationEffects"]
+        effects["allowed"].append("service-deployment")
+        effects["forbidden"].remove("service-deployment")
+        self.write_json(CONTRACT_PATH, profile)
+        self.base = self.commit("allow completion recovery deployment")
+        self.assert_rejected(
+            self.check(self.prepare_release()),
+            "registry-only effects",
+        )
+
     def test_rejects_overlapping_completion_and_recovery_directories(self) -> None:
         profile = self.profile()
         profile["tagOnlyCompletion"]["intentDirectory"] = (
@@ -2273,6 +2478,29 @@ class AdmissionTest(unittest.TestCase):
             ],
             "verification-only",
         )
+        self.assertEqual(
+            completion_recovery["properties"]["stateOutcomes"]["const"][
+                "predecessorRerunOrLaterRun"
+            ],
+            "fail-closed",
+        )
+        self.assertEqual(
+            {
+                key: completion_recovery["properties"]["stateOutcomes"]["const"][
+                    key
+                ]
+                for key in (
+                    "artifactMissing",
+                    "artifactExpired",
+                    "artifactMismatched",
+                )
+            },
+            {
+                "artifactMissing": "fail-closed",
+                "artifactExpired": "fail-closed",
+                "artifactMismatched": "fail-closed",
+            },
+        )
         self.assertEqual(schema["$defs"]["pathPatterns"]["items"]["$ref"], "#/$defs/pathPattern")
         self.assertEqual(schema["properties"]["releaseUnit"]["properties"]["registry"]["pattern"], "^https://")
         self.assertTrue(schema["properties"]["siblingReleaseUnits"]["uniqueItems"])
@@ -2329,6 +2557,12 @@ class AdmissionTest(unittest.TestCase):
             ]["registryMutationState"]["const"],
             "not-started",
         )
+        self.assertEqual(
+            completion_recovery_schema["properties"]["failedCompletion"][
+                "properties"
+            ]["authorizationRunOrdinal"]["const"],
+            1,
+        )
 
     def test_current_core_incident_fixture_matches_completion_recovery_shape(self) -> None:
         fixture = json.loads(
@@ -2346,6 +2580,9 @@ class AdmissionTest(unittest.TestCase):
             fixture["reason"], schema["properties"]["reason"]["const"]
         )
         self.assertEqual(fixture["failedCompletion"]["runAttempt"], 1)
+        self.assertEqual(
+            fixture["failedCompletion"]["authorizationRunOrdinal"], 1
+        )
         self.assertEqual(
             fixture["failedCompletion"]["workflowRunUrl"],
             "https://github.com/5010-dev/fiftyten-indicators-core/actions/runs/31877967715",

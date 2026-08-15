@@ -106,6 +106,9 @@ EXPECTED_TAG_ONLY_COMPLETION = {
         "exactPair": "verification-only",
         "tagMissingMovedOrConflicting": "fail-closed",
         "registryOnlyMismatchedOrAmbiguous": "fail-closed",
+        "artifactMissing": "fail-closed",
+        "artifactExpired": "fail-closed",
+        "artifactMismatched": "fail-closed",
     },
 }
 EXPECTED_COMPLETION_PERMISSION_PREFLIGHT = {
@@ -156,7 +159,11 @@ EXPECTED_COMPLETION_PERMISSION_PREFLIGHT = {
 EXPECTED_TAG_ONLY_COMPLETION_RECOVERY = {
     "jobPermissions": EXPECTED_TAG_ONLY_COMPLETION["jobPermissions"],
     "publicationEffects": EXPECTED_TAG_ONLY_COMPLETION["publicationEffects"],
-    "stateOutcomes": EXPECTED_TAG_ONLY_COMPLETION["stateOutcomes"],
+    "stateOutcomes": {
+        **EXPECTED_TAG_ONLY_COMPLETION["stateOutcomes"],
+        "predecessorFirstRunAttemptOne": "recovery-eligible",
+        "predecessorRerunOrLaterRun": "fail-closed",
+    },
 }
 REGULAR_FILE_MODES = {"100644", "100755"}
 
@@ -1036,6 +1043,7 @@ def validate_tag_only_completion_recovery_intent(
             "sourceCommit",
             "workflowRunUrl",
             "runAttempt",
+            "authorizationRunOrdinal",
             "outcome",
             "failurePhase",
             "retainedArtifactRetrievalState",
@@ -1064,6 +1072,12 @@ def validate_tag_only_completion_recovery_intent(
         and not isinstance(failed["runAttempt"], bool)
         and failed["runAttempt"] == 1,
         f"{label} requires failed completion run attempt 1",
+    )
+    require(
+        isinstance(failed["authorizationRunOrdinal"], int)
+        and not isinstance(failed["authorizationRunOrdinal"], bool)
+        and failed["authorizationRunOrdinal"] == 1,
+        f"{label} requires the predecessor authorization's first workflow run",
     )
     require(
         failed["outcome"] == "terminal-failure",
