@@ -27,6 +27,7 @@
     "sourceCommit": "5555555555555555555555555555555555555555",
     "workflowRunUrl": "https://github.com/example/repository/actions/runs/345678901",
     "runAttempt": 1,
+    "authorizationRunOrdinal": 1,
     "outcome": "terminal-failure",
     "failurePhase": "admission-live-verification",
     "retainedArtifactRetrievalState": "not-started",

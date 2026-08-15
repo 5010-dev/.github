@@ -114,8 +114,11 @@ completion record is consumed. Another same-version attempt requires one new
 PR-merged `package-release-tag-only-completion-recovery-intent/v1` record whose
 exact diff changes no other path. The first record names the immutable original
 completion path and bytes; every later record names the latest recovery source
-and failed run. Rerun, second-run mutation, predecessor reuse, and branched
-successors remain forbidden.
+and failed run. The record fixes authorization-run ordinal `1`; live history
+must prove that the failed predecessor is the first distinct workflow run
+selected by the exact authorization, workflow, source, event, and ref. Run
+attempt `1` alone does not prove that fact. Rerun, later-run mutation,
+predecessor reuse, and branched successors remain forbidden.
 
 Before any completion-recovery authorization PR can merge, the repository's
 implementation/foundation PR MUST run a zero-mutation live preflight with the
@@ -178,7 +181,10 @@ registry, archive, or record operations are permanent.
 - A tag-only completion run that failed before retained-artifact retrieval and
   registry mutation MAY start another attempt only from a new append-only,
   PR-mediated completion-recovery record. The original completion is consumed;
-  each later pre-mutation failure requires another direct successor record.
+  each later pre-mutation failure requires another direct successor record. The
+  failed predecessor must be the authorization's first distinct workflow run
+  at attempt `1`, established from live workflow history rather than attempt
+  number alone.
 - After a package version, tag, image digest, accepted native build, immutable
   release, or immutable research record is published or finalized, recovery
   MUST NOT overwrite it. Use the applicable correction, successor, deprecate,

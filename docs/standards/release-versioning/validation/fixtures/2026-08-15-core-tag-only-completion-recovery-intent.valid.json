@@ -27,6 +27,7 @@
     "sourceCommit": "e2e679715ec19e8ac6ba9a45b08ea9a467d607c5",
     "workflowRunUrl": "https://github.com/5010-dev/fiftyten-indicators-core/actions/runs/31877967715",
     "runAttempt": 1,
+    "authorizationRunOrdinal": 1,
     "outcome": "terminal-failure",
     "failurePhase": "admission-live-verification",
     "retainedArtifactRetrievalState": "not-started",

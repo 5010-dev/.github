@@ -13,6 +13,7 @@ report() {
 
 required_sources=(
     .github/workflows/docs.yml
+    .gitignore
     README.md
     CONTRIBUTING.md
     pull_request_template.md
@@ -106,7 +107,10 @@ required_sources=(
     templates/engineering-documentation/subsystem/README.md
     scripts/docs/README.md
     scripts/docs/check-protected-package-tag-admission.py
+    scripts/docs/package.json
+    scripts/docs/package-lock.json
     scripts/docs/test-protected-package-tag-admission.py
+    scripts/docs/validate-json-schema-examples.mjs
     scripts/docs/scaffold-arc42.sh
     scripts/docs/check-contract.sh
     scripts/docs/check-repository.sh
@@ -172,6 +176,7 @@ done < <(
     find \
         "$repo_root" \
         -path "$repo_root/.git" -prune -o \
+        -path "$script_dir/node_modules" -prune -o \
         -type f -name '*.md' -print0
 )
 
@@ -183,8 +188,17 @@ done < <(
     find \
         "$repo_root" \
         -path "$repo_root/.git" -prune -o \
+        -path "$script_dir/node_modules" -prune -o \
         -type f -name '*.json' -print0
 )
+
+if command -v node >/dev/null 2>&1 && [[ -d "$script_dir/node_modules" ]]; then
+    if ! node "$script_dir/validate-json-schema-examples.mjs"; then
+        report "release-versioning JSON Schema example validation failed"
+    fi
+else
+    report "Node.js and scripts/docs pinned dependencies are required for JSON Schema validation"
+fi
 
 if command -v ruby >/dev/null 2>&1; then
     while IFS= read -r -d '' yaml_file; do
@@ -195,6 +209,7 @@ if command -v ruby >/dev/null 2>&1; then
         find \
             "$repo_root" \
             -path "$repo_root/.git" -prune -o \
+            -path "$script_dir/node_modules" -prune -o \
             -type f \( -name '*.yml' -o -name '*.yaml' \) -print0
     )
 else
@@ -211,6 +226,7 @@ done < <(
     find \
         "$repo_root" \
         -path "$repo_root/.git" -prune -o \
+        -path "$script_dir/node_modules" -prune -o \
         -type f -name '*.toml' -print0
 )
 

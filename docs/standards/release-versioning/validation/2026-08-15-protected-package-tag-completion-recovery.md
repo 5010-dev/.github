@@ -107,11 +107,15 @@ authorization record and cannot trigger publication.
 
 The first successor binds the immutable original completion path and bytes,
 original publication and retained-artifact chain, failed completion source/run,
-attempt `1`, terminal admission failure, not-started retrieval/mutation/consumer
-phases, unchanged tag-present/registry-absent state, and current protected
-base/ref. A later failure requires a new direct successor to the latest recovery
-record. The checker rejects reuse, branching, duplicate failed runs, stale bases,
-multiple-file authorization diffs, record mutation, and sibling effects.
+authorization-run ordinal `1`, attempt `1`, terminal admission failure,
+not-started retrieval/mutation/consumer phases, unchanged
+tag-present/registry-absent state, and current protected base/ref. Live history
+must prove this is the first distinct run selected by the exact predecessor
+authorization, workflow, source, event, and ref; attempt `1` alone is
+insufficient. A later failure requires a new direct successor to the latest
+recovery record. The checker rejects reuse, branching, duplicate failed runs,
+stale bases, multiple-file authorization diffs, record mutation, and sibling
+effects.
 
 ## Executable permission preflight
 
@@ -139,19 +143,25 @@ effect.
 
 The dependency-free checker covers corrected permission sets, endpoint
 inventory, the current incident fixture, append-only successor admission, stale
-base, rerun/attempt mismatch, retrieval or mutation having started, tag and
-registry state drift, retained-artifact identity, original completion mutation,
-duplicate or branched successors, multi-file diffs, sibling effects, and exact
-pair verification-only state.
+base, rerun/attempt and later-run ordinal mismatch, retrieval or mutation having
+started, missing/expired/mismatched retained artifacts, missing/moved/conflicting
+tag state, registry drift, original completion mutation, duplicate or branched
+successors, multi-file diffs, sibling and deployment effects, and exact-pair
+verification-only state. The canonical gate also compiles all five Draft
+2020-12 schemas and validates six examples or fixtures with pinned Ajv
+dependencies.
 
 ```bash
+npm run check:schemas --prefix scripts/docs
 python3 scripts/docs/test-protected-package-tag-admission.py
 scripts/docs/check-repository.sh
 git diff --check
 ```
 
-- focused admission suite: 133 tests, `OK`;
-- complete documentation gate: 133 embedded admission tests, `OK`, followed by
+- JSON Schema validation: 6 documents against 5 schemas, `OK`;
+- focused admission suite: 144 tests, `OK`;
+- complete documentation gate: schema validation and 144 embedded admission
+  tests, `OK`, followed by
   `organization documentation check: OK`; and
 - whitespace/error-marker check: exit 0 with no output.
 

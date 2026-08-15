@@ -13,12 +13,18 @@ scripts/docs/check-repository.sh
 
 The gate checks required sources, including the Golden Path journeys and
 reference examples, local Markdown links, trailing whitespace, JSON syntax,
-YAML syntax through Ruby's standard parser, TOML syntax through Python
-`tomllib`, Just example syntax through Just itself, shell syntax, and the
+Draft 2020-12 schema conformance with pinned Ajv dependencies, YAML syntax
+through Ruby's standard parser, TOML syntax through Python `tomllib`, Just
+example syntax through Just itself, shell syntax, and the
 engineering-documentation scaffold. It also runs the dependency-free protected
 package-tag admission regression suite against temporary Git repositories. The
-workflow pins Just `1.57.0`; local validation requires Python 3.11 or newer plus
-compatible `ruby`, `git`, and `just` commands.
+workflow pins Node `24.19.0` and Just `1.57.0`; local validation requires Python
+3.11 or newer plus compatible `node`, `npm`, `ruby`, `git`, and `just` commands.
+Install the schema validator dependencies before running the gate:
+
+```bash
+npm ci --prefix scripts/docs --ignore-scripts --no-audit --no-fund
+```
 
 The gate does not execute a Golden Path binary or any reference-example recipe,
 validate consumer repositories, call live GitHub APIs, or replay another
@@ -73,10 +79,12 @@ Completion-recovery admission requires one newly added direct record and no
 other change. It binds the immutable original completion path and SHA-256,
 original failed-publication and retained-artifact chain, exact failed completion
 source/run/attempt/phase, proof that artifact retrieval and registry mutation did
-not start, unchanged tag-present/registry-absent state, and exact current
-base/ref. The first record must follow the original completion addition; every
-later record must follow the latest recovery addition. Reuse, branching,
-duplicates, stale bases, and multiple-file authorization diffs fail closed.
+not start, authorization-run ordinal `1`, unchanged
+tag-present/registry-absent state, and exact current base/ref. The first record
+must follow the original completion addition; every later record must follow the
+latest recovery addition. Reuse, branching, duplicates, stale bases, and
+multiple-file authorization diffs fail closed. Repository live admission must
+prove that ordinal from workflow history; run attempt `1` alone is insufficient.
 
 The checker intentionally does not publish, query Actions, remote tag, or
 registry state, inspect authorization-use history, inspect hosting rulesets or
@@ -115,6 +123,12 @@ Run its repository-owned tests directly with:
 
 ```bash
 python3 scripts/docs/test-protected-package-tag-admission.py
+```
+
+Validate the Draft 2020-12 schemas and their examples directly with:
+
+```bash
+npm run check:schemas --prefix scripts/docs
 ```
 
 ## Engineering documentation scaffold

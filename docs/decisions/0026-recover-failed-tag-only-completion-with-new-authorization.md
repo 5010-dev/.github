@@ -40,19 +40,21 @@ defect would repeat the failure without improving assurance.
 3. Bind every recovery record to release unit, channel, version, tag, dist-tag,
    original release intent, the original publication source/run, retained
    artifact identities, the immutable original completion path and SHA-256,
-   the exact failed completion source/run/attempt/phase, not-started retrieval,
-   not-started registry mutation, not-started post-publication verification,
-   unchanged tag-present/registry-version-absent state, and current protected
-   base/ref.
+   the exact failed completion source/run, authorization-run ordinal `1`, run
+   attempt `1`, phase, not-started retrieval, not-started registry mutation,
+   not-started post-publication verification, unchanged
+   tag-present/registry-version-absent state, and current protected base/ref.
 4. The first recovery names the original completion authorization. If that new
    run also fails before retrieval and mutation, a later record must name the
    latest recovery authorization. Protected first-parent history must form one
    append-only chain. Duplicate, reused, branched, stale, or multi-file
    authorization is rejected.
-5. Only the first run/attempt `1` selected by the newly merged record may regain
-   registry-only mutation authority after live state and provenance are
-   revalidated. Every rerun, second run, and old-record run remains
-   mutation-disabled before credential setup.
+5. Only the first distinct workflow run, at run attempt `1`, selected by the
+   newly merged record may regain registry-only mutation authority after live
+   state and provenance are revalidated. Live history must group runs by the
+   exact predecessor authorization, workflow, source, event, and ref and prove
+   ordinal `1`; `run_attempt == 1` alone is insufficient. Every rerun, later
+   run, and old-record run remains mutation-disabled before credential setup.
 6. Before any recovery authorization PR merges, the selecting repository's
    implementation/foundation PR must execute a zero-mutation live permission
    preflight with the exact four-read admission set. It calls every Actions run,

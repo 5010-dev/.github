@@ -219,7 +219,7 @@ part of this standard.
 
 | Version | Normative change |
 | --- | --- |
-| `2026.08.7` | Add `pull-requests: read` to completion admission, require executable endpoint permission preflight, and add append-only pre-mutation recovery for a consumed completion authorization |
+| `2026.08.7` | Add `pull-requests: read` to completion admission, require executable endpoint permission preflight, and add append-only pre-mutation recovery for a consumed completion authorization with an exact first-workflow-run ordinal |
 | `2026.08.6` | Fix tag-only completion to require exact job-scoped read, artifact-retrieval, registry-mutation, and post-publication permissions and classify the existing protected tag as a released immutable identity |
 | `2026.08.5` | Add one PR-mediated retained-artifact completion path for an exact tag-only attempt-1 failure while preserving the immutable tag and forbidding rerun or second-run mutation |
 | `2026.08.4` | Add a separate PR-mediated pre-mutation recovery authorization that may preserve an unpublished version only while both immutable identities are absent |
