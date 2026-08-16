@@ -33,6 +33,7 @@ required_sources=(
     docs/decisions/0025-adopt-retained-artifact-tag-only-package-completion.md
     docs/decisions/0026-recover-failed-tag-only-completion-with-new-authorization.md
     docs/decisions/0027-simplify-protected-package-tag-publication.md
+    docs/decisions/0028-bind-protected-package-channels-to-branch-roles.md
     docs/golden-path/README.md
     docs/golden-path/stack-defaults.md
     docs/golden-path/reference-examples.md

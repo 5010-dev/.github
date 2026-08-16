@@ -117,8 +117,9 @@ That profile is an explicit package release-unit opt-in, not a repository-wide
 branch-model change or authority for sibling deployment.
 
 Under that opt-in, a same-version attempt after failure is permitted by the
-same required-check-passing release pull request merge only through the
-profile's idempotent workflow. When both tag and exact version are absent it may
+same required-check-passing protected branch merge and resolved version only
+through the profile's idempotent workflow. When both tag and exact version are
+absent it may
 publish from the verified source; when the exact immutable tag already selects
 that source but the registry version is absent it may resume registry
 publication without moving the tag; and when the exact tag, version, source,
@@ -320,11 +321,12 @@ convenience MUST NOT silently turn unrelated packages or research artifacts into
 one compatibility or scientific-scope promise.
 
 An independently versioned package MUST NOT mutate, version, publish, or deploy
-a sibling release unit as a side effect of its release. If a package requires a
-source boundary before repository-wide `main` promotion, it MUST retain
-validated `main` as the default and explicitly satisfy the protected package-tag
-profile rather than treating every `dev` commit or a mutable branch as release
-authority.
+a sibling release unit as a side effect of its release. If a package requires an
+immutable development candidate before repository-wide `main` promotion, it
+MUST retain validated `main` as the final publication boundary and explicitly
+satisfy the protected package-tag profile. Only package-relevant `dev` merges
+publish prereleases; package-neutral service or documentation changes do not
+become package release authority.
 
 ## Relevant upstream specifications
 

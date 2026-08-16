@@ -35,13 +35,19 @@ The record MUST include the following when applicable:
   limitations.
 
 A protected package-tag release MUST use repository and registry native
-surfaces as its minimum evidence: the merged source SHA and immutable package
-tag, the GitHub Actions publication run, the registry's exact version and native
-integrity, the applicable changelog or release notes, clean exact-version
+surfaces as its minimum evidence: branch channel, exact version, recorded source
+SHA and immutable package tag, the GitHub Actions publication run, the registry's
+native integrity, the applicable changelog or release notes, clean exact-version
 install/import/initialization/execution, and workflow isolation showing that no
 sibling deployment or release-unit mutation occurred. The run MUST distinguish
 new publication, safe tag-only resume from the same immutable source,
 verification of an already exact pair, and a fail-closed conflict.
+
+A final protected package publication MUST additionally record its selected
+prerelease, the separate prerelease and final source SHAs, equal package-closure
+and runtime-payload identities, and the package-neutral intervening-diff result.
+These fields prove promotion equivalence without claiming that repository SHAs
+or version-bearing archives are byte-identical.
 
 Linear, a separate evidence pull request, or a repository evidence file is not
 package publication authority. Package visibility, repository association, and
