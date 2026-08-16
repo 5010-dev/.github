@@ -1,6 +1,7 @@
 # ADR-0027: Simplify protected package-tag publication to an idempotent registry-native lifecycle
 
-- Status: Accepted
+- Status: Superseded
+- Superseded by: ADR-0028
 - Date: 2026-08-16
 - Owners: `5010-dev/.github` maintainers and selecting repository maintainers
 - Supersedes: ADR-0023, ADR-0025, and ADR-0026

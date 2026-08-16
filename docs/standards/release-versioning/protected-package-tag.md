@@ -2,8 +2,8 @@
 
 This profile is a narrow opt-in for a monorepo that contains an independently
 released registry package and an independently deployed service or application.
-It allows the package to use an immutable, release-unit-specific protected tag
-without promoting or deploying the sibling release unit.
+It binds package prereleases to `dev` and final package publication to `main`
+without coupling either package publication to the sibling release unit.
 
 Validated `main` remains the organization default. A repository that does not
 explicitly select and enforce this profile continues to publish only from
@@ -18,37 +18,47 @@ A repository MAY select this profile only when all of the following are true:
   under [Artifact and version profiles](./profiles.md);
 - the package has independent consumers, compatibility surface, version,
   publication cadence, correction boundary, and production effect;
-- repository-wide `main` promotion would couple package publication to an
-  unrelated service or application production effect;
-- PR-mediated package prereleases provide a real package-delivery validation
-  boundary before final publication; and
-- the repository owns the package contract, workflow, tag protection,
-  credentials, evidence, and correction path described below.
+- repository-wide `main` promotion would otherwise couple package validation or
+  publication to an unrelated sibling release effect;
+- immutable package prereleases provide a real development integration boundary
+  before final publication; and
+- the repository owns the package closure, branch/channel contract, workflow,
+  tag protection, credentials, evidence, and correction path described below.
 
 This profile MUST NOT be selected merely to publish every `dev` commit, avoid
 validation, create a shared development deployment, or preserve an unreleased
-intermediate contract. A feature pull request MAY build, pack, and test a
+intermediate contract. A pull request before merge MAY build, pack, and test a
 package but MUST NOT publish it.
 
-## Release-unit authority and isolation
+## Release-unit authority and package closure
 
 The repository-local contract MUST declare:
 
-- exactly one package release unit, its native package identity and manifest,
-  compatibility surface, build-input closure, changelog, and tag pattern;
-- the protected `dev` release-preparation branch and its required checks;
-- the repository-owned publication workflow and its serialized concurrency
-  identity;
-- prerelease and final registry channels;
+- exactly one package release unit, its native package identity and manifest or
+  staging-manifest strategy, compatibility surface, changelog or release notes,
+  and tag pattern;
+- the package build-input closure, including transitive source, generated
+  payload, public exports, release metadata, and build/pack inputs that can
+  change the published package;
+- protected `dev` and `main` branch boundaries and their required checks;
+- the repository-owned publication engine and serialized concurrency identity;
+- the Stable target source, unique prerelease sequence, prerelease and final
+  registry channels, and version materialization rule;
 - every sibling release unit and mutation path that publication must not
   change; and
 - release, credential, and correction owners.
 
+Package-only and shared-input changes inside the declared closure are
+package-relevant. Sibling service-only and documentation-only changes outside
+the closure are package-neutral. A simple path filter MAY avoid unnecessary
+workflow startup, but a repository-owned closure checker is authoritative for
+publication and prerelease-to-final equivalence.
+
 The organization standard does not select a package name, version, tag pattern,
-trigger path, credential, or current release state for a repository. The
-repository MAY express its opt-in contract in prose, configuration, workflow
-tests, or another reviewable repository-native form. No central schema or
-checker is required.
+path layout, Stable-target file, sequence source, staging implementation,
+credential, or current release state for a repository. The repository MAY
+express its opt-in contract in prose, configuration, workflow tests, or another
+reviewable repository-native form. No central schema or checker is required.
 
 The package tag is authority only for the declared package version. `main`
 remains the production source for sibling services and applications. Package
@@ -62,19 +72,59 @@ workflow and prevents routine update or deletion. Missing or unverified
 protection fails before tag creation. Tag publication MUST NOT use a credential
 that can push branches or mutate sibling release units.
 
-## PR-mediated publication authorization
+## Branch and channel authority
 
-A package release pull request MUST change the native package version and its
-changelog or release notes. It MAY include only repository-declared supporting
-changes that are necessary to build, validate, or publish that same package
-release unit. Feature work is validated separately and is not implicitly made a
-release merely because it exists on `dev`.
+The protected branch merge is publication authorization; there is no separate
+release-intent control plane.
 
-The release change reaches `dev` through a protected pull request after
-repository-required checks pass. An authorized maintainer's explicit merge is
-publication authorization for the exact merged source and materialized package
-version. The pull-request author and the maintainer performing the merge MAY be
-the same GitHub identity.
+### Development prerelease
+
+A required-check-passing pull request that changes the package closure and
+merges to `dev` authorizes one unique prerelease for that merged package state.
+The pull request SHOULD update the owning changelog or release notes and MUST
+leave the repository-owned Stable target consistent with the intended final
+compatibility version. An authorized maintainer's explicit merge is sufficient;
+the author and merger MAY be the same identity.
+
+The prerelease MUST:
+
+- use native SemVer prerelease syntax derived from the Stable target and a
+  serialized repository-owned unique sequence;
+- use the repository-declared non-`latest` channel, normally `next`;
+- build, test, pack, and publish only the declared package release unit;
+- verify registry identity, integrity, exact-version clean installation, and
+  representative package execution;
+- verify that `latest` and every sibling release unit remain unchanged; and
+- emit the native evidence defined below.
+
+A package-neutral merge to `dev` MUST NOT publish a package. A distinct
+package-relevant merge receives a distinct prerelease identity. A retry of the
+same authorized publication reuses the same resolved version and never allocates
+a successor merely because the workflow was retried.
+
+### Final publication
+
+Fast-forward promotion of `dev` to `main` is authorization to publish the
+repository-owned Stable target only when the promoted package state matches an
+eligible prerelease under the equivalence contract below. A final package MUST
+NOT be published from `dev`, a feature branch, a manual version input, or a
+separate version-only release pull request.
+
+The final publication MUST:
+
+- use the exact Stable SemVer target and `latest`;
+- build from the promoted `main` package closure;
+- verify an eligible prerelease with the same package-closure and runtime-payload
+  identities before mutation;
+- verify that every source change between the prerelease and final sources is
+  package-neutral, or require a new prerelease;
+- preserve sibling release-unit isolation; and
+- follow the same idempotent tag/registry state model as prerelease publication.
+
+A promotion whose package closure is unchanged from the previous final MUST NOT
+publish a package. Final package publication is a package release effect of the
+production branch, but it does not itself deploy or authorize a sibling service,
+application, or environment.
 
 Independent approval is not an organization minimum. A repository MAY require a
 distinct qualified approver when its operating model, concrete risk,
@@ -86,15 +136,59 @@ Direct-push publication, arbitrary version or source input, a comment, Linear,
 a manually created tag, and a standalone evidence change are not publication
 authorization.
 
-## Repository-owned idempotent workflow
+## Version materialization
 
-After the release pull request merges, one repository-owned workflow MUST:
+The repository MUST own one Stable target for the package. It MAY keep a
+non-publishable template version in source and inject the resolved prerelease or
+final version only into package staging output, or use another repository-native
+strategy that preserves the same branch/channel contract.
 
-1. derive the package identity, version, channel, source, changelog, and tag
-   from the merged repository state;
-2. verify required checks, package closure, deterministic build, content
+The prerelease sequence MUST be serialized, unique, and durable enough that:
+
+- two distinct package-relevant `dev` merges cannot publish the same version;
+- a retry of the same authorized merge resolves the same version;
+- a published version is never overwritten or reused; and
+- final publication resolves the exact Stable target rather than deriving a
+  new version from a moving channel.
+
+Changing the Stable target and the human-readable package change record belongs
+to ordinary package-relevant work. This profile MUST NOT require a second
+version-only or evidence-only pull request after feature integration.
+
+## Prerelease-to-final equivalence
+
+The prerelease and final registry archives need not be byte-identical because
+the native version and version-derived metadata differ. The final workflow MUST
+instead prove:
+
+- equal package build-input closure identity or digest;
+- equal compiled runtime payload identity or digest;
+- equal public export and type surface;
+- equal package file set except for declared version-derived generated metadata;
+  and
+- a package-neutral diff between the recorded prerelease source and the final
+  `main` source.
+
+The prerelease and final source SHAs MUST be recorded separately. Identical
+repository SHAs are not required when intervening changes affect only a sibling
+service or documentation outside the package closure. If any package or shared
+input changed, the repository MUST publish and validate a new prerelease before
+final publication.
+
+## Repository-owned idempotent publication engine
+
+Prerelease and final channels MUST use the same repository-owned publication
+engine and state model. Branch, version form, channel, and equivalence checks are
+inputs to that engine rather than separate recovery workflows.
+
+For each authorized exact version, the engine MUST:
+
+1. derive the package identity, version, channel, source, package closure,
+   changelog or release notes, and tag from protected repository state;
+2. verify required checks, closure routing, deterministic build, content
    allowlist, credential hygiene, tag protection, and sibling isolation;
-3. build, test, and pack from that immutable source;
+3. materialize the version in staging and build, test, and pack from the selected
+   immutable source;
 4. read the protected tag and exact registry version before mutation;
 5. apply the state table below in a serialized, non-canceling publication
    section;
@@ -115,38 +209,45 @@ An ambiguous or unauthorized tag or registry query also fails closed. It MUST
 NOT delete, move, recreate, overwrite, or reuse a published tag or version.
 
 A workflow rerun is not a new release authorization. It MAY idempotently finish
-or verify only the exact source and version already authorized by the merge.
+or verify only the exact source and version already authorized by the branch
+merge.
 The same rules apply when an earlier run stopped before either identity existed
 or after the exact tag was created but before registry publication completed.
 No parallel publication control plane is required. A different source, version,
-package, integrity, or conflicting remote state requires a new release pull
-request and SemVer correction as applicable.
+package, integrity, channel, or conflicting remote state requires a new package
+version as applicable.
 
-Standard `2026.08.8` retires the former custom intent, admission, recovery, and
+Standard `2026.08.9` retires the former custom intent, admission, recovery, and
 completion control plane; repositories MUST NOT keep a compatibility mode or
 dual policy for it.
 
-## Development prerelease and final publication
+## Consumer exactness and artifact provenance
 
-A prerelease MUST:
+Development integration artifacts MUST consume an exact prerelease. Production
+artifacts MUST consume an exact final version. A mutable `next`, `latest`, or
+equivalent channel MAY be used to discover a new candidate, but MUST NOT be the
+install identity for a retry, replay, rebuild, or redeployment.
 
-- use the final package identity rather than a separate development package;
-- use native SemVer prerelease syntax and the repository-declared non-`latest`
-  channel, normally `next`;
-- build, test, pack, and publish only the declared package release unit;
-- verify registry identity, integrity, clean exact-version installation, and
-  representative package execution;
-- verify that `latest` and every sibling release unit remain unchanged; and
-- emit the native evidence defined below.
+The exact consumer input MUST carry at least the package version and native
+registry integrity. When the selecting repository publishes closure and runtime
+payload identities, the consumer SHOULD retain those identities and the package
+tag/source in its artifact provenance. The exact input MAY be materialized in a
+native lockfile or in a repository-owned immutable build-input record and
+generated dependency layer.
 
-Consumers MUST use an exact version and lockfile integrity. A mutable channel is
-discovery metadata and MUST NOT be the production dependency identity.
+The organization does not require a consumer source commit that replaces every
+prerelease pin with the corresponding final pin. A branch-aware resolver MAY
+discover a candidate once and record the exact immutable input outside the root
+manifest/lockfile, provided that:
 
-A final release pull request materializes a new final native SemVer and
-changelog. The same idempotent workflow publishes that exact version to
-`latest`. It MUST NOT promote prerelease bytes in place, create source, version,
-or changelog commits, push `dev` or `main`, or require repository-wide `main`
-promotion for the package.
+- its channel policy is repository-owned and reviewable;
+- ordinary dependency bootstrap remains frozen;
+- installation uses the recorded exact version rather than a floating channel;
+- retries and rebuilds reuse the same record; and
+- the resulting artifact records its source and exact package input.
+
+Production rebuild and redeployment use the immutable consumer artifact or its
+retained exact build-input record, not a fresh resolution of `latest`.
 
 ## Permissions and credentials
 
@@ -162,17 +263,18 @@ that needs them:
 | Post-publication execution | No registry credential or token environment after installation |
 
 Write-capable credentials MUST be absent from feature validation and consumer
-execution. Secrets MUST NOT be written to manifests, lockfiles, logs, evidence
-artifacts, or packed package contents. A repository MAY split validation, tag
-creation, registry publication, and verification into jobs when that is needed
-to enforce these boundaries; they remain one repository-owned idempotent
-publication workflow and state machine.
+execution. Secrets MUST NOT be written to manifests, lockfiles, generated
+dependency state, logs, evidence artifacts, or packed package contents. A
+repository MAY split validation, tag creation, registry publication, and
+verification into jobs when needed to enforce these boundaries; they remain one
+repository-owned idempotent publication engine and state machine.
 
 ## Registry-native evidence
 
 The minimum evidence is:
 
-- merged source SHA and immutable package tag;
+- branch channel, exact package version, recorded source SHA, and immutable
+  package tag;
 - GitHub Actions publication run;
 - registry exact version and native integrity;
 - applicable changelog or release notes;
@@ -180,6 +282,12 @@ The minimum evidence is:
   execution; and
 - workflow isolation showing that no Calculator, service, OCI/ECS,
   object-storage, or other sibling release-unit mutation occurred.
+
+Final publication additionally records the selected prerelease, both source
+SHAs, package-closure identity, runtime-payload identity, and the package-neutral
+source-diff result. This is the smallest evidence that distinguishes package
+equivalence from repository-SHA equality; it is not a new evidence control
+plane.
 
 This evidence MUST distinguish new publication, safe tag-only resume,
 verification-only exact state, and fail-closed conflict. GitHub, the registry,
@@ -223,10 +331,11 @@ evidence for superseded policy versions. They are non-normative and their prior
 runs, source SHAs, files, and implementation details are not requirements of the
 current profile.
 
-Selecting repositories, including Core, MUST align their repository-owned
-workflow with this profile before their next publication. They migrate directly
-to this lifecycle without dual readers, dual workflows, compatibility mode, or
-a central migration control plane.
+Selecting repositories MUST align their repository-owned workflow with this
+profile before their next package-relevant merge. They migrate directly to this
+lifecycle without dual workflows, compatibility mode, custom intent records, or
+a central migration control plane. Existing published versions and immutable
+tags remain unchanged.
 
 ## Out of scope
 
@@ -234,4 +343,4 @@ This profile does not create a central release queue, repository current-version
 registry, package-name registry, shared publication workflow, cross-repository
 approval gate, or evidence database. It does not publish a package, deploy a
 service, clean object storage, mutate durable state, or define a repository's
-initial package name or version.
+package name, current version, path layout, or prerelease sequence implementation.

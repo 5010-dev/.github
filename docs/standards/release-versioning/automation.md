@@ -28,9 +28,9 @@ equivalent fail-closed order:
 
 1. Resolve the release unit, profile, version or research-record source,
    requested identifier, and applicable channel or record status.
-2. Verify validated `main` for a governed publication, the exact admitted source
-   commit selected by the protected package-tag profile, or the exact immutable
-   source boundary selected by the owning research contract for internal record
+2. Verify validated `main` for a governed publication, an exact package-relevant
+   `dev` merge for a protected-package prerelease, or the exact immutable source
+   boundary selected by the owning research contract for internal record
    finalization, plus required source or manifest state.
 3. Verify applicable version, research identifier, tag or ref, registry, channel,
    and status uniqueness and consistency.
@@ -56,14 +56,25 @@ irreversible publication or finalization begins. Every remote mutation and
 verification loop MUST be bounded and report an unambiguous failure when its
 result cannot be established.
 
-For the protected package-tag profile, a required-check-passing release pull
-request merge authorizes the exact merged source and materialized version. One
-repository-owned workflow MUST derive release unit, channel, version, source,
-changelog, and protected tag from that state. It MUST NOT accept arbitrary
+For the protected package-tag profile, a required-check-passing package-relevant
+merge to `dev` authorizes a unique prerelease, while fast-forward promotion to
+`main` authorizes the corresponding final only after package-closure and
+runtime-payload equivalence to an eligible prerelease is established. A
+package-neutral `dev` merge or a `main` promotion whose package closure is
+unchanged from the previous final MUST NOT publish a package. One
+repository-owned engine MUST derive release unit, branch channel, Stable target,
+prerelease sequence, exact version, source, changelog or release notes, closure,
+and protected tag from repository state. It MUST NOT accept arbitrary
 publication inputs, create version or changelog commits, push a branch, invoke a
 sibling deployment, or cancel an older run after irreversible mutation begins.
-The hosting layer owns the protected PR-only merge boundary; an independent
-GitHub approval is not an organization minimum.
+The hosting layer owns the protected PR merge boundary; an independent GitHub
+approval is not an organization minimum.
+
+The engine MUST materialize the resolved version only in the package staging
+output or through an equivalent repository-owned native strategy. A distinct
+package-relevant `dev` merge receives a distinct prerelease. A retry of the same
+authorized merge reuses its exact version. Final publication uses the
+repository-owned Stable target and MUST NOT occur from `dev`.
 
 The workflow MUST serialize publication, build deterministically from the exact
 source, and read tag and registry state before mutation. If both identities are
@@ -78,9 +89,12 @@ fail closed.
 The registry state MUST be re-read immediately before and after publication.
 The workflow then verifies the native integrity and channel, clean exact-version
 installation and representative execution, credential removal, and absence of
-sibling effects. A workflow rerun is not new authorization, but it MAY
-idempotently complete or verify only the exact source and version authorized by
-the merge. It does not require a parallel publication control plane.
+sibling effects. Final publication additionally verifies equal package-closure
+and runtime-payload identities and a package-neutral diff between the separately
+recorded prerelease and final sources. A workflow rerun is not new authorization,
+but it MAY idempotently complete or verify only the exact source and version
+authorized by the branch merge. It does not require a parallel publication
+control plane.
 
 ## Native client distribution
 

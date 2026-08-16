@@ -215,15 +215,23 @@ application MAY opt in to the narrowly scoped
 The opt-in is valid only for the declared package release unit and does not make
 `dev` a deployment target, change `main` as the production source for sibling
 services or applications, or alter repositories that omit the profile contract.
-The package release pull request changes its native version and changelog.
-Required checks followed by an authorized maintainer's explicit merge provide
-publication authorization; a separate GitHub approval or two-person review is
-not an organization minimum. After merge, one repository-owned, serialized,
-idempotent workflow verifies the source and package closure, creates an absent
-immutable package tag, publishes an absent exact registry version, or reports
-verification success when the exact tag, version, source, and integrity already
-agree. An exact tag with an absent registry version may resume publication only
-from that same immutable source without moving or recreating the tag.
+The selecting repository declares the package build-input closure and keeps its
+package publication separate from every sibling service or application release
+unit. A required-check-passing package-relevant change merged to `dev`
+authorizes a unique prerelease on a non-`latest` channel. Fast-forward promotion
+to `main` authorizes the corresponding final version on `latest` only after the
+repository proves that the promoted package closure and runtime payload match a
+validated prerelease. Service-only and documentation-only changes outside the
+declared package closure do not publish the package.
+
+A separate release-intent pull request, independent approval, or two-person
+review is not an organization minimum. One repository-owned, serialized,
+idempotent publication engine derives the branch channel and exact version,
+verifies the package closure and sibling isolation, creates an absent immutable
+package tag, publishes an absent exact registry version, or reports verification
+success when the exact tag, version, source, and integrity already agree. An
+exact tag with an absent registry version may resume publication only from that
+same immutable source without moving or recreating the tag.
 
 Registry-only state, a missing or moved expected tag, or a version, source, or
 integrity conflict fails closed and requires a new SemVer correction. Published
@@ -231,6 +239,10 @@ tags and versions are never moved, deleted, overwritten, or reused. Workflow
 reruns do not create new authorization, but may idempotently complete or verify
 the exact source and version already authorized by the merge. The profile does
 not use Linear or a parallel publication control plane as authority.
+Development consumers use an exact prerelease input; production consumers use
+an exact final input. A native lockfile or immutable artifact build-input record
+may carry that exact version and registry integrity. Mutable `next` and `latest`
+channels are discovery metadata, not reproducible build identities.
 
 Organization release units must follow the
 [Release and Versioning Standard](https://github.com/5010-dev/.github/blob/main/docs/standards/release-versioning/README.md).

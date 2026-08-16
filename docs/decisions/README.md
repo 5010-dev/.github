@@ -21,7 +21,8 @@ index.
 | [ADR-0024](./0024-separate-dependency-risk-from-routine-automation.md) | Accepted | Separate dependency-risk outcomes from routine-update automation |
 | [ADR-0025](./0025-adopt-retained-artifact-tag-only-package-completion.md) | Superseded by ADR-0027 | Adopt retained-artifact tag-only package completion |
 | [ADR-0026](./0026-recover-failed-tag-only-completion-with-new-authorization.md) | Superseded by ADR-0027 | Recover failed tag-only completion with a new authorization |
-| [ADR-0027](./0027-simplify-protected-package-tag-publication.md) | Accepted | Simplify protected package-tag publication to an idempotent registry-native lifecycle |
+| [ADR-0027](./0027-simplify-protected-package-tag-publication.md) | Superseded by ADR-0028 | Simplify protected package-tag publication to an idempotent registry-native lifecycle |
+| [ADR-0028](./0028-bind-protected-package-channels-to-branch-roles.md) | Accepted | Bind protected package prerelease and final channels to `dev` and `main` |
 
 Organization standards and platform contracts hold the current normative view.
 ADRs explain why those views were accepted.

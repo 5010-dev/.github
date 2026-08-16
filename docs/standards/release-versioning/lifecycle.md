@@ -32,11 +32,12 @@ a new final version; it MUST NOT mutate an existing prerelease, tag, or artifact
 
 Under the protected package-tag profile, a `dev` prerelease MUST use the same
 package identity as the final package, a native SemVer prerelease, and a
-repository-declared non-`latest` channel. Consumers MUST pin the exact version;
-the mutable channel is discovery only. Final publication MUST use a new final
-SemVer version with greater precedence than the materialized predecessor and
-`latest`, and MUST NOT relabel prerelease bytes as final. Build metadata alone
-does not establish a new release precedence.
+repository-declared non-`latest` channel. Consumers MUST retain the exact version
+and native integrity in a lockfile or immutable artifact build-input record; the
+mutable channel is discovery only. Final publication MUST use a new final SemVer
+version with greater precedence than the materialized predecessor and `latest`,
+and MUST NOT relabel prerelease bytes as final. Build metadata alone does not
+establish a new release precedence.
 
 ## Research record status
 
@@ -158,10 +159,10 @@ scope, replacement, required consumer action, owner, and follow-up review.
 
 A protected package-tag workflow run or rerun MUST re-read the immutable tag
 and exact registry version before mutation and re-read registry state
-immediately before and after publication. The required-check-passing release
-pull request merge remains authorization for only its exact source and version;
-a rerun creates no new authorization but MAY idempotently complete or verify
-that same authorized publication:
+immediately before and after publication. The required-check-passing branch
+merge remains authorization for only its exact source and resolved version; a
+rerun creates no new authorization but MAY idempotently complete or verify that
+same authorized publication:
 
 - when both tag and exact registry version are absent, create the protected tag
   from the verified source and publish the exact version;
