@@ -61,20 +61,25 @@ merge to `dev` authorizes a unique prerelease, while fast-forward promotion to
 `main` authorizes the corresponding final only after package-closure and
 runtime-payload equivalence to an eligible prerelease is established. A
 package-neutral `dev` merge or a `main` promotion whose package closure is
-unchanged from the previous final MUST NOT publish a package. One
-repository-owned engine MUST derive release unit, branch channel, Stable target,
-prerelease sequence, exact version, source, changelog or release notes, closure,
-and protected tag from repository state. It MUST NOT accept arbitrary
+unchanged from the previous final, when one exists, MUST NOT publish a package.
+One repository-owned engine MUST derive release unit, branch channel, Stable
+target, prerelease sequence, exact version, source, changelog or release notes,
+closure, and protected tag from repository state. It MUST NOT accept arbitrary
 publication inputs, create version or changelog commits, push a branch, invoke a
 sibling deployment, or cancel an older run after irreversible mutation begins.
-The hosting layer owns the protected PR merge boundary; an independent GitHub
-approval is not an organization minimum.
+The hosting layer owns the protected `dev` merge and fast-forward `main`
+promotion boundaries; an independent GitHub approval is not an organization
+minimum.
 
 The engine MUST materialize the resolved version only in the package staging
 output or through an equivalent repository-owned native strategy. A distinct
 package-relevant `dev` merge receives a distinct prerelease. A retry of the same
 authorized merge reuses its exact version. Final publication uses the
 repository-owned Stable target and MUST NOT occur from `dev`.
+
+Before any final-package mutation, the engine MUST verify equal package-closure
+and runtime-payload identities and a package-neutral diff between the separately
+recorded prerelease and final sources.
 
 The workflow MUST serialize publication, build deterministically from the exact
 source, and read tag and registry state before mutation. If both identities are
@@ -89,11 +94,9 @@ fail closed.
 The registry state MUST be re-read immediately before and after publication.
 The workflow then verifies the native integrity and channel, clean exact-version
 installation and representative execution, credential removal, and absence of
-sibling effects. Final publication additionally verifies equal package-closure
-and runtime-payload identities and a package-neutral diff between the separately
-recorded prerelease and final sources. A workflow rerun is not new authorization,
-but it MAY idempotently complete or verify only the exact source and version
-authorized by the branch merge. It does not require a parallel publication
+sibling effects. A workflow rerun is not new authorization, but it MAY
+idempotently complete or verify only the exact source and version authorized by
+the branch merge or promotion. It does not require a parallel publication
 control plane.
 
 ## Native client distribution

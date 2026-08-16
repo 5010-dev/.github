@@ -116,16 +116,17 @@ select the [protected package-tag publication profile](./protected-package-tag.m
 That profile is an explicit package release-unit opt-in, not a repository-wide
 branch-model change or authority for sibling deployment.
 
-Under that opt-in, a same-version attempt after failure is permitted by the
-same required-check-passing protected branch merge and resolved version only
-through the profile's idempotent workflow. When both tag and exact version are
-absent it may
-publish from the verified source; when the exact immutable tag already selects
-that source but the registry version is absent it may resume registry
-publication without moving the tag; and when the exact tag, version, source,
-and integrity agree it succeeds by verification. Registry-only, moved-tag,
-source, version, integrity, or ambiguous state fails closed. Defective or
-conflicting published content uses a new SemVer correction.
+Under that opt-in, a same-version attempt after failure is permitted only for
+the same authorized source event and resolved version: either the
+required-check-passing package-relevant merge to `dev` or the fast-forward
+promotion to `main`. It proceeds only through the profile's idempotent workflow.
+When both tag and exact version are absent, it may publish from the verified
+source; when the exact immutable tag already selects that source but the registry
+version is absent, it may resume registry publication without moving the tag;
+and when the exact tag, version, source, and integrity agree, it succeeds by
+verification. Registry-only, moved-tag, source, version, integrity, or ambiguous
+state fails closed. Defective or conflicting published content uses a new SemVer
+correction.
 
 ## CLI and distributed executable profile
 
