@@ -156,30 +156,30 @@ yank or retract the defective release without publishing a replacement.
 Emergency deletion MUST record credential rotation or containment, affected
 scope, replacement, required consumer action, owner, and follow-up review.
 
-A retry of protected package-tag publication MUST re-read both immutable tag and
-registry state. Matching tag, version, source, and integrity are an idempotent
-verification result; any mismatch is a conflict and MUST fail closed. A
+A protected package-tag workflow run or rerun MUST re-read the immutable tag
+and exact registry version before mutation and re-read registry state
+immediately before and after publication. The required-check-passing release
+pull request merge remains authorization for only its exact source and version;
+a rerun creates no new authorization but MAY idempotently complete or verify
+that same authorized publication:
+
+- when both tag and exact registry version are absent, create the protected tag
+  from the verified source and publish the exact version;
+- when the exact tag already selects the verified source but the registry
+  version is absent, keep the tag unchanged and resume registry publication
+  from that same immutable source; and
+- when tag, version, source, integrity, and channel all match, return
+  verification success without republishing.
+
+Registry-only state, a missing or moved expected tag, conflicting source,
+version, integrity, or channel, and ambiguous or unauthorized queries MUST fail
+closed. The workflow MUST NOT move, delete, recreate, overwrite, or reuse an
+immutable tag or version, broaden tag or registry credentials, or mutate a
+sibling release unit. The eligible both-absent, exact-tag-only, and exact-pair
+states use the same repository-owned idempotent workflow without a separate
+intent, recovery, completion, attempt-number, or retained-artifact contract. A
 prerelease defect requires a new prerelease version, and a final defect requires
 a new SemVer correction.
-
-A terminal protected package attempt that created neither its package tag nor
-its registry version is not a published release and has no immutable release
-identity to correct. It MAY preserve the intended version only through the
-profile's new PR-mediated pre-mutation recovery authorization. The failed
-attempt, original intent, and prior recovery records remain historical evidence;
-a normal rerun is not authorization.
-
-A terminal attempt-1 failure that created the exact immutable package tag but
-not the registry version is a tag-only partial publication. It MAY complete
-only the missing exact registry version through the profile's separate
-PR-mediated tag-only completion authorization and the original run's unexpired,
-digest-bound retained artifact. The existing tag is verification-only and MUST
-NOT be moved, deleted, or recreated. The first authorized completion workflow
-run at attempt 1 may publish only while the registry version is absent. If the
-registry version already exists and tag, source, integrity, and dist-tag all
-match, the outcome is verification-only. Any mismatch, registry-only state,
-expired or unavailable artifact, rebuild, ordinary rerun, or second completion
-workflow run MUST NOT mutate and fails closed for owner action.
 
 Database migrations are superseded by later migrations rather than deprecated,
 yanked, or deleted. Research records follow their correction, supersession, and
