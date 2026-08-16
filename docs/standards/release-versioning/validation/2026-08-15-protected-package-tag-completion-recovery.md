@@ -101,7 +101,7 @@ The new
 `package-release-tag-only-completion-recovery-intent/v1` contract adds a fourth
 non-overlapping, append-only authorization lane. Its exact current Core incident
 shape is preserved as the non-authoritative schema fixture
-[`fixtures/2026-08-15-core-tag-only-completion-recovery-intent.valid.json`](./fixtures/2026-08-15-core-tag-only-completion-recovery-intent.valid.json).
+[`fixtures/2026-08-15-core-tag-only-completion-recovery-intent.valid.json`](https://github.com/5010-dev/.github/blob/b97e749998b0bfb4b731a5961b54f277ec1e18a1/docs/standards/release-versioning/validation/fixtures/2026-08-15-core-tag-only-completion-recovery-intent.valid.json).
 The fixture is validation evidence in the central repository; it is not a Core
 authorization record and cannot trigger publication.
 

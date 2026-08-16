@@ -34,41 +34,20 @@ The record MUST include the following when applicable:
 - known security, integrity, compatibility, scientific-scope, or use
   limitations.
 
-A protected package-tag release record MUST additionally include the immutable
-release intent, admitted base and head commits, exact merge-diff identity,
-derived package tag, registry version and integrity, selected channel, workflow
-run, package-only effect verification, and retry or recovery state. The record
-MUST distinguish a successful new publication from an idempotent verification
-of an already-published identical identity.
+A protected package-tag release MUST use repository and registry native
+surfaces as its minimum evidence: the merged source SHA and immutable package
+tag, the GitHub Actions publication run, the registry's exact version and native
+integrity, the applicable changelog or release notes, clean exact-version
+install/import/initialization/execution, and workflow isolation showing that no
+sibling deployment or release-unit mutation occurred. The run MUST distinguish
+new publication, safe tag-only resume from the same immutable source,
+verification of an already exact pair, and a fail-closed conflict.
 
-A pre-mutation recovery record MUST additionally preserve the unchanged original
-release-intent path, prior failed source and workflow run, terminal pre-mutation
-outcome, observed absence of both immutable identities, newly admitted base and
-head, recovery-record path, authorization-use result, and final tag/registry
-state. Evidence MUST distinguish an unpublished pre-mutation failure from
-tag-only or registry-only partial publication and from successful immutable
-publication followed by verification failure.
-
-A tag-only completion record MUST additionally preserve the unchanged original
-release intent; the exact failed publication source, selecting repository,
-declared publication or recovery workflow, `dev` push event/ref, workflow run,
-run attempt, authorization type and path, and trusted job or terminal evidence
-that its tag-creation phase completed before registry publication failed; the
-existing tag and observed absent registry version; retained Actions artifact ID,
-name, expiry, archive digest, tarball file name and SHA-256, native package
-integrity, and embedded source; newly admitted base and head; authorization-use
-result; and final tag, registry integrity, and dist-tag state. Evidence MUST
-distinguish a new registry publication from verification-only exact state and
-MUST prove that no rebuild, tag mutation, rerun mutation, second-run mutation,
-sibling effect, or tag credential occurred.
-
-A completion-recovery record MUST additionally preserve the immutable original
-completion path and bytes, the direct predecessor authorization path, exact
-failed run, authorization-run ordinal `1`, run attempt `1`, terminal
-pre-mutation phase outcomes, and live workflow-history evidence used to derive
-that ordinal. Evidence MUST distinguish the predecessor's first distinct run
-from a rerun and from a later distinct run whose attempt number also equals
-`1`.
+Linear, a separate evidence pull request, or a repository evidence file is not
+package publication authority. Package visibility, repository association, and
+consumer grants are setup and access configuration: verify them when
+establishing or changing access and during consumer handoff, but do not use them
+as per-release terminal evidence for an otherwise exact artifact identity.
 
 A native client release record MUST additionally identify the application or
 bundle, platform-native display version and build identifier, signed build or

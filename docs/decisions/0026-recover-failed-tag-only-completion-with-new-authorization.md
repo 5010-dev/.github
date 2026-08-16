@@ -1,6 +1,7 @@
 # ADR-0026: Recover failed tag-only completion with a new authorization
 
-- Status: Accepted
+- Status: Superseded
+- Superseded by: ADR-0027
 - Date: 2026-08-15
 - Owners: `5010-dev/.github` maintainers and selecting repository maintainers
 - Refines: ADR-0025 decisions 2, 6, 9, and 12
