@@ -63,15 +63,17 @@ compatibility level, scientific status, publication state, or verification resul
 that has not been established. It MUST NOT overwrite a published or finalized
 identity or reuse it for different content.
 
-An exception MUST NOT convert tag-only, registry-only, conflicting, or completed
-immutable package publication into the protected package-tag profile's
-pre-mutation same-version recovery path. That path is available only through its
-normal PR-mediated authorization while both immutable identities are absent.
-Tag-only state may use only the profile's separate retained-artifact completion
-contract while the exact registry version is absent; an exception cannot waive
-its attempt-1, one-record, immutable-tag, no-rebuild, digest, first-run, or
-credential-isolation requirements. Registry-only and conflicting state remain
-ineligible for same-version mutation.
+An exception MUST NOT bypass the protected package-tag profile's immutable
+identity, exact-source, least-privilege credential, sibling-isolation, or
+conflict-rejection requirements. When both immutable identities are absent, or
+when the exact protected tag selects the merge-authorized source and only the
+registry version is absent, only the repository-owned idempotent workflow may
+complete that same source and version. When the exact tag, version, source,
+integrity, and channel all match, the outcome is verification success. An
+exception cannot authorize manual publication, a different source or version,
+tag movement or recreation, credential expansion, or sibling mutation.
+Registry-only, missing or moved expected tag, conflicting identity or integrity,
+and ambiguous state remain ineligible for same-version mutation.
 
 A `SHOULD` deviation MAY be documented in normal repository decision, release,
 or research records when the rationale and impact are clear. A `MUST` or `MUST
