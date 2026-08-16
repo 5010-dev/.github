@@ -217,9 +217,9 @@ No parallel publication control plane is required. A different source, version,
 package, integrity, channel, or conflicting remote state requires a new package
 version as applicable.
 
-Standard `2026.08.9` retires the former custom intent, admission, recovery, and
-completion control plane; repositories MUST NOT keep a compatibility mode or
-dual policy for it.
+Under Standard `2026.08.9`, the former custom intent, admission, recovery, and
+completion control plane remains retired; repositories MUST NOT keep a
+compatibility mode or dual policy for it.
 
 ## Consumer exactness and artifact provenance
 
