@@ -56,78 +56,31 @@ irreversible publication or finalization begins. Every remote mutation and
 verification loop MUST be bounded and report an unambiguous failure when its
 result cannot be established.
 
-For the protected package-tag profile, tag creation and registry publication
-MUST occur in the same serialized state machine after exact merge-diff admission.
-The workflow MUST derive release unit, channel, version, source, and tag from the
-PR-merged repository state admitted by the exact `before..after` diff; it MUST
-NOT accept them as arbitrary dispatch inputs, create a version or changelog
-commit, push a branch, invoke a sibling deployment, or cancel an older run after
-tag creation or publication begins. The hosting layer owns the PR-only merge
-boundary. The publication workflow revalidates the exact diff and every
-publication prerequisite before mutation; it does not infer or validate an
-independent human approval.
+For the protected package-tag profile, a required-check-passing release pull
+request merge authorizes the exact merged source and materialized version. One
+repository-owned workflow MUST derive release unit, channel, version, source,
+changelog, and protected tag from that state. It MUST NOT accept arbitrary
+publication inputs, create version or changelog commits, push a branch, invoke a
+sibling deployment, or cancel an older run after irreversible mutation begins.
+The hosting layer owns the protected PR-only merge boundary; an independent
+GitHub approval is not an organization minimum.
 
-One normal release intent may start only its first admitted publication
-attempt. An Actions rerun, manual dispatch, comment, or repeated evaluation of
-the old event is not renewed mutation authority. If that attempt reaches a
-terminal failure before any tag or registry version exists, same-version
-recovery requires one new PR-merged
-`package-release-recovery-intent/v1`. The recovery workflow derives all
-identities from the unchanged manifest, historical intent, recovery record, and
-new exact `before..after` diff; the recovery `after` is the new source.
+The workflow MUST serialize publication, build deterministically from the exact
+source, and read tag and registry state before mutation. If both identities are
+absent, it may create the protected tag and publish. If the exact tag already
+selects that source while the registry version is absent, it may keep the tag
+unchanged and resume registry publication from the same immutable source. If
+the exact tag, version, source, integrity, and channel already agree, it MUST
+return verification success without republishing. Registry-only, missing or
+moved expected tag, conflicting source/version/integrity, and ambiguous state
+fail closed.
 
-Before a recovery mutation, repository automation MUST query the prior Actions
-run and prove terminal failure before immutable mutation, query the exact tag
-and registry version and prove both absent, prove the recovery record has not
-started another attempt, and revalidate the protected source branch, required
-checks, protected tag authority, package closure, credentials, and sibling
-isolation. Record fields declaring absent identities are reviewed authorization
-claims, not replacements for live state. The central reference checker validates
-only record structure and local Git history and MUST NOT query Actions,
-rulesets, or registries.
-
-Tag-only completion uses a different state machine and a different immutable
-record conforming to `package-release-tag-only-completion-intent/v1`. Before any
-registry mutation, repository automation MUST verify the exact existing tag and
-its source; the failed run's selecting-repository identity, protected `dev` push
-event/ref, exact source, attempt 1, terminal failure, and declared normal
-publication or recovery workflow selected by its authorization type; the
-run's trusted job or terminal evidence that the exact tag-creation phase
-completed and registry publication failed before creating the version; the
-original admitted release or recovery authorization; the unexpired retained
-artifact ID and run, archive digest, tarball SHA-256, native integrity, embedded
-source, unchanged manifest/version, expected dist-tag, authorization-use
-history, rulesets, and current registry state. It MUST download the retained
-artifact and MUST NOT rebuild or substitute bytes.
-
-Only the first workflow run created by that newly merged completion record, and
-only its run attempt 1, may create the absent exact registry version. A rerun or
-second workflow run MUST be mutation-disabled before the publication credential
-is exposed. If the exact version already exists and tag, source, integrity, and
-dist-tag all match, every run is verification-only. Any mismatch, registry-only
-state, unavailable or expired artifact, ambiguous query, or consumed
-authorization fails closed without mutation.
-
-If that first completion run/attempt `1` fails during admission/live
-verification before retained-artifact retrieval and registry mutation, the
-completion record is consumed. Another same-version attempt requires one new
-PR-merged `package-release-tag-only-completion-recovery-intent/v1` record whose
-exact diff changes no other path. The first record names the immutable original
-completion path and bytes; every later record names the latest recovery source
-and failed run. The record fixes authorization-run ordinal `1`; live history
-must prove that the failed predecessor is the first distinct workflow run
-selected by the exact authorization, workflow, source, event, and ref. Run
-attempt `1` alone does not prove that fact. Rerun, later-run mutation,
-predecessor reuse, and branched successors remain forbidden.
-
-Before any completion-recovery authorization PR can merge, the repository's
-implementation/foundation PR MUST run a zero-mutation live preflight with the
-same read-only admission permissions. It must successfully call the Actions run,
-job, artifact and completion-history endpoints, commit-associated pull requests,
-Git tag/ref, and authenticated registry version/dist-tag queries used by live
-admission. HTTP 403 or ambiguous responses fail the required check. The
-preflight receives no package write or tag App credential and creates no
-artifact or release/deployment effect.
+The registry state MUST be re-read immediately before and after publication.
+The workflow then verifies the native integrity and channel, clean exact-version
+installation and representative execution, credential removal, and absence of
+sibling effects. A workflow rerun is not new authorization, but it MAY
+idempotently complete or verify only the exact source and version authorized by
+the merge. It does not require a parallel publication control plane.
 
 ## Native client distribution
 
@@ -169,22 +122,13 @@ registry, archive, or record operations are permanent.
 
 - Before immutable publication or finalization, a draft MAY be completed,
   replaced, or removed under the owning system's documented recovery semantics.
-- A protected package attempt that failed terminally before creating either its
-  tag or registry version MAY preserve the same version only through a new,
-  unused, PR-mediated pre-mutation recovery record. The original intent and all
-  previous recovery records remain immutable. A second such failure requires a
-  second record bound to the newly failed run.
-- A protected package attempt-1 run that created the exact immutable tag and
-  then failed before registry publication MAY complete only the absent registry
-  version through one unused PR-mediated tag-only completion record and the
-  original run's retained artifact. It never rebuilds or mutates the tag.
-- A tag-only completion run that failed before retained-artifact retrieval and
-  registry mutation MAY start another attempt only from a new append-only,
-  PR-mediated completion-recovery record. The original completion is consumed;
-  each later pre-mutation failure requires another direct successor record. The
-  failed predecessor must be the authorization's first distinct workflow run
-  at attempt `1`, established from live workflow history rather than attempt
-  number alone.
+- A protected package run that stopped while both tag and registry version were
+  absent MAY be rerun idempotently for the same merged source and version.
+- A protected package run that created the exact immutable tag but stopped
+  before registry publication MAY keep that tag unchanged and resume the absent
+  registry publication from the same immutable source.
+- An exact tag/version/source/integrity pair is verification success. A rerun
+  MUST NOT republish it or expose an unnecessary mutation credential.
 - After a package version, tag, image digest, accepted native build, immutable
   release, or immutable research record is published or finalized, recovery
   MUST NOT overwrite it. Use the applicable correction, successor, deprecate,
@@ -194,11 +138,10 @@ registry, archive, or record operations are permanent.
   owner action, and retry, correction, or successor path.
 - A retry MUST re-read remote state and fail when it would create a conflicting
   identity or claim success for a different artifact.
-- Tag-only state is not pre-mutation recovery and is eligible only for the
-  narrower retained-artifact completion above. Registry-only, conflicting
-  immutable state, and a successful exact publication followed by verification
-  failure retain the existing identities and use fail-closed verification,
-  correction, or owner action without deletion, movement, overwrite, or reuse.
+- Registry-only, conflicting immutable state, and a successful exact publication
+  followed by verification failure retain the existing identities and use
+  fail-closed verification, a new SemVer correction, or owner action without
+  deletion, movement, overwrite, or reuse.
 
 ## Shared automation admission
 
@@ -232,22 +175,14 @@ deterministic release logic remains locally or independently executable.
   split: validation uses `contents: read`, private-package consumption uses
   `packages: read`, and `packages: write` exists only in the package publication
   job. Validation and consumer jobs MUST NOT receive package write access.
-- A tag-only completion workflow uses four exact job permission sets: admission
-  and live verification receive `contents: read`, `actions: read`,
-  `pull-requests: read`, and `packages: read`; retained-artifact retrieval receives only `actions: read`;
-  registry mutation receives only `packages: write`; and post-publication
-  verification receives `contents: read` and `packages: read`. The registry
-  credential is exposed only to the exact native publish step. Admission and
-  live verification read tag and registry together before releasing the
-  mutation job; that job re-reads only the registry immediately before publish.
-  The tag-mutation App credential or equivalent tag authority MUST NOT be
-  minted, forwarded, or referenced anywhere in the completion workflow.
-- The completion permission preflight uses only that same four-read admission
-  set and executes in the repository validation workflow. Its endpoint inventory
-  maps Actions run/job/artifact/history to `actions: read`, commit-associated
-  pull requests to `pull-requests: read`, Git tag/ref to `contents: read`, and
-  authenticated registry version/dist-tag queries to `packages: read`. Any write
-  permission, tag App credential, or mutation effect is non-conformant.
+- A protected package-tag workflow scopes tag mutation authority to the declared
+  tag namespace without branch-push authority. Registry write authority is
+  exposed only to the native publish step. Private-registry read credentials
+  are exposed only to the install step and removed before representative
+  execution.
+- The workflow reads protected tag and registry state before publication,
+  re-reads the registry immediately before and after publish, and keeps
+  validation and consumer execution free of write credentials.
 - Secrets MUST be forwarded by name. `secrets: inherit` MUST NOT be the default.
 - OIDC or repository-scoped `GITHUB_TOKEN` SHOULD replace long-lived publication
   credentials when the registry or cloud supports it.

@@ -215,30 +215,22 @@ application MAY opt in to the narrowly scoped
 The opt-in is valid only for the declared package release unit and does not make
 `dev` a deployment target, change `main` as the production source for sibling
 services or applications, or alter repositories that omit the profile contract.
-The repository must materialize a PR-based release intent through a protected,
-explicit merge and satisfy the profile's exact merge-diff, protected-tag,
-immutability, isolation, evidence, and least-privilege requirements before
-publication.
+The package release pull request changes its native version and changelog.
+Required checks followed by an authorized maintainer's explicit merge provide
+publication authorization; a separate GitHub approval or two-person review is
+not an organization minimum. After merge, one repository-owned, serialized,
+idempotent workflow verifies the source and package closure, creates an absent
+immutable package tag, publishes an absent exact registry version, or reports
+verification success when the exact tag, version, source, and integrity already
+agree. An exact tag with an absent registry version may resume publication only
+from that same immutable source without moving or recreating the tag.
 
-If an admitted package publication attempt fails before creating any package
-tag or registry version, the repository MAY preserve the same version only
-through the profile's separate append-only, PR-mediated pre-mutation recovery
-authorization. A normal workflow rerun and the historical release intent are
-not renewed publication authority. If attempt 1 instead creates the exact
-immutable package tag and then fails before the registry version exists, the
-repository MAY complete only the missing registry identity through the
-profile's separate PR-mediated tag-only completion authorization and the exact
-retained artifact. The tag is verified and never moved, deleted, or recreated;
-a rebuild, manual publish, rerun mutation, or second workflow-run mutation is
-forbidden. Registry-only or conflicting state remains fail closed, while an
-already identical tag/version pair is verification-only.
-If that completion run itself fails before retained-artifact retrieval and
-registry mutation, its authority is consumed. Another attempt requires the
-profile's separate append-only completion-recovery record and a successful
-zero-mutation live permission preflight. The failed predecessor must be the
-first distinct workflow run selected by that exact authorization and source,
-at run attempt `1`; attempt number alone is insufficient. Rerun, later-run, and
-record reuse remain forbidden.
+Registry-only state, a missing or moved expected tag, or a version, source, or
+integrity conflict fails closed and requires a new SemVer correction. Published
+tags and versions are never moved, deleted, overwritten, or reused. Workflow
+reruns do not create new authorization, but may idempotently complete or verify
+the exact source and version already authorized by the merge. The profile does
+not use Linear or a parallel publication control plane as authority.
 
 Organization release units must follow the
 [Release and Versioning Standard](https://github.com/5010-dev/.github/blob/main/docs/standards/release-versioning/README.md).

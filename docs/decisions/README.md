@@ -17,10 +17,11 @@ index.
 | [ADR-0008](./0008-separate-artifact-components-from-native-dependency-roots.md) | Superseded in part by ADR-0022 | Separate artifact components from native dependency roots |
 | [ADR-0021](./0021-adopt-dependency-policy-compiler.md) | Superseded by ADR-0022 | Adopt the dependency policy compiler contract |
 | [ADR-0022](./0022-retire-golden-path-executable-tooling.md) | Accepted | Retire executable control plane and retain a repository-owned Golden Path |
-| [ADR-0023](./0023-adopt-protected-package-tag-publication-profile.md) | Accepted | Adopt the opt-in protected package-tag publication profile |
+| [ADR-0023](./0023-adopt-protected-package-tag-publication-profile.md) | Superseded by ADR-0027 | Adopt the opt-in protected package-tag publication profile |
 | [ADR-0024](./0024-separate-dependency-risk-from-routine-automation.md) | Accepted | Separate dependency-risk outcomes from routine-update automation |
-| [ADR-0025](./0025-adopt-retained-artifact-tag-only-package-completion.md) | Accepted | Adopt retained-artifact tag-only package completion |
-| [ADR-0026](./0026-recover-failed-tag-only-completion-with-new-authorization.md) | Accepted | Recover failed tag-only completion with a new authorization |
+| [ADR-0025](./0025-adopt-retained-artifact-tag-only-package-completion.md) | Superseded by ADR-0027 | Adopt retained-artifact tag-only package completion |
+| [ADR-0026](./0026-recover-failed-tag-only-completion-with-new-authorization.md) | Superseded by ADR-0027 | Recover failed tag-only completion with a new authorization |
+| [ADR-0027](./0027-simplify-protected-package-tag-publication.md) | Accepted | Simplify protected package-tag publication to an idempotent registry-native lifecycle |
 
 Organization standards and platform contracts hold the current normative view.
 ADRs explain why those views were accepted.

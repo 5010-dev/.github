@@ -32,6 +32,7 @@ required_sources=(
     docs/decisions/0024-separate-dependency-risk-from-routine-automation.md
     docs/decisions/0025-adopt-retained-artifact-tag-only-package-completion.md
     docs/decisions/0026-recover-failed-tag-only-completion-with-new-authorization.md
+    docs/decisions/0027-simplify-protected-package-tag-publication.md
     docs/golden-path/README.md
     docs/golden-path/stack-defaults.md
     docs/golden-path/reference-examples.md
@@ -75,23 +76,6 @@ required_sources=(
     docs/standards/release-versioning/release-evidence.md
     docs/standards/release-versioning/automation.md
     docs/standards/release-versioning/exceptions.md
-    docs/standards/release-versioning/schemas/README.md
-    docs/standards/release-versioning/schemas/protected-package-tag-profile-v1.schema.json
-    docs/standards/release-versioning/schemas/package-release-intent-v1.schema.json
-    docs/standards/release-versioning/schemas/package-release-recovery-intent-v1.schema.json
-    docs/standards/release-versioning/schemas/package-release-tag-only-completion-intent-v1.schema.json
-    docs/standards/release-versioning/schemas/package-release-tag-only-completion-recovery-intent-v1.schema.json
-    docs/standards/release-versioning/schemas/examples/protected-package-tag-profile-v1.valid.json
-    docs/standards/release-versioning/schemas/examples/package-release-intent-v1.valid.json
-    docs/standards/release-versioning/schemas/examples/package-release-recovery-intent-v1.valid.json
-    docs/standards/release-versioning/schemas/examples/package-release-tag-only-completion-intent-v1.valid.json
-    docs/standards/release-versioning/schemas/examples/package-release-tag-only-completion-recovery-intent-v1.valid.json
-    docs/standards/release-versioning/validation/2026-08-12-protected-package-tag-profile.md
-    docs/standards/release-versioning/validation/2026-08-13-protected-package-tag-authorization.md
-    docs/standards/release-versioning/validation/2026-08-14-protected-package-tag-pre-mutation-recovery.md
-    docs/standards/release-versioning/validation/2026-08-14-protected-package-tag-only-completion.md
-    docs/standards/release-versioning/validation/2026-08-15-protected-package-tag-completion-recovery.md
-    docs/standards/release-versioning/validation/fixtures/2026-08-15-core-tag-only-completion-recovery-intent.valid.json
     docs/guides/README.md
     docs/guides/adopting-developer-tooling.md
     docs/guides/bootstrap-new-repository.md
@@ -106,11 +90,6 @@ required_sources=(
     templates/engineering-documentation/repository/docs/decisions/0001-adopt-organization-arc42-profile.md
     templates/engineering-documentation/subsystem/README.md
     scripts/docs/README.md
-    scripts/docs/check-protected-package-tag-admission.py
-    scripts/docs/package.json
-    scripts/docs/package-lock.json
-    scripts/docs/test-protected-package-tag-admission.py
-    scripts/docs/validate-json-schema-examples.mjs
     scripts/docs/scaffold-arc42.sh
     scripts/docs/check-contract.sh
     scripts/docs/check-repository.sh
@@ -192,14 +171,6 @@ done < <(
         -type f -name '*.json' -print0
 )
 
-if command -v node >/dev/null 2>&1 && [[ -d "$script_dir/node_modules" ]]; then
-    if ! node "$script_dir/validate-json-schema-examples.mjs"; then
-        report "release-versioning JSON Schema example validation failed"
-    fi
-else
-    report "Node.js and scripts/docs pinned dependencies are required for JSON Schema validation"
-fi
-
 if command -v ruby >/dev/null 2>&1; then
     while IFS= read -r -d '' yaml_file; do
         if ! ruby -e 'require "yaml"; YAML.parse_file(ARGV.fetch(0))' "$yaml_file" >/dev/null; then
@@ -238,10 +209,6 @@ if command -v just >/dev/null 2>&1; then
     done
 else
     report "Just is required to validate Golden Path reference examples"
-fi
-
-if ! python3 "$script_dir/test-protected-package-tag-admission.py"; then
-    report "protected package-tag admission tests failed"
 fi
 
 for shell_script in \

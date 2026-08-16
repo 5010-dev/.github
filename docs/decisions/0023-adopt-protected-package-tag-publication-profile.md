@@ -1,6 +1,7 @@
 # ADR-0023: Adopt protected package-tag publication profile
 
-- Status: Accepted
+- Status: Superseded
+- Superseded by: ADR-0027
 - Date: 2026-08-12
 - Last amended: 2026-08-14
 - Owners: `5010-dev/.github` maintainers and selecting repository maintainers

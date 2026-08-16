@@ -1,8 +1,8 @@
 # Release and Versioning Standard
 
 - Status: Accepted
-- Standard version: `2026.08.7`
-- Last reviewed: 2026-08-15
+- Standard version: `2026.08.8`
+- Last reviewed: 2026-08-16
 
 This standard defines how the `5010-dev` organization versions, identifies,
 publishes, evolves, and retires software, Infrastructure as Code, native client,
@@ -103,7 +103,8 @@ A governed publication MUST:
 1. originate from validated `main` under the organization contribution policy,
    unless an independently released registry package has explicitly selected
    the [protected package-tag profile](./protected-package-tag.md) and its exact
-   source commit was admitted under that profile;
+   source commit was authorized by a required-check-passing release pull request
+   merge under that profile;
 2. identify its release unit and repository-native version, release identifier,
    or research-record identifier;
 3. record the immutable source revision;
@@ -155,7 +156,7 @@ validity.
 | Document | Normative responsibility |
 | --- | --- |
 | [Artifact and version profiles](./profiles.md) | Version and ordering schemes, exact release or research-record identities, compatibility or scientific-scope surfaces, and monorepo release units |
-| [Protected package-tag publication](./protected-package-tag.md) | Narrow opt-in authority, intent, exact merge-diff admission, package-only effects, permissions, and recovery for mixed package/service monorepos |
+| [Protected package-tag publication](./protected-package-tag.md) | Narrow opt-in PR-merge authority, idempotent registry publication, package-only effects, permissions, and conflict handling for mixed package/service monorepos |
 | [Compatibility lifecycle](./lifecycle.md) | Maturity, support, research-record status, correction, deprecation, EOL, bad releases, and emergency changes |
 | [Release records and evidence](./release-evidence.md) | Authority of manifests, tags, registries, archives, changelogs, release and revision notes, checksums, SBOMs, provenance, and attestations |
 | [Release automation](./automation.md) | Repository ownership, shared automation criteria, publication and finalization sequencing, permissions, and recovery |
@@ -219,6 +220,7 @@ part of this standard.
 
 | Version | Normative change |
 | --- | --- |
+| `2026.08.8` | Retire the custom release-intent and recovery state machine; adopt PR-mediated idempotent package publication, registry-native minimum evidence, and access-configuration treatment for package association |
 | `2026.08.7` | Add `pull-requests: read` to completion admission, require executable endpoint permission preflight, and add append-only pre-mutation recovery for a consumed completion authorization with an exact first-workflow-run ordinal |
 | `2026.08.6` | Fix tag-only completion to require exact job-scoped read, artifact-retrieval, registry-mutation, and post-publication permissions and classify the existing protected tag as a released immutable identity |
 | `2026.08.5` | Add one PR-mediated retained-artifact completion path for an exact tag-only attempt-1 failure while preserving the immutable tag and forbidding rerun or second-run mutation |
@@ -230,12 +232,10 @@ part of this standard.
 
 The governing decision is
 [ADR-0007: Adopt the organization Release and Versioning Standard](../../decisions/0007-adopt-release-and-versioning-standard.md).
-The protected package-tag opt-in is introduced by
-[ADR-0023: Adopt protected package-tag publication profile](../../decisions/0023-adopt-protected-package-tag-publication-profile.md).
-Its tag-only partial-publication completion boundary is refined by
-[ADR-0025: Adopt retained-artifact tag-only package completion](../../decisions/0025-adopt-retained-artifact-tag-only-package-completion.md).
-Pre-mutation failure of that completion boundary is refined by
-[ADR-0026: Recover failed tag-only completion with a new authorization](../../decisions/0026-recover-failed-tag-only-completion-with-new-authorization.md).
+The current protected package-tag lifecycle is established by
+[ADR-0027: Simplify protected package-tag publication to an idempotent registry-native lifecycle](../../decisions/0027-simplify-protected-package-tag-publication.md),
+which supersedes ADR-0023, ADR-0025, and ADR-0026 without rewriting their
+historical rationale.
 
 ## Adoption
 

@@ -117,14 +117,14 @@ That profile is an explicit package release-unit opt-in, not a repository-wide
 branch-model change or authority for sibling deployment.
 
 Under that opt-in, a same-version attempt after failure is permitted by the
-profile's separate pre-mutation recovery authorization only while neither the
-derived tag nor exact registry version exists. A narrower tag-only completion
-authorization may create only the absent registry version from the exact
-retained attempt-1 artifact while verifying and preserving the existing tag.
-Registry-only, conflicting, rebuilt, expired-artifact, rerun-mutation, and
-second-run-mutation states remain fail closed. An already identical tag/version
-pair is verification-only; normal correction lifecycle applies to defective or
-conflicting published content.
+same required-check-passing release pull request merge only through the
+profile's idempotent workflow. When both tag and exact version are absent it may
+publish from the verified source; when the exact immutable tag already selects
+that source but the registry version is absent it may resume registry
+publication without moving the tag; and when the exact tag, version, source,
+and integrity agree it succeeds by verification. Registry-only, moved-tag,
+source, version, integrity, or ambiguous state fails closed. Defective or
+conflicting published content uses a new SemVer correction.
 
 ## CLI and distributed executable profile
 
