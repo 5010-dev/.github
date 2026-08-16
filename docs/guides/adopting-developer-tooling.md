@@ -58,8 +58,13 @@ or exception queue.
 
 Adoption is complete when native manifests and locks, toolchain ownership,
 truthful commands, canonical CI, required release behavior, and any accepted
-exceptions are reviewable in the owning repository. Link to the central
-standard; do not copy or materialize a managed central footprint. Apply the
+exceptions are reviewable in the owning repository.
+Before declaring completion, reconcile every applicable normative profile
+requirement with repository As-built source or an accepted exception, and verify
+the documented first-run bootstrap from the declared platform prerequisite
+rather than inferring either result from a passing gate.
+Link to the central standard; do not copy or materialize a managed central
+footprint. Apply the
 [release-readiness checklist](../golden-path/release-readiness.md) only to real
 repository boundaries, and keep its evidence in the repository's normal pull
 request, release, and deployment records.
