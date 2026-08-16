@@ -159,10 +159,11 @@ scope, replacement, required consumer action, owner, and follow-up review.
 
 A protected package-tag workflow run or rerun MUST re-read the immutable tag
 and exact registry version before mutation and re-read registry state
-immediately before and after publication. The required-check-passing branch
-merge remains authorization for only its exact source and resolved version; a
-rerun creates no new authorization but MAY idempotently complete or verify that
-same authorized publication:
+immediately before and after publication. The applicable required-check-passing
+package-relevant merge to `dev` or fast-forward promotion to `main` remains
+authorization for only its exact source and resolved version; a rerun creates no
+new authorization but MAY idempotently complete or verify that same authorized
+publication:
 
 - when both tag and exact registry version are absent, create the protected tag
   from the verified source and publish the exact version;

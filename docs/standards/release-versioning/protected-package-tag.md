@@ -121,10 +121,10 @@ The final publication MUST:
 - preserve sibling release-unit isolation; and
 - follow the same idempotent tag/registry state model as prerelease publication.
 
-A promotion whose package closure is unchanged from the previous final MUST NOT
-publish a package. Final package publication is a package release effect of the
-production branch, but it does not itself deploy or authorize a sibling service,
-application, or environment.
+A promotion whose package closure is unchanged from the previous final, when
+one exists, MUST NOT publish a package. Final package publication is a package
+release effect of the production branch, but it does not itself deploy or
+authorize a sibling service, application, or environment.
 
 Independent approval is not an organization minimum. A repository MAY require a
 distinct qualified approver when its operating model, concrete risk,
@@ -147,7 +147,9 @@ The prerelease sequence MUST be serialized, unique, and durable enough that:
 
 - two distinct package-relevant `dev` merges cannot publish the same version;
 - a retry of the same authorized merge resolves the same version;
-- a published version is never overwritten or reused; and
+- a published version is never overwritten or reused;
+- a new prerelease identity is never derived from a Stable target whose final
+  version is already published; and
 - final publication resolves the exact Stable target rather than deriving a
   new version from a moving channel.
 
