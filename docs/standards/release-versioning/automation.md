@@ -192,11 +192,12 @@ deterministic release logic remains locally or independently executable.
   split: validation uses `contents: read`, private-package consumption uses
   `packages: read`, and `packages: write` exists only in the package publication
   job. Validation and consumer jobs MUST NOT receive package write access.
-- A protected package-tag workflow scopes tag mutation authority to the declared
-  tag namespace without branch-push authority. Registry write authority is
-  exposed only to the native publish step. Private-registry read credentials
-  are exposed only to the install step and removed before representative
-  execution.
+- A protected package-tag workflow exposes job-scoped `contents: write` only to
+  the exact tag-creation job. That job re-reads live state, creates only the
+  verified package tag, and performs no branch-ref or sibling release-unit
+  mutation. Registry write authority is exposed only to the separate native
+  publish step. Private-registry read credentials are exposed only to the
+  install step and removed before representative execution.
 - The workflow reads protected tag and registry state before publication,
   re-reads the registry immediately before and after publish, and keeps
   validation and consumer execution free of write credentials.
@@ -207,6 +208,10 @@ deterministic release logic remains locally or independently executable.
   provenance when the release topology is supported.
 - GitHub Packages publication SHOULD use the releasing repository's
   `GITHUB_TOKEN`; consumer repositories retain explicit package read access.
+- A dedicated GitHub App, private key, or App-token action MAY be used as a
+  repository-specific stronger control, but is not an organization minimum and
+  does not create release authorization independent of the protected branch
+  merge and repository workflow.
 - A called workflow MUST NOT assume it can elevate permissions the caller did
   not grant.
 - Private shared workflow access and any hosting-plan configuration are
