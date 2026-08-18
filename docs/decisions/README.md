@@ -23,6 +23,7 @@ index.
 | [ADR-0026](./0026-recover-failed-tag-only-completion-with-new-authorization.md) | Superseded by ADR-0027 | Recover failed tag-only completion with a new authorization |
 | [ADR-0027](./0027-simplify-protected-package-tag-publication.md) | Superseded by ADR-0028 | Simplify protected package-tag publication to an idempotent registry-native lifecycle |
 | [ADR-0028](./0028-bind-protected-package-channels-to-branch-roles.md) | Accepted | Bind protected package prerelease and final channels to `dev` and `main` |
+| [ADR-0029](./0029-default-package-tags-to-repository-token.md) | Accepted | Default protected package-tag creation to a job-scoped repository workflow token |
 
 Organization standards and platform contracts hold the current normative view.
 ADRs explain why those views were accepted.

@@ -66,11 +66,20 @@ publication MUST NOT version, commit, tag, publish, deploy, or invoke a workflow
 for a sibling release unit and MUST NOT publish an OCI image or object-storage
 artifact outside the declared package release unit.
 
-The repository MUST protect the package-specific tag namespace with hosting
-rules or an equivalent control that limits creation to the approved publication
-workflow and prevents routine update or deletion. Missing or unverified
-protection fails before tag creation. Tag publication MUST NOT use a credential
-that can push branches or mutate sibling release units.
+The repository MUST protect existing package-specific tags with hosting rules or
+an equivalent control that prevents update, deletion, and non-fast-forward
+mutation. Missing or unverified protection fails before tag creation. The
+supported publication workflow MUST re-read tag and registry state immediately
+before mutation and create only the exact absent tag for its verified source.
+
+The organization does not require hosting-level exclusive tag-creator identity.
+For GitHub Packages, the default is a job-scoped repository `GITHUB_TOKEN` with
+`contents: write` only in the tag-creation job and `packages: write` only in the
+separate registry-publication job. The workflow MUST NOT perform a branch-ref or
+sibling release-unit mutation with the tag credential. A repository MAY adopt a
+stronger dedicated credential or creation restriction when concrete risk or an
+external obligation justifies it, but that control is not an independent release
+authorization merely because it uses another application identity.
 
 ## Branch and channel authority
 
@@ -219,7 +228,7 @@ No parallel publication control plane is required. A different source, version,
 package, integrity, channel, or conflicting remote state requires a new package
 version as applicable.
 
-Under Standard `2026.08.9`, the former custom intent, admission, recovery, and
+Under Standard `2026.08.10`, the former custom intent, admission, recovery, and
 completion control plane remains retired; repositories MUST NOT keep a
 compatibility mode or dual policy for it.
 
@@ -259,7 +268,7 @@ that needs them:
 | Responsibility | Minimum authority |
 | --- | --- |
 | Source and policy validation | `contents: read` and repository-required read access |
-| Protected tag creation | Package-tag mutation credential scoped to the declared tag namespace; no branch-push authority |
+| Protected tag creation | Job-scoped repository token with `contents: write`; the job creates only the verified exact package tag and performs no branch mutation |
 | Native registry publication | `packages: write` or native equivalent, exposed only to the publish step |
 | Private package installation | `packages: read` or native equivalent, exposed only to the install step |
 | Post-publication execution | No registry credential or token environment after installation |
@@ -270,6 +279,14 @@ dependency state, logs, evidence artifacts, or packed package contents. A
 repository MAY split validation, tag creation, registry publication, and
 verification into jobs when needed to enforce these boundaries; they remain one
 repository-owned idempotent publication engine and state machine.
+
+A tag ruleset for this profile MUST reject update, deletion, and
+non-fast-forward mutation of the declared package tags. It MAY allow creation
+without bypass actors when the repository workflow applies the exact-source and
+fresh-state checks above. The profile does not require a dedicated GitHub App,
+private key, App-token mint action, or an additional all-branch exclusion
+ruleset. Repositories that retire such optional controls remove them only after
+the replacement workflow and live protection have been verified.
 
 ## Registry-native evidence
 

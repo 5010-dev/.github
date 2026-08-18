@@ -1,8 +1,8 @@
 # Release and Versioning Standard
 
 - Status: Accepted
-- Standard version: `2026.08.9`
-- Last reviewed: 2026-08-17
+- Standard version: `2026.08.10`
+- Last reviewed: 2026-08-19
 
 This standard defines how the `5010-dev` organization versions, identifies,
 publishes, evolves, and retires software, Infrastructure as Code, native client,
@@ -220,6 +220,7 @@ part of this standard.
 
 | Version | Normative change |
 | --- | --- |
+| `2026.08.10` | Use a job-scoped repository token as the default package-tag credential, preserve update/delete/non-fast-forward protection, and make dedicated App/PEM creator isolation optional rather than mandatory |
 | `2026.08.9` | Bind protected package prereleases to package-relevant `dev` merges and finals to `main`; add package-closure routing, prerelease-to-final payload equivalence, and exact artifact build-input consumer policy |
 | `2026.08.8` | Retire the custom release-intent and recovery state machine; adopt PR-mediated idempotent package publication, registry-native minimum evidence, and access-configuration treatment for package association |
 | `2026.08.7` | Add `pull-requests: read` to completion admission, require executable endpoint permission preflight, and add append-only pre-mutation recovery for a consumed completion authorization with an exact first-workflow-run ordinal |
@@ -234,8 +235,10 @@ part of this standard.
 The governing decision is
 [ADR-0007: Adopt the organization Release and Versioning Standard](../../decisions/0007-adopt-release-and-versioning-standard.md).
 The current protected package-tag lifecycle is established by
-[ADR-0028: Bind protected package prerelease and final channels to branch roles](../../decisions/0028-bind-protected-package-channels-to-branch-roles.md),
-which supersedes ADR-0027 without rewriting it or the earlier historical
+[ADR-0028: Bind protected package prerelease and final channels to branch roles](../../decisions/0028-bind-protected-package-channels-to-branch-roles.md)
+and refined by
+[ADR-0029: Default package-tag creation to the repository workflow token](../../decisions/0029-default-package-tags-to-repository-token.md).
+ADR-0028 supersedes ADR-0027 without rewriting it or the earlier historical
 rationale.
 
 ## Adoption
