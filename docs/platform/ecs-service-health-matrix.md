@@ -1,7 +1,7 @@
 # ECS service contract ownership directory
 
 - Status: Navigation index; non-authoritative discovery aid
-- Last updated: 2026-08-25
+- Last updated: 2026-08-26
 - Applies to: `5010-dev` services using the shared AWS ECS platform
 
 This directory connects the organization
@@ -35,6 +35,7 @@ implementation progress, profile assignments, or conformance status.
 | Calculator          | [`fiftyten-indicators-core`](https://github.com/5010-dev/fiftyten-indicators-core) | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Calculator service documentation](https://github.com/5010-dev/fiftyten-indicators-core/blob/HEAD/apps/calculator-service/README.md)              | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
 | Data Collector      | [`indicator-data-collector`](https://github.com/5010-dev/indicator-data-collector) | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Deployment view](https://github.com/5010-dev/indicator-data-collector/blob/dev/docs/architecture/07-deployment-view.md)                          | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
 | Fleet API           | [`fiftyten-quant`](https://github.com/5010-dev/fiftyten-quant)                     | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Fleet API production ECS contract](https://github.com/5010-dev/fiftyten-quant/blob/dev/docs/architecture/subsystems/fleet-api/README.md#production-ecs-contract) | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
+| Service Status      | [`service-status`](https://github.com/5010-dev/service-status)                     | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Runtime deployment contract](https://github.com/5010-dev/service-status/blob/dev/docs/architecture/07-deployment-view.md)                         | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
 | Quant Bot           | [`fiftyten-quant`](https://github.com/5010-dev/fiftyten-quant)                     | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Engine deployment contract](https://github.com/5010-dev/fiftyten-quant/blob/dev/docs/architecture/subsystems/engine/deployment.md)               | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
 | Quant Observability | [`fiftyten-quant`](https://github.com/5010-dev/fiftyten-quant)                     | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Observability deployment contract](https://github.com/5010-dev/fiftyten-quant/blob/dev/docs/architecture/subsystems/observability/deployment.md) | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
 
