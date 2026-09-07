@@ -49,8 +49,16 @@ and release steps only when required.
 Start from the syntax-checked
 [repository-owned canonical CI example](./examples/canonical-ci.yml).
 
-Review action pins at adoption time. A central conformance workflow must not
-call this workflow or run `just ci` again.
+Replace `<EXACT_MISE_VERSION>` in `with.version` with a repository-validated,
+exact mise release that satisfies the root `mise.toml` `min_version`. Confirm
+that its release asset is available for the CI runner platform. The action SHA
+pins the installer code; `with.version` pins the mise executable it installs.
+Omitting `with.version` makes that executable follow the latest release even
+when the action SHA and `mise.lock` are fixed.
+
+Review action and mise version pins at adoption time and update them through
+reviewable repository changes. A central conformance workflow must not call
+this workflow or run `just ci` again.
 
 ## Dependabot starting point
 
