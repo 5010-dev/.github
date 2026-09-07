@@ -65,6 +65,14 @@ NOT receive an independent mise version pin.
 - `just init` starts bootstrap and orchestrates mise or the profile-native
   installer.
 - CI uses the same committed selectors and locks.
+- CI MUST pin the mise executable itself to an exact released version in
+  committed repository configuration. With `jdx/mise-action`, set `with.version`
+  to that version in addition to pinning the action to an immutable commit SHA.
+  Omitting `with.version` selects the latest mise release at execution time.
+- The selected mise release MUST satisfy the root `mise.toml` `min_version`.
+  `min_version` declares a compatibility floor; `mise.lock` records tools
+  managed by mise. Neither selects the mise executable installed by the CI
+  bootstrap.
 - mise tasks MAY be internal helpers but MUST NOT become a second public
   interface competing with `just init`, `just check`, or `just ci`.
 - Directory entry hooks MUST NOT install dependencies, modify source, mutate a
