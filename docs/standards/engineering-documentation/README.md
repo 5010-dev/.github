@@ -9,12 +9,13 @@ The current organization profile is **`5010-arc42-v1`**.
 ## Normative documents
 
 1. [Engineering documentation contract](./contract.md) — applicability,
-   authority, required repository capabilities, layering, and exceptions.
+   authority, diagram authoring and fallback, required repository capabilities,
+   layering, and exceptions.
 2. [5010 arc42 profile](./arc42-profile.md) — required L0 chapters, metadata,
    state vocabulary, L1 profiles, and placement rules.
 3. [Documentation lifecycle and validation](./lifecycle-and-validation.md) —
-   adoption, migration, same-change completion, profile evolution, and
-   conformance checks.
+   adoption, migration, same-change completion, diagram regeneration and review,
+   profile evolution, and conformance checks.
 
 The governing decision is
 [ADR-0004: Adopt arc42 as the canonical engineering documentation system](../../decisions/0004-adopt-arc42-engineering-documentation-system.md).
@@ -29,6 +30,7 @@ in all capitals.
 - [Adoption guide](../../guides/adopting-arc42.md)
 - [Migration guide](../../guides/migrating-existing-documentation.md)
 - [Templates](../../../templates/engineering-documentation/README.md)
+- [Diagram placement and review examples](../../../templates/engineering-documentation/diagram.md)
 - [Scaffold and conformance tools](../../../scripts/docs/README.md)
 
 Supporting material helps repositories implement the standard but does not

@@ -32,6 +32,9 @@ and 6 explain responsibilities and significant runtime scenarios. Chapters 7
 and 8 cover topology and cross-cutting contracts. Chapters 9 through 11 cover
 decisions, quality, evidence expectations, and remaining risk.
 
+Diagram authoring: [organization contract](https://github.com/5010-dev/.github/blob/main/docs/standards/engineering-documentation/contract.md#engineering-diagrams)
+and [placement and review examples](https://github.com/5010-dev/.github/blob/main/templates/engineering-documentation/diagram.md).
+
 ## Scope boundary
 
 <!-- State what this corpus owns and explicitly does not own. For a mixed-purpose
