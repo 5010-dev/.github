@@ -16,6 +16,8 @@ organization profile.
 - [`runbook.md`](./runbook.md) — production diagnosis and recovery procedure.
 - [`validation-record.md`](./validation-record.md) — dated reproducible
   verification evidence.
+- [`diagram.md`](./diagram.md) — illustrative diagram placement, source links,
+  fallback rationale, and review evidence for L0 or L1 documents.
 
 The repository template contains the following scaffold tokens:
 

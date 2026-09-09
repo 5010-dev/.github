@@ -71,6 +71,13 @@ for architecture goals, boundaries, responsibilities, runtime and deployment
 views, cross-cutting concepts, quality requirements, risks, and accepted target
 state.
 
+Use Archify by default for new or substantively revised diagrams in canonical
+engineering documentation, following the
+[diagram contract](https://github.com/5010-dev/.github/blob/main/docs/standards/engineering-documentation/contract.md#engineering-diagrams)
+and its authoring and review lifecycle. Keep source and generated views in the
+same change. Mermaid is an allowed fallback with a brief reason in the change
+description; existing diagrams do not require wholesale conversion.
+
 Concern-specific authorities remain with their owners. Executable code, schemas,
 generated contracts, runbooks, deployment evidence, scientific designs, and
 empirical results are linked from the architecture corpus rather than absorbed

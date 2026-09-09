@@ -73,6 +73,95 @@ When sources disagree, authors MUST identify the concern, verify the owning
 evidence, correct the canonical owner, and replace duplicate non-owning detail
 with a link or explicit state label.
 
+## Engineering diagrams
+
+### Scope and default authoring tool
+
+Authors SHOULD use the [Archify skill](https://github.com/tt-a1i/archify) for
+new or substantively revised architecture, workflow, sequence, data-flow, and
+lifecycle/state diagrams in canonical engineering documentation. A substantive
+revision changes participants, responsibilities, boundaries, relationships,
+conditions, ordering, or failure/recovery meaning. Typographical, link, or
+surrounding prose edits alone do not require conversion of an existing diagram.
+
+These authoring rules preserve the existing arc42 corpus structure, authority
+map, and state vocabulary. They do not require a new diagram in every document
+or layer, wholesale conversion or revalidation of existing diagrams, or a
+profile migration. Unrelated maintenance MUST NOT be blocked by diagram
+conversion.
+
+The tool-conversion scope above is separate from maintenance review. Changes
+to a diagram's generation path, viewer, layout, navigation, or evidence links
+MUST receive the applicable
+[regeneration and review checks](./lifecycle-and-validation.md#diagram-authoring-and-review)
+for the affected surface even when architectural meaning is unchanged. This
+does not require tool conversion or revalidation of unaffected diagrams.
+
+### Authority and meaning
+
+The diagram source owns its visual representation; the existing
+[concern-based authorities](#concern-based-authority) continue to own the facts
+it depicts. A diagram MUST follow its owning section's As-built, Target, Open,
+or Deprecated state, with explicit labels for any differing elements or paths.
+Authorship, accepted design, or successful rendering MUST NOT imply verified
+implementation, deployment, or runtime behavior.
+
+Within its stated scope, a diagram MUST preserve meaningful participants,
+responsibilities, boundaries, relationship directions and protocols,
+request/response and synchronous/asynchronous distinctions, branch conditions,
+ordering, state transitions, failure/recovery behavior, and final invariants.
+Authors MUST NOT remove meaningful labels or paths to satisfy layout checks,
+invent unverified consumers or recovery paths, or imply a total order between
+independent asynchronous events.
+
+Authors MAY split a complex view into linked overview and detail diagrams when
+each scope and the location of omitted detail are clear. Essential meaning MUST
+remain understandable from the static figure and adjacent prose, without
+requiring hover, interaction, or animation. An unsupported notation MAY be
+replaced with another representation when responsibility, action, conditions,
+and ordering remain explicit; otherwise use the fallback below.
+
+### Artifacts and exploration
+
+For Archify diagrams, authors MUST keep JSON as the editable source, embed a
+static SVG in the document, and provide adjacent links to the explorable HTML
+and source. HTML MUST be generated from that JSON through the documented
+generation path. The static SVG MUST be derived from the exact delivered HTML
+through a repository-documented export step, using the viewer's SVG export or
+a script. It MUST preserve the diagram's meaning when embedded independently
+of the HTML viewer. Authors MUST update the source and affected generated or
+exported artifacts in the same change and MUST NOT edit only the generated
+HTML or SVG. The
+[diagram authoring and review lifecycle](./lifecycle-and-validation.md#diagram-authoring-and-review)
+defines regeneration and evidence requirements.
+
+Complex diagrams SHOULD offer question-based Guided Views, role and
+responsibility descriptions, named source references, and explanations of
+invariants and failure/recovery behavior where these help the reader. The
+number of views, cards, nodes, or references is determined by the questions and
+scope; no fixed count is an organization requirement.
+
+Repositories MAY provide HTML through existing documentation hosting or explain
+how to download and open it locally. A dedicated hosting service is not
+required. Organization diagram guidance and examples MUST remain independent
+of consumer repository names, paths, implementation code, revisions, and
+adoption or review status. Repositories own their generation commands and any
+viewer corrections; this standard does not require copying another
+repository's runtime or validation implementation.
+
+### Mermaid fallback
+
+Authors MAY use Mermaid when the Archify skill is unavailable, execution is
+constrained, required notation is unsupported, or meaning and readability
+cannot be adequately preserved through an alternative representation or split
+views. Record the reason briefly in the pull request or change description.
+
+This fallback is an allowed choice under the standard, not a material local
+exception: it requires no separate ADR, approval, or follow-up conversion issue.
+The same authority, state, meaning, readability, and truthful review requirements
+apply. Markdown or a dedicated Mermaid file is the editable source; Archify
+JSON and HTML artifacts are not required for the fallback.
+
 ## Required repository capabilities
 
 An adopted system MUST provide:
