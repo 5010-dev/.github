@@ -60,6 +60,11 @@ Those outcomes do not require a custom central executable.
 
 ## Supersession
 
+[ADR-0030](./0030-separate-public-policy-from-private-tooling.md) supersedes
+the whole-repository archive requirement in decision 7 and narrows decision 6
+to the retired Go `golden-path` release line. The original decision text above
+is retained as history; all control-plane retirement rules remain in force.
+
 This decision supersedes the executable implementation, locator, managed asset,
 shared checker, and dependency compiler portions of ADR-0006, ADR-0008, and
 ADR-0021. Their historical files remain unchanged.

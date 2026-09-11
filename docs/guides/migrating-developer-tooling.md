@@ -9,8 +9,10 @@ the Golden Path itself.
 
 Check whether each footprint exists on unreleased `dev`, on `main`, or in a
 released artifact. Unreleased development intermediates are corrected directly.
-Published `engineering-tooling` tags and release artifacts remain immutable
-audit history; they do not create an ongoing consumer-support obligation.
+Published Go `golden-path` tags `v0.1.0` through `v1.6.1` and their release
+artifacts remain immutable audit history; they do not create an ongoing
+consumer-support obligation. Active independent packages in the private
+`engineering-tooling` repository are outside this executable-retirement scope.
 
 ## Remove only the central managed footprint
 
@@ -30,8 +32,10 @@ owner, approval, expiry, and risk record in repository canonical documentation
 before removing the generated schema-bound file.
 
 Do not remove a similarly named repository-owned workflow merely because its
-name contains `developer-tooling`. Inspect whether it calls
-`5010-dev/engineering-tooling` or only the repository's own canonical CI.
+name contains `developer-tooling`. Inspect whether it calls the retired
+`golden-path` executable/control-plane workflow or the repository's own
+canonical CI. A reference to `engineering-tooling` alone does not identify a
+retired consumer.
 
 ## Preserve repository authorities
 
@@ -46,8 +50,8 @@ routine regrouping.
 ## Validate
 
 Run only the owning repository's canonical CI after the removal. Confirm that no
-remaining workflow or script installs, downloads, calls, or selects
-`engineering-tooling`. Do not add a compatibility wrapper or issue a new
+remaining workflow or script installs, downloads, calls, or selects the
+retired `golden-path` executable or its control-plane assets. Do not add a compatibility wrapper or issue a new
 central tooling release to perform the removal. Re-enter the
 [adoption journey](./adopting-developer-tooling.md) only for a concrete gap in
 the repository-owned implementation; retirement alone does not require a
