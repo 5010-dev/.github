@@ -47,11 +47,21 @@ not require a shared custom validator.
 
 ## Historical releases
 
-Existing `5010-dev/engineering-tooling` tags, GitHub Releases, checksums,
-attestations, and embedded standard snapshots are immutable audit history. They
+The retired Go `golden-path` tags `v0.1.0` through `v1.6.1` in
+`5010-dev/engineering-tooling`, their GitHub Releases, checksums, attestations,
+and embedded standard snapshots are immutable audit history. They
 are not active, preferred, supported, or compatibility boundaries for current
 consumers. The retirement does not publish a corrective tooling release or a
 replacement locator.
+
+The active `engineering-tooling` repository is a private development and
+operations tooling monorepo. Its independently versioned private packages have
+their own support and publication contracts. The developer-installed
+[Golden Path Agent](../../golden-path/agent.md) is local support, not an executable
+distribution of this normative contract or a central CI control plane.
+`.github` remains public policy and guidance source;
+[ADR-0030](../../decisions/0030-separate-public-policy-from-private-tooling.md)
+limits the previous whole-repository archive decision to the retired executable.
 
 ## Change procedure
 

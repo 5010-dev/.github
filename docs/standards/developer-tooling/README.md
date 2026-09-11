@@ -41,8 +41,13 @@ Active central executable tooling: **none**.
 
 The organization does not select or support a Golden Path binary, locator,
 generator, updater, shared conformance workflow, managed asset bundle, live
-report, or central dependency/security queue. Published
-`engineering-tooling` tags and releases are immutable audit history only.
+report, or central dependency/security queue. The retired Go `golden-path`
+release line (`v0.1.0` through `v1.6.1`) in `engineering-tooling` is immutable
+audit history only. The active private tooling repository and its independently
+versioned packages, including the developer-installed
+[Golden Path Agent](../../golden-path/agent.md), are separate from that retired
+control plane. [ADR-0030](../../decisions/0030-separate-public-policy-from-private-tooling.md)
+records the source and retirement boundary.
 
 A future shared validator requires a separate accepted decision proving repeated
 errors, off-the-shelf insufficiency, lower net operating cost, explicit file

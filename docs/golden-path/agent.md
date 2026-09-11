@@ -6,7 +6,7 @@
 - Owner: `5010-dev/engineering-tooling` maintainers
 - Last reviewed: 2026-08-14
 - General support: [create an Engineering issue in Linear](https://linear.new?team=ENG) for triage by the `engineering-tooling` maintainers
-- Sensitive security reports: [use the organization private vulnerability-reporting route](https://github.com/5010-dev/engineering-tooling/security/advisories/new)
+- Sensitive security reports: [follow the private tooling repository security policy](https://github.com/5010-dev/engineering-tooling/blob/main/SECURITY.md)
 
 Linear is the support intake and work-tracking system. Reviewed source at
 `5010-dev/.github@main` remains the policy and Golden Path authority.
@@ -97,11 +97,16 @@ The supported `1.0.1` package is identified by the following release evidence:
 | Registry SRI | `sha512-nrvyu5OC4k4wZN6W9Gnis3T5v4JdTx3PiRjDjvrC1gFFnasMD2PmbeJ1bG4AzQUOJKpQhwfBN6TLm079gPT6jA==` |
 
 These identities document the supported release; they are not a machine
-locator or an automatic update instruction. Public `engineering-tooling`
+locator or an automatic update instruction. Historical Go `engineering-tooling`
 releases `v0.1.0` through `v1.6.1` remain immutable audit history for the
 retired Go executable line; this package is not a version of, locator for, or
 compatibility bridge to that line. General questions use the
 [Engineering Linear intake](https://linear.new?team=ENG) for triage by the
-`engineering-tooling` maintainers. Credentials, vulnerability details, and
-other sensitive material must use the private security-reporting route instead
-of a general support issue or pull request.
+`engineering-tooling` maintainers. Never include credentials in support reports. Vulnerability details must use
+the private security-reporting route instead of a general support issue or pull
+request.
+
+The implementation repository is private; source evidence links require
+authorized repository access. `.github` remains public authority. Package
+download access is separately granted, and the exact published version and
+source record above remain unchanged by the repository layout refactor.
