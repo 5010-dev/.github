@@ -56,26 +56,33 @@ missing version; it is not sufficient evidence to choose either explanation.
 
 ## Registry routing and exact access
 
-Follow the owning repository's routing setup. A repository-owned installer may
-create and remove a private temporary npm configuration. A trusted user npm
-configuration can instead contain these entries, merged with unrelated settings
-and with the placeholder kept literal:
+Prefer a private temporary npm configuration that exists only for the install
+session. The example below creates one with the GitHub Packages scope route and
+a literal token-variable reference, then removes it on exit. It runs from its
+temporary directory so a checkout's npm configuration does not override it.
+`gh auth status` does not inject a token into npm or pnpm; the example passes the
+selected GitHub CLI credential to the package-manager process.
 
-```ini
-@5010-dev:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
-```
+This temporary user configuration replaces the usual user npm file for these
+commands. Follow the owning repository's setup for any additional private
+registries, proxies, or custom global directories; include required non-secret
+settings explicitly in the temporary configuration. Resolve conflicting
+package-manager environment overrides before running the example. Public npm
+dependencies continue to use the package manager's default registry unless
+explicitly configured otherwise.
 
-The scope route selects GitHub Packages while other npm packages keep their
-normal registry. `gh auth status` does not inject a token into npm or pnpm.
-An installer has to pass the selected GitHub CLI credential to its native
-package-manager process.
+Do not add the token-variable reference to a persistent user `.npmrc` for this
+flow. When `NODE_AUTH_TOKEN` is unset outside installation, pnpm can warn on
+unrelated commands; pnpm 10 can also ignore that file's scope route. If an older
+setup already contains this reference, move its authentication entries into the
+temporary setup while preserving unrelated user settings. Do not keep a token
+exported merely to suppress these warnings.
 
 The following **bash/zsh example is for a globally installed CLI**, after the
-login/access checks and routing setup above. Replace the illustrative coordinate
-with the exact one from the owning package guide before running it. Libraries
-and repository dependencies use their owning installation command instead of
-`pnpm add --global`.
+login/access checks and package-manager setup above. Replace the illustrative
+coordinate with the exact one from the owning package guide before running it.
+Library and repository-dependency installation must use the target directory
+and installation procedure documented by its owner, not this temporary directory.
 
 ```sh
 (
@@ -85,6 +92,20 @@ and repository dependencies use their owning installation command instead of
   case "$package_spec" in
     *REPLACE_*) printf 'Set the exact package coordinate first.\n' >&2; exit 1 ;;
   esac
+
+  umask 077
+  install_dir="$(mktemp -d "${TMPDIR:-/tmp}/private-package-install.XXXXXX")"
+  trap 'rm -rf -- "$install_dir"' EXIT
+  trap 'exit 129' HUP
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  cat > "$install_dir/npmrc" <<'NPMRC'
+@5010-dev:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
+NPMRC
+  unset NPM_CONFIG_USERCONFIG npm_config_userconfig
+  export NPM_CONFIG_USERCONFIG="$install_dir/npmrc"
+  cd "$install_dir"
 
   # Select the previously checked stored login, not an ambient token override.
   unset GH_TOKEN GITHUB_TOKEN NODE_AUTH_TOKEN
@@ -108,7 +129,10 @@ and repository dependencies use their owning installation command instead of
 ```
 
 The example does not print the token or leave its assignment in the parent
-shell. It rejects registry-check diagnostics even when pnpm returns exit code
+shell. The temporary directory and configuration are private to the current
+user and removed on normal exit, command failure, or a handled interrupt. The
+file contains only a literal environment reference, never the expanded token.
+It rejects registry-check diagnostics even when pnpm returns exit code
 zero, stopping before lookup or installation. Inspect the scope route and
 variable references in your npm configuration locally without printing expanded
 authentication values. A configuration substitution warning, failed lookup, or

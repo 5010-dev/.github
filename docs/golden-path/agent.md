@@ -20,13 +20,10 @@ or replace the manual bootstrap, adoption, and retirement journeys.
 
 First follow the [central private-package installation guide](../guides/install-private-packages.md).
 Reuse an approved GitHub CLI browser/OAuth login and establish package-read scope,
-required organization approval, and package Read access. Complete the exact
-package access check, then run the install command below within that guide's
-scoped registry-authentication process:
-
-```bash
-pnpm add --global @5010-dev/golden-path-agent@1.0.1
-```
+required organization approval, and package Read access. In that guide's scoped
+installation example, replace the illustrative `package_spec` value with
+`@5010-dev/golden-path-agent@1.0.1`, then run the whole example to check access
+and install that exact version.
 
 After that process exits, run the Skill commands without registry credentials
 in their environment:
@@ -42,9 +39,11 @@ are separate permissions even when the same approved login can satisfy both.
 Missing package grants go to the package administrator; missing login or scope
 requires developer login or consent. Do not direct the user to create a PAT.
 The [owning package guide](https://github.com/5010-dev/engineering-tooling/tree/main/packages/golden-path-agent)
-owns exact prerequisites and commands. This central authentication procedure
-supersedes the older PAT setup prose for the unchanged `1.0.1` artifact; the
-historical source and release identities below remain intact.
+owns exact tool prerequisites and package commands. It has not yet adopted this
+authentication contract: its PAT prerequisites and linked PAT setup do not apply
+to this journey. Use the central guide's scoped installation process above for
+the unchanged `1.0.1` artifact. The historical source and release identities
+below remain intact.
 
 Invocation is always explicit:
 

@@ -1,7 +1,7 @@
 # Developer Tooling schemas
 
 - Status: Accepted
-- Standard version: `2026.08.8`
+- Standard version: `2026.09`
 
 Only repository-owned facts that benefit from a stable source-controlled shape
 remain machine-readable:
