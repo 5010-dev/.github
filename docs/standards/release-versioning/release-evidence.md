@@ -34,6 +34,17 @@ The record MUST include the following when applicable:
 - known security, integrity, compatibility, scientific-scope, or use
   limitations.
 
+When [registry consumer verification](./profiles.md#registry-package-consumer-verification)
+is required, the release record MUST identify the intended exact package version
+and recorded published integrity or digest when provided, the representative
+consumer check, its outcome, and the producing workflow run or equivalent native
+execution record. It MUST retain the installed identity when established and
+mark unverified checks explicitly. Publication and consumer verification
+outcomes MUST remain distinct, including when publication succeeds but
+verification fails or is interrupted.
+Existing native records or workflow results MAY carry this evidence; no separate
+evidence file, schema, or central store is required.
+
 A protected package-tag release MUST use repository and registry native
 surfaces as its minimum evidence: branch channel, exact version, recorded source
 SHA and immutable package tag, the GitHub Actions publication run, the registry's

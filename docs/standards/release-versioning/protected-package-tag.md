@@ -345,6 +345,11 @@ contract remain unchanged. This profile MUST NOT change its repository files,
 tag format, workflow trigger, approval policy, release permissions, or
 Changesets behavior.
 
+Default-profile repositories still follow the shared
+[package and library requirements](./profiles.md#package-and-library-profile),
+including registry consumer verification; those requirements do not enroll a
+repository in this opt-in profile.
+
 The historical validation records in this directory preserve time-bounded
 evidence for superseded policy versions. They are non-normative and their prior
 runs, source SHAs, files, and implementation details are not requirements of the
