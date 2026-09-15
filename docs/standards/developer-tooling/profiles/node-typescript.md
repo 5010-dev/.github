@@ -153,6 +153,10 @@ For registry/external packages:
   workflow; local-developer and pull-request-origin publish are prohibited; and
 - a long-lived token requires a scoped, rotated, expiring high-risk exception.
 
+The Release and Versioning Standard owns
+[post-publication registry consumer verification](../../release-versioning/profiles.md#registry-package-consumer-verification).
+The pre-publication tarball smoke above does not replace that release check.
+
 An internal workspace-only package does not require registry metadata, OIDC,
 provenance, publint, or ATTW. Its build, typecheck, and actual workspace consumer
 tests are authoritative until the distribution boundary changes.

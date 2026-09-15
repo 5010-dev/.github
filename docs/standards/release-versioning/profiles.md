@@ -128,6 +128,54 @@ verification. Registry-only, moved-tag, source, version, integrity, or ambiguous
 state fails closed. Defective or conflicting published content uses a new SemVer
 correction.
 
+### Registry package consumer verification
+
+Before reporting a newly published registry package version as complete,
+automation MUST verify consumption of that exact version from its published
+registry. The same requirement applies when completing an interrupted
+publication whose consumer verification is still incomplete. It applies to both
+validated-`main` publication and protected package-tag publication, including
+prereleases, without changing their source or authorization boundaries.
+
+The verification MUST:
+
+1. Install the exact published package version in a fresh consumer context
+   through normal registry dependency resolution, without substituting a
+   workspace link, source checkout, or locally packed archive.
+2. Confirm the installed package identity and version and match its native
+   integrity or digest to the recorded published artifact identity when the
+   ecosystem provides one.
+3. Exercise a small, repository-owned consumer check appropriate to the
+   distributed surface. Examples include library import and initialization,
+   CLI version and help execution, or resolution and use of packaged types or
+   assets. Representative execution MUST run without publication or registry
+   authentication credentials.
+
+Pre-publication tarball smoke tests remain useful source and packaging checks;
+they do not establish registry consumer verification. A successful publish
+command, registry lookup, or tag check alone MUST NOT satisfy this requirement.
+If consumer verification fails or is interrupted after publication, the result
+MUST retain the published identity and report incomplete verification, not a
+completed release or an absent publication. Recovery follows the existing
+[immutable publication rules](./automation.md#partial-publication-or-finalization-and-recovery).
+
+An unchanged older version with completed verification need not repeat these
+checks for every unrelated release. Its earlier result MAY be reused, but MUST
+NOT be presented as verification performed by the current run. An existing
+registry version alone does not establish that an outstanding consumer check
+passed. Existing releases adopt this requirement under
+[Adoption and exceptions](./exceptions.md#existing-release-units); unavailable
+historical evidence is not fabricated or made a prerequisite for unrelated
+package releases.
+
+Repositories own the commands, representative consumer environment, job layout,
+and native evidence storage. This minimum does not require product-wide
+end-to-end tests, production data access, every supported platform, or a shared
+workflow, checker, or evidence schema. Other applicable profile and runtime
+support requirements continue to apply. Package visibility and consumer grants
+retain their separate
+[access-configuration boundary](./release-evidence.md#minimum-release-record).
+
 ## CLI and distributed executable profile
 
 A distributed executable MUST record its version, source revision, applicable

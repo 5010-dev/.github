@@ -48,6 +48,13 @@ equivalent fail-closed order:
 9. Emit durable release evidence and an explicit success, staged, partial, or
    failed state.
 
+For registry packages, phase 8 includes the
+[registry consumer verification](./profiles.md#registry-package-consumer-verification)
+required before a new publication or its interrupted completion can be reported
+as complete. A verification retry MUST consume the existing exact published
+version; it MUST NOT substitute a rebuilt archive or republish the version to
+repair a failed consumer check.
+
 Publication or finalization of the same release unit and intended version or
 repository-native identifier MUST be serialized. Independent research runs with
 distinct preallocated immutable identities MAY execute concurrently. A workflow
@@ -144,8 +151,9 @@ registry, archive, or record operations are permanent.
 - A protected package run that created the exact immutable tag but stopped
   before registry publication MAY keep that tag unchanged and resume the absent
   registry publication from the same immutable source.
-- An exact tag/version/source/integrity pair is verification success. A rerun
-  MUST NOT republish it or expose an unnecessary mutation credential.
+- An exact tag/version/source/integrity pair is identity verification success.
+  It does not satisfy an outstanding registry consumer check. A rerun MUST NOT
+  republish it or expose an unnecessary mutation credential.
 - After a package version, tag, image digest, accepted native build, immutable
   release, or immutable research record is published or finalized, recovery
   MUST NOT overwrite it. Use the applicable correction, successor, deprecate,
