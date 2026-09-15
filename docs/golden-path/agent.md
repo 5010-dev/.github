@@ -39,11 +39,12 @@ are separate permissions even when the same approved login can satisfy both.
 Missing package grants go to the package administrator; missing login or scope
 requires developer login or consent. Do not direct the user to create a PAT.
 The [owning package guide](https://github.com/5010-dev/engineering-tooling/tree/main/packages/golden-path-agent)
-owns exact tool prerequisites and package commands. It has not yet adopted this
-authentication contract: its PAT prerequisites and linked PAT setup do not apply
-to this journey. Use the central guide's scoped installation process above for
-the unchanged `1.0.1` artifact. The historical source and release identities
-below remain intact.
+owns exact tool prerequisites and package commands. Follow the central
+installation process above if an older packaged README or source snapshot gives
+different authentication instructions. Published `1.0.1` remains immutable;
+corrections to its source installation guide do not imply a new package release.
+The owning repository records installation and host-acceptance evidence
+separately. The historical source and release identities below remain intact.
 
 Invocation is always explicit:
 
