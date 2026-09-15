@@ -34,6 +34,7 @@ organization contracts are interpreted as described in
 - [Bootstrapping a new repository](./guides/bootstrap-new-repository.md)
 - [Migrating existing developer tooling](./guides/migrating-developer-tooling.md)
 - [GitHub hosting capability profile](./guides/github-hosting-capabilities.md)
+- [Installing private GitHub packages](./guides/install-private-packages.md)
 - [Adopting the organization arc42 profile](./guides/adopting-arc42.md)
 - [Migrating existing documentation](./guides/migrating-existing-documentation.md)
 

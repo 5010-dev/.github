@@ -94,6 +94,10 @@ permitted to rely.
 
 ## Package and library profile
 
+Private GitHub npm packages additionally follow the
+[package authentication contract](./package-authentication.md) for developer
+installation, CI consumption, and access remediation.
+
 A published package or library MUST:
 
 - use its ecosystem-native manifest or release metadata as the version source;

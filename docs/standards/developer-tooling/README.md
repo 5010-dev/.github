@@ -1,9 +1,9 @@
 # Developer Tooling Standard
 
 - Status: Accepted
-- Standard version: `2026.08.8`
+- Standard version: `2026.09`
 - Contract version: `golden-path/v1`
-- Last reviewed: 2026-08-13
+- Last reviewed: 2026-09-16
 - Owner: `5010-dev/.github` maintainers
 
 This standard defines organization defaults for repository-owned developer
@@ -116,6 +116,15 @@ Existing repositories follow the
 the [retirement journey](../../guides/migrating-developer-tooling.md) when they
 still contain the executable control-plane footprint.
 No central registry tracks adoption.
+
+`2026.09` aligns the Node profile with the
+[private package authentication contract](../release-versioning/package-authentication.md).
+Local read authentication uses approved GitHub CLI OAuth reuse, with separate
+user login/scope remediation and administrator access grants. Publication-only
+credential restrictions do not require a separate local PAT. The retained
+`golden-path/v1` schema contract is unchanged.
+[ADR-0032](../../decisions/0032-reuse-approved-github-cli-authentication-for-package-installation.md)
+records this boundary.
 
 `2026.08.8` separates dependency-risk outcomes from routine-update machinery.
 Active buildable repositories retain vulnerability and lifecycle obligations,

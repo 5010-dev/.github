@@ -263,6 +263,13 @@ Each repository owns its exact versions, release units, native manifests, tag
 format, changelog policy, release automation, current support state, and release
 history. Document those details in the repository README or development guide.
 
+Private GitHub npm packages follow the
+[package authentication contract](https://github.com/5010-dev/.github/blob/main/docs/standards/release-versioning/package-authentication.md).
+Local guides reuse approved GitHub CLI authentication and distinguish user
+login/scope remediation from administrator access grants; they do not offer PAT
+creation as an installation fallback. Exact install commands and access-request
+contacts remain repository-owned.
+
 Every production release must be traceable to its source commit, an applicable
 tag or ref or a repository-native release identifier, and its exact artifact
 or deployment identity. Git tags, GitHub Releases, changelog files, checksums,

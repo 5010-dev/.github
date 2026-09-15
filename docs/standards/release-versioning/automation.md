@@ -197,6 +197,11 @@ deterministic release logic remains locally or independently executable.
 
 ## Permissions and credentials
 
+Developer-machine installation follows the separate
+[private package authentication contract](./package-authentication.md). A local
+read-access failure does not authorize a new PAT or use of a publication token.
+The workflow permissions below retain their publication and CI scope.
+
 - Caller permissions MUST be explicit and least privilege.
 - A protected package-tag workflow additionally follows its profile-specific
   split: validation uses `contents: read`, private-package consumption uses

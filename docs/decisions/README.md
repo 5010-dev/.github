@@ -26,6 +26,7 @@ index.
 | [ADR-0029](./0029-default-package-tags-to-repository-token.md) | Accepted | Default protected package-tag creation to a job-scoped repository workflow token |
 | [ADR-0030](./0030-separate-public-policy-from-private-tooling.md) | Accepted | Separate public policy from private tooling and narrow executable retirement |
 | [ADR-0031](./0031-require-registry-package-consumer-verification.md) | Accepted | Require registry package consumer verification while retaining repository-owned implementation |
+| [ADR-0032](./0032-reuse-approved-github-cli-authentication-for-package-installation.md) | Accepted | Reuse approved GitHub CLI authentication and route package access failures without PAT fallback |
 
 Organization standards and platform contracts hold the current normative view.
 ADRs explain why those views were accepted.

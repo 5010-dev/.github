@@ -1,7 +1,7 @@
 # Release and Versioning Standard
 
 - Status: Accepted
-- Standard version: `2026.09`
+- Standard version: `2026.09.1`
 - Last reviewed: 2026-09-16
 
 This standard defines how the `5010-dev` organization versions, identifies,
@@ -160,6 +160,7 @@ validity.
 | [Compatibility lifecycle](./lifecycle.md) | Maturity, support, research-record status, correction, deprecation, EOL, bad releases, and emergency changes |
 | [Release records and evidence](./release-evidence.md) | Authority of manifests, tags, registries, archives, changelogs, release and revision notes, checksums, SBOMs, provenance, and attestations |
 | [Release automation](./automation.md) | Repository ownership, shared automation criteria, publication and finalization sequencing, permissions, and recovery |
+| [Private package authentication](./package-authentication.md) | Developer OAuth reuse, CI/read/publication identity separation, credential handling, and access remediation |
 | [Adoption and exceptions](./exceptions.md) | New-unit adoption, existing-repository migration, exception records, and emergency review |
 
 ## Ownership boundary
@@ -220,6 +221,7 @@ part of this standard.
 
 | Version | Normative change |
 | --- | --- |
+| `2026.09.1` | Default local private GitHub npm installation to approved GitHub CLI OAuth reuse; distinguish login, scope consent, and administrator grants; prohibit PAT fallback and require a documented fresh installation path |
 | `2026.09` | Require exact-version registry installation, native integrity verification, and representative consumer use before completing a new or interrupted package publication; retain repository-owned implementation and existing access, adoption, and immutable-recovery boundaries |
 | `2026.08.10` | Use a job-scoped repository token as the default package-tag credential, preserve update/delete/non-fast-forward protection, and make dedicated App/PEM creator isolation optional rather than mandatory |
 | `2026.08.9` | Bind protected package prereleases to package-relevant `dev` merges and finals to `main`; add package-closure routing, prerelease-to-final payload equivalence, and exact artifact build-input consumer policy |
@@ -237,6 +239,8 @@ The governing decision is
 [ADR-0007: Adopt the organization Release and Versioning Standard](../../decisions/0007-adopt-release-and-versioning-standard.md).
 The common registry consumer verification requirement is established by
 [ADR-0031: Require registry package consumer verification](../../decisions/0031-require-registry-package-consumer-verification.md).
+The local package authentication and remediation contract is established by
+[ADR-0032: Reuse approved GitHub CLI authentication for package installation](../../decisions/0032-reuse-approved-github-cli-authentication-for-package-installation.md).
 The current protected package-tag lifecycle is established by
 [ADR-0028: Bind protected package prerelease and final channels to branch roles](../../decisions/0028-bind-protected-package-channels-to-branch-roles.md)
 and refined by
