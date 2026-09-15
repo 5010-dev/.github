@@ -69,9 +69,12 @@ conflict-rejection requirements. When both immutable identities are absent, or
 when the exact protected tag selects the merge-authorized source and only the
 registry version is absent, only the repository-owned idempotent workflow may
 complete that same source and version. When the exact tag, version, source,
-integrity, and channel all match, the outcome is verification success. An
-exception cannot authorize manual publication, a different source or version,
-tag movement or recreation, credential expansion, or sibling mutation.
+integrity, and channel all match, the outcome is identity verification success;
+it does not waive any outstanding
+[registry consumer verification](./profiles.md#registry-package-consumer-verification)
+required for release completion. An exception cannot authorize manual
+publication, a different source or version, tag movement or recreation,
+credential expansion, or sibling mutation.
 Registry-only, missing or moved expected tag, conflicting identity or integrity,
 and ambiguous state remain ineligible for same-version mutation.
 

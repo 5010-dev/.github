@@ -211,9 +211,15 @@ For each authorized exact version, the engine MUST:
 | --- | --- | --- |
 | Absent | Absent | Create the tag from the verified source, then publish the exact version |
 | Exact source | Absent | Keep the tag unchanged and resume registry publication from the same immutable source |
-| Exact source | Exact version and integrity | Verification success; do not republish |
+| Exact source | Exact version and integrity | Identity verification success; do not republish; continue outstanding consumer verification |
 | Missing, moved, or conflicting | Present or unknown | Fail closed |
 | Any | Version or integrity conflict | Fail closed and use a new SemVer correction |
+
+Identity verification success alone does not complete an unfinished release.
+Any outstanding
+[registry consumer verification](./profiles.md#registry-package-consumer-verification)
+MUST pass before the workflow reports release completion, including after an
+earlier installation or representative execution failed or was interrupted.
 
 The workflow MUST treat a registry-only state as conflicting and fail closed.
 An ambiguous or unauthorized tag or registry query also fails closed. It MUST
