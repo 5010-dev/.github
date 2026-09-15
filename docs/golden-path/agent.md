@@ -56,9 +56,9 @@ Implicit invocation is disabled. Installing the host integration does not add
 the package to a consumer manifest or lock, pin a consumer version, or install a
 repository-managed runtime.
 
-Update or roll back by replacing the coordinate in `pnpm add --global` with a
-newer or prior exact version, then rerun `skill install --host all` and
-`skill check --host all`.
+Update or roll back by repeating the central guide's scoped installation example
+with the newer or prior exact package coordinate, then rerun
+`skill install --host all` and `skill check --host all`.
 
 Do not use `latest`, a range, or another moving selector. Installation does not
 automatically regenerate repository files or open consumer upgrade pull
