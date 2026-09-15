@@ -10,6 +10,11 @@ checklist is guidance, not a central approval queue.
 - [ ] The applicable standard profiles match real source and native manifests.
 - [ ] Exact toolchains, native manifests, locks or integrity records, and
       private-registry boundaries are committed and agree.
+- [ ] Private GitHub npm installation links the
+      [authentication contract](../standards/release-versioning/package-authentication.md)
+      and distinguishes user login/scope fixes from administrator access grants;
+      no PAT fallback is offered. New or changed installation paths have fresh
+      context evidence for their documented prerequisites and exact version.
 - [ ] Root `just init`, `just check`, and `just ci` are truthful; no required
       capability is a successful no-op.
 - [ ] Ambiguous native roots are classified without package mappings,

@@ -4,7 +4,7 @@
 - Package: `@5010-dev/golden-path-agent@1.0.1`
 - Visibility: Private
 - Owner: `5010-dev/engineering-tooling` maintainers
-- Last reviewed: 2026-08-14
+- Last reviewed: 2026-09-16
 - General support: [create an Engineering issue in Linear](https://linear.new?team=ENG) for triage by the `engineering-tooling` maintainers
 - Sensitive security reports: [follow the private tooling repository security policy](https://github.com/5010-dev/engineering-tooling/blob/main/SECURITY.md)
 
@@ -18,24 +18,33 @@ or replace the manual bootstrap, adoption, and retirement journeys.
 
 ## Exact installation and invocation
 
-Persist the supported private package at its exact coordinate, then install and
-check both host Skills:
+First follow the [central private-package installation guide](../guides/install-private-packages.md).
+Reuse an approved GitHub CLI browser/OAuth login and establish package-read scope,
+required organization approval, and package Read access. Complete the exact
+package access check, then run the install command below within that guide's
+scoped registry-authentication process:
 
 ```bash
 pnpm add --global @5010-dev/golden-path-agent@1.0.1
+```
+
+After that process exits, run the Skill commands without registry credentials
+in their environment:
+
+```bash
 golden-path-agent skill install --host all
 golden-path-agent skill check --host all
 ```
 
-Before installing, obtain package `Read`, configure a personal access token
-(classic) with `read:packages`, authorize it for organization SSO when
-applicable, configure the user-level `@5010-dev` npm scope, and confirm that
-pnpm's global bin directory is on `PATH`. GitHub CLI `gh` must be
-authenticated to `github.com` with read access to `5010-dev/.github`.
-Follow the exact released package
-[access, authentication, and setup instructions](https://github.com/5010-dev/engineering-tooling/blob/8dfdac46dc9886e69dc4f33cf0a658c86353d3a3/README.md#package-access-and-authentication).
-Package and `gh` credentials are separate; neither belongs in a consumer
-repository.
+Confirm the package's supported tools and pnpm global bin directory on `PATH`.
+The Agent's runtime `gh` access to `5010-dev/.github` and package download access
+are separate permissions even when the same approved login can satisfy both.
+Missing package grants go to the package administrator; missing login or scope
+requires developer login or consent. Do not direct the user to create a PAT.
+The [owning package guide](https://github.com/5010-dev/engineering-tooling/tree/main/packages/golden-path-agent)
+owns exact prerequisites and commands. This central authentication procedure
+supersedes the older PAT setup prose for the unchanged `1.0.1` artifact; the
+historical source and release identities below remain intact.
 
 Invocation is always explicit:
 

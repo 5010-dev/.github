@@ -10,6 +10,7 @@ standards remain normative.
 - [Bootstrapping a new repository](./bootstrap-new-repository.md)
 - [Migrating existing developer tooling](./migrating-developer-tooling.md)
 - [GitHub hosting capability profile](./github-hosting-capabilities.md)
+- [Installing private GitHub packages](./install-private-packages.md)
 
 Developer Tooling uses a contract-backed, repository-owned Golden Path. The
 Golden Path is an opinionated supported journey, not an active organization

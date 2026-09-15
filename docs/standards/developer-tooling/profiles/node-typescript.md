@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Profile ID: `node-typescript`
-- Standard version: `2026.08.8`
+- Standard version: `2026.09`
 
 This profile combines a common TypeScript quality contract with artifact-specific
 module, build, workspace, and publishing behavior.
@@ -145,13 +145,20 @@ For registry/external packages:
   exports, dual packages, or multiple module consumers;
 - ESM-only packages test an ESM consumer and type resolution;
 - dual packages test both import and require/type resolution;
-- registry authentication is supplied only through a trusted repository-local
-  `.npmrc` contract or CI secret injection and MUST NOT be committed as a token;
+- registry authentication is supplied through trusted native credential
+  configuration or scoped process/CI injection and MUST NOT be committed as a
+  token;
+- local private GitHub npm installation follows the
+  [package authentication contract](../../release-versioning/package-authentication.md),
+  including approved GitHub CLI OAuth reuse and user/admin remediation without
+  PAT fallback;
 - npm OIDC trusted publishing is the default where supported;
 - supported public npm packages MUST generate provenance;
 - publish MUST run only from an immutable release ref through an approved
   workflow; local-developer and pull-request-origin publish are prohibited; and
-- a long-lived token requires a scoped, rotated, expiring high-risk exception.
+- a long-lived publication token requires a scoped, rotated, expiring high-risk
+  exception. This publication restriction does not require a PAT for local
+  package reads.
 
 The Release and Versioning Standard owns
 [post-publication registry consumer verification](../../release-versioning/profiles.md#registry-package-consumer-verification).
