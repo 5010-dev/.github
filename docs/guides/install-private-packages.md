@@ -92,10 +92,15 @@ and repository dependencies use their owning installation command instead of
   test -n "$NODE_AUTH_TOKEN"
   export NODE_AUTH_TOKEN
 
-  registry="$(pnpm config get '@5010-dev:registry')"
+  # pnpm can warn about invalid configuration and still exit successfully.
+  # Capture both streams; only a clean, expected registry value may proceed.
+  if ! registry="$(pnpm config get '@5010-dev:registry' 2>&1)"; then
+    printf 'Could not read npm configuration. Diagnose it before installing.\n' >&2
+    exit 1
+  fi
   case "$registry" in
     https://npm.pkg.github.com|https://npm.pkg.github.com/) ;;
-    *) printf 'Fix the private scope route before installing.\n' >&2; exit 1 ;;
+    *) printf 'Fix npm configuration warnings or the private scope route before installing.\n' >&2; exit 1 ;;
   esac
   pnpm view "$package_spec" version --registry=https://npm.pkg.github.com
   pnpm add --global "$package_spec"
@@ -103,13 +108,16 @@ and repository dependencies use their owning installation command instead of
 ```
 
 The example does not print the token or leave its assignment in the parent
-shell. A configuration substitution warning, failed lookup, or failed install
-requires diagnosis before continuing; it is not a reason to retry against public
-npm or create another credential. Run the package's version/help or consumer
-check after installation with registry credential variables absent. Existing
-credentials in a parent shell are not removed by the example's subshell. Runtime
-AWS, database, or source-repository authentication follows the package's own
-guide and is not granted by package installation.
+shell. It rejects registry-check diagnostics even when pnpm returns exit code
+zero, stopping before lookup or installation. Inspect the scope route and
+variable references in your npm configuration locally without printing expanded
+authentication values. A configuration substitution warning, failed lookup, or
+failed install requires diagnosis before continuing; it is not a reason to retry
+against public npm or create another credential. Run the package's version/help
+or consumer check after installation with registry credential variables absent.
+Existing credentials in a parent shell are not removed by the example's
+subshell. Runtime AWS, database, or source-repository authentication follows the
+package's own guide and is not granted by package installation.
 
 ## New-package documentation check
 
