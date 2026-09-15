@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Standard version: `2026.09`
-- Last reviewed: 2026-09-15
+- Last reviewed: 2026-09-16
 
 This standard defines how the `5010-dev` organization versions, identifies,
 publishes, evolves, and retires software, Infrastructure as Code, native client,

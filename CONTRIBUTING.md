@@ -235,10 +235,13 @@ A separate release-intent pull request, independent approval, or two-person
 review is not an organization minimum. One repository-owned, serialized,
 idempotent publication engine derives the branch channel and exact version,
 verifies the package closure and sibling isolation, creates an absent immutable
-package tag, publishes an absent exact registry version, or reports verification
-success when the exact tag, version, source, and integrity already agree. An
-exact tag with an absent registry version may resume publication only from that
-same immutable source without moving or recreating the tag.
+package tag, publishes an absent exact registry version, or records identity
+verification success when the exact tag, version, source, and integrity already
+agree. Any outstanding
+[registry consumer verification](https://github.com/5010-dev/.github/blob/main/docs/standards/release-versioning/profiles.md#registry-package-consumer-verification)
+must pass before reporting release completion. An exact tag with an absent
+registry version may resume publication only from that same immutable source
+without moving or recreating the tag.
 
 Registry-only state, a missing or moved expected tag, or a version, source, or
 integrity conflict fails closed and requires a new SemVer correction. Published

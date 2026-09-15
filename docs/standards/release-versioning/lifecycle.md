@@ -170,8 +170,10 @@ publication:
 - when the exact tag already selects the verified source but the registry
   version is absent, keep the tag unchanged and resume registry publication
   from that same immutable source; and
-- when tag, version, source, integrity, and channel all match, return
-  verification success without republishing.
+- when tag, version, source, integrity, and channel all match, record identity
+  verification success without republishing; any outstanding
+  [registry consumer verification](./profiles.md#registry-package-consumer-verification)
+  MUST pass before reporting release completion.
 
 Registry-only state, a missing or moved expected tag, conflicting source,
 version, integrity, or channel, and ambiguous or unauthorized queries MUST fail

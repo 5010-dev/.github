@@ -94,8 +94,10 @@ absent, it may create the protected tag and publish. If the exact tag already
 selects that source while the registry version is absent, it may keep the tag
 unchanged and resume registry publication from the same immutable source. If
 the exact tag, version, source, integrity, and channel already agree, it MUST
-return verification success without republishing. Registry-only, missing or
-moved expected tag, conflicting source/version/integrity, and ambiguous state
+record identity verification success without republishing. Any outstanding
+[registry consumer verification](./profiles.md#registry-package-consumer-verification)
+MUST pass before the workflow reports release completion. Registry-only, missing
+or moved expected tag, conflicting source/version/integrity, and ambiguous state
 fail closed.
 
 The registry state MUST be re-read immediately before and after publication.

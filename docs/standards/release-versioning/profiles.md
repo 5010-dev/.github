@@ -123,10 +123,12 @@ promotion to `main`. It proceeds only through the profile's idempotent workflow.
 When both tag and exact version are absent, it may publish from the verified
 source; when the exact immutable tag already selects that source but the registry
 version is absent, it may resume registry publication without moving the tag;
-and when the exact tag, version, source, and integrity agree, it succeeds by
-verification. Registry-only, moved-tag, source, version, integrity, or ambiguous
-state fails closed. Defective or conflicting published content uses a new SemVer
-correction.
+and when the exact tag, version, source, and integrity agree, identity
+verification succeeds without republishing. Any outstanding
+[registry consumer verification](#registry-package-consumer-verification) MUST
+pass before reporting release completion. Registry-only, moved-tag, source,
+version, integrity, or ambiguous state fails closed. Defective or conflicting
+published content uses a new SemVer correction.
 
 ### Registry package consumer verification
 
