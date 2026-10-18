@@ -3,7 +3,7 @@
 - Status: Accepted
 - Profile IDs: `infrastructure-aws-cdk`, `infrastructure-terraform`,
   `infrastructure-opentofu`, `infrastructure-pulumi`
-- Standard version: `2026.09`
+- Standard version: `2026.10`
 
 This profile owns IaC authoring, exact tool/dependency authority, static
 validation, and non-mutating commands. Deployment and Operations contracts own
@@ -20,10 +20,18 @@ lifecycle.
 - Terraform or OpenTofu is conditional for HCL modules/providers, existing
   state, or external integration.
 - Pulumi is conditional for code-first abstractions, multi-cloud portability,
-  or an actual move beyond AWS.
+  an actual move beyond AWS, or an IaC owner whose accepted ADR selects it.
+  Such a selection applies only to the named owner; it does not change the
+  AWS CDK default or require other repositories to migrate.
 - One resource MUST have one engine, state, and write owner.
 - An engine migration requires a separate ADR and resource-identity, import,
-  replacement, secret/state, rollback, and verification plan.
+  replacement, secret/state, rollback, and verification plan. The ADR records
+  the cross-repository decision; the owning repository keeps the plan and its
+  evidence.
+- A transfer imports or adopts existing resources without replacement, physical
+  identity change, data rewrite, or secret regeneration. Intended changes
+  after transfer are separate reviewed deliveries. The previous engine's writer
+  for a transferred resource is retired, not run concurrently with the new one.
 
 The static lane MUST NOT mutate shared cloud or state and SHOULD be
 credential-free. Dynamic architecture that requires current state belongs to a
@@ -122,10 +130,28 @@ conformance prerequisite.
   provider pins are committed.
 - Host-language package-manager/toolchain options align with the selected
   language profile.
+- A Pulumi project is the directory containing `Pulumi.yaml`; that directory is
+  its `infrastructure-pulumi` native root. A stack is a configuration, state,
+  and lock target of one project, not another project or native root.
+- Several projects MAY share one host-language workspace and its single lock,
+  for example one pnpm workspace whose packages are the programs and their
+  shared library. When they do, projects MUST NOT duplicate that lock. A
+  repository with more than one project declares each project root and its
+  actual host-language dependency root or roots in
+  `.github/golden-path-native-roots.yaml`.
 - Stack configuration MAY be committed, but plaintext secrets, backend
   credentials, and decrypted state MUST NOT be.
-- Static `ci` uses locked host dependencies and language quality gates; a
-  stateful `pulumi preview` remains in the delivery lane rather than `just ci`.
+- Static `ci` uses locked host dependencies and language quality gates without
+  cloud, backend, or state credentials. `pulumi preview`, `import`, `refresh`,
+  and `up` remain in the stateful delivery lane rather than `just ci`.
+- Each delivery target names its project, stack, account, region, and backend.
+  A change to shared program code, the host lock, providers, or delivery
+  workflows previews every configured stack that consumes it; apply runs only
+  for explicitly selected stacks.
+- A stack reference reads the producer's last applied outputs. A consumer
+  preview does not validate producer output that is not yet applied.
+- An import preview MUST show no replacement or unintended property change
+  before the import is applied.
 - Production `up` MUST preview the current target and MUST NOT skip preview.
 - A strict/saved plan remains an evaluation option, not a universal MUST.
 - Drift operation is risk-based.
@@ -136,5 +162,10 @@ Adopting this profile does not silently modify an existing deployment workflow,
 approval boundary, role, automatic production policy, or executable As-built.
 Such changes require the owning deployment decision and repository migration
 work.
+
+IaC that owns shared ECS structure, with any engine, follows the
+[ECS deployment contract](../../../platform/ecs-deployment-contract.md). It
+MUST NOT declare a task-definition writer that competes with the contract's
+common revision path, and it does not run application releases.
 
 Rule IDs: `DT-IAC-*`, plus common `DT-CMD-*`, `DT-TOOL-*`, and `DT-DEP-*`.

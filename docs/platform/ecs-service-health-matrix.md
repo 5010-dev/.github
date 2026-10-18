@@ -1,7 +1,7 @@
 # ECS service contract ownership directory
 
 - Status: Navigation index; non-authoritative discovery aid
-- Last updated: 2026-10-04
+- Last updated: 2026-10-18
 - Applies to: `5010-dev` services using the shared AWS ECS platform
 
 This directory connects the organization
@@ -39,6 +39,16 @@ implementation progress, profile assignments, or conformance status.
 | RecSummary          | [`marketmon`](https://github.com/5010-dev/marketmon)                               | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Zero API release contract](https://github.com/5010-dev/marketmon/blob/HEAD/experiments/meeting-transcription-summary/ops/release/README.md)      | [ECS deployment view (RecSummary)](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md#710-recsummary-main-only-deployment) |
 | Quant Bot           | [`fiftyten-quant`](https://github.com/5010-dev/fiftyten-quant)                     | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Engine deployment contract](https://github.com/5010-dev/fiftyten-quant/blob/dev/docs/architecture/subsystems/engine/deployment.md)               | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
 | Quant Observability | [`fiftyten-quant`](https://github.com/5010-dev/fiftyten-quant)                     | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Observability deployment contract](https://github.com/5010-dev/fiftyten-quant/blob/dev/docs/architecture/subsystems/observability/deployment.md) | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
+
+Target note: the accepted [Pulumi Infrastructure
+decision](../decisions/0034-adopt-pulumi-for-the-integrated-ecs-infrastructure-repository.md)
+targets an integrated Infrastructure repository as the Infrastructure owner of
+these units. The Infrastructure plan also targets replacing the Zero API
+deployment whose release contract the RecSummary row links with separate zer0
+and Marketmon API units. This directory does not establish those repository
+or unit names, locations, or transfers. The rows above remain the current
+canonical owners and names until the owning repositories record a transfer;
+rows change here only against the actual owner and document locations.
 
 The linked repositories remain authoritative even when a linked landing document
 needs further repository-local refinement. Executable code and workflows are

@@ -7,11 +7,11 @@ index.
 
 | ADR                                                                    | Status                 | Decision                                                      |
 | ---------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------- |
-| [ADR-0001](./0001-adopt-hybrid-ecs-deployment-model.md)                | Accepted               | Adopt a hybrid ECS deployment model                           |
+| [ADR-0001](./0001-adopt-hybrid-ecs-deployment-model.md)                | Accepted; refined by ADR-0033 | Adopt a hybrid ECS deployment model                           |
 | [ADR-0002](./0002-adopt-state-aware-ecs-health-profiles.md)            | Superseded by ADR-0003 | Adopt state-aware ECS health profiles                         |
-| [ADR-0003](./0003-adopt-current-state-ecs-bootstrap-classification.md) | Accepted               | Adopt current-state ECS bootstrap classification              |
+| [ADR-0003](./0003-adopt-current-state-ecs-bootstrap-classification.md) | Accepted; refined by ADR-0033 | Adopt current-state ECS bootstrap classification              |
 | [ADR-0004](./0004-adopt-arc42-engineering-documentation-system.md)     | Accepted               | Adopt arc42 as the canonical engineering documentation system |
-| [ADR-0005](./0005-adopt-ecs-service-delivery-workflow-envelope.md)     | Accepted               | Adopt an ECS service delivery workflow envelope               |
+| [ADR-0005](./0005-adopt-ecs-service-delivery-workflow-envelope.md)     | Superseded in part by ADR-0033 | Adopt an ECS service delivery workflow envelope               |
 | [ADR-0006](./0006-adopt-developer-tooling-golden-path.md)              | Superseded in part by ADR-0022 | Adopt the organization Developer Tooling Golden Path |
 | [ADR-0007](./0007-adopt-release-and-versioning-standard.md)             | Accepted               | Adopt the organization Release and Versioning Standard        |
 | [ADR-0008](./0008-separate-artifact-components-from-native-dependency-roots.md) | Superseded in part by ADR-0022 | Separate artifact components from native dependency roots |
@@ -27,6 +27,8 @@ index.
 | [ADR-0030](./0030-separate-public-policy-from-private-tooling.md) | Accepted | Separate public policy from private tooling and narrow executable retirement |
 | [ADR-0031](./0031-require-registry-package-consumer-verification.md) | Accepted | Require registry package consumer verification while retaining repository-owned implementation |
 | [ADR-0032](./0032-reuse-approved-github-cli-authentication-for-package-installation.md) | Accepted | Reuse approved GitHub CLI authentication and route package access failures without PAT fallback |
+| [ADR-0033](./0033-adopt-a-common-ecs-task-revision-path.md) | Accepted | Adopt a common ECS task revision path |
+| [ADR-0034](./0034-adopt-pulumi-for-the-integrated-ecs-infrastructure-repository.md) | Accepted | Adopt Pulumi for the integrated ECS Infrastructure repository |
 
 Organization standards and platform contracts hold the current normative view.
 ADRs explain why those views were accepted.

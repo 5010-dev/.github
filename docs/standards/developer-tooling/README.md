@@ -1,9 +1,9 @@
 # Developer Tooling Standard
 
 - Status: Accepted
-- Standard version: `2026.09`
+- Standard version: `2026.10`
 - Contract version: `golden-path/v1`
-- Last reviewed: 2026-09-16
+- Last reviewed: 2026-10-18
 - Owner: `5010-dev/.github` maintainers
 
 This standard defines organization defaults for repository-owned developer
@@ -116,6 +116,16 @@ Existing repositories follow the
 the [retirement journey](../../guides/migrating-developer-tooling.md) when they
 still contain the executable control-plane footprint.
 No central registry tracks adoption.
+
+`2026.10` clarifies the IaC profile for multi-project Pulumi workspaces:
+Pulumi projects, their stacks, and host-language dependency roots are distinct,
+several projects may share one host lock, and static `ci` remains
+credential-free while preview, import, and apply stay in stateful delivery.
+Pulumi selection gains an ADR-backed condition without changing the AWS CDK
+default or requiring other repositories to migrate.
+[ADR-0034](../../decisions/0034-adopt-pulumi-for-the-integrated-ecs-infrastructure-repository.md)
+records the first selection. The `golden-path/v1` contract and native-root
+schema are unchanged.
 
 `2026.09` aligns the Node profile with the
 [private package authentication contract](../release-versioning/package-authentication.md).
