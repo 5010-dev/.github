@@ -1,7 +1,7 @@
 # Golden Path Agent-assisted application
 
 - Status: Supported
-- Package: `@5010-dev/golden-path-agent@1.0.1`
+- Package: `@5010-dev/golden-path-agent@1.1.0`
 - Visibility: Private
 - Owner: `5010-dev/engineering-tooling` maintainers
 - Last reviewed: 2026-10-18
@@ -22,7 +22,7 @@ First follow the [central private-package installation guide](../guides/install-
 Reuse an approved GitHub CLI browser/OAuth login and establish package-read scope,
 required organization approval, and package Read access. In that guide's scoped
 installation example, replace the illustrative `package_spec` value with
-`@5010-dev/golden-path-agent@1.0.1`, then run the whole example to check access
+`@5010-dev/golden-path-agent@1.1.0`, then run the whole example to check access
 and install that exact version.
 
 After that process exits, run the Skill commands without registry credentials
@@ -33,6 +33,9 @@ golden-path-agent skill install --host all
 golden-path-agent skill check --host all
 ```
 
+Start a new Codex or Claude Code session after installing the Skill so that the
+host loads the newly installed version.
+
 Confirm the package's supported tools and pnpm global bin directory on `PATH`.
 The Agent's runtime `gh` access to `5010-dev/.github` and package download access
 are separate permissions even when the same approved login can satisfy both.
@@ -41,8 +44,8 @@ requires developer login or consent. Do not direct the user to create a PAT.
 The [owning package guide](https://github.com/5010-dev/engineering-tooling/tree/main/packages/golden-path-agent)
 owns exact tool prerequisites and package commands. Follow the central
 installation process above if an older packaged README or source snapshot gives
-different authentication instructions. Published `1.0.1` remains immutable;
-corrections to its source installation guide do not imply a new package release.
+different authentication instructions. Published versions remain immutable;
+corrections to a source installation guide do not imply a new package release.
 The owning repository records installation and host-acceptance evidence
 separately. The historical source and release identities below remain intact.
 
@@ -59,7 +62,9 @@ repository-managed runtime.
 
 Update or roll back by repeating the central guide's scoped installation example
 with the newer or prior exact package coordinate, then rerun
-`skill install --host all` and `skill check --host all`.
+`skill install --host all` and `skill check --host all` and start a new host
+session. The owning repository's installation guide keeps `1.0.1` as the
+reviewed previous coordinate for rollback.
 
 Do not use `latest`, a range, or another moving selector. Installation does not
 automatically regenerate repository files or open consumer upgrade pull
@@ -98,12 +103,17 @@ golden-path-agent check --root . --json
 ```
 
 They record the exact authority commit, package and Skill identity, observed
-native roots and profiles, and unresolved observations. Binding each applicable
-profile document, such as the IaC profile, into these reports requires an Agent
-version later than `1.0.1`; with `1.0.1`, read the applicable profiles
-directly. The owning repository's
+native roots and profiles, and unresolved observations. From `1.1.0`, these
+reports bind the same core documents and profile set that `plan` binds: the
+SHA-256 of each observed or declared native profile document, such as the
+infrastructure profile for a Pulumi program, is listed under the authority
+files. If the authority cannot be read, `info` fails and `doctor`/`check` mark
+it unavailable rather than partially bound. `1.0.1` does not bind profile documents; after a rollback
+to it, read the applicable profiles directly. The `1.1.0` Skill also carries an
+IaC and delivery-boundary reference for programs, stacks, native roots, engine
+migration and deployment workflows. The owning repository's
 [IaC check guide](https://github.com/5010-dev/engineering-tooling/blob/main/docs/guides/check-iac-workspace.md)
-covers that selection. Several roots of one
+covers these commands. Several roots of one
 profile remain `pending-classification` until the repository declares them, as
 shown in the [IaC stack defaults](./stack-defaults.md#infrastructure-as-code).
 Repeat the commands when central policy or the inspected configuration changes.
@@ -124,7 +134,23 @@ does not make the Agent or its package a source of normative policy.
 
 ## Release identity
 
-The supported `1.0.1` package is identified by the following release evidence:
+The current `1.1.0` package is identified by the following release evidence:
+
+| Evidence | Identity |
+| --- | --- |
+| Source commit | [`6689d2ba49e27c91ec41e6928d981f6150bc0ab7`](https://github.com/5010-dev/engineering-tooling/commit/6689d2ba49e27c91ec41e6928d981f6150bc0ab7) |
+| Source tag | [`golden-path-agent-v1.1.0`](https://github.com/5010-dev/engineering-tooling/releases/tag/golden-path-agent-v1.1.0) |
+| Publication workflow | [`39122697144`](https://github.com/5010-dev/engineering-tooling/actions/runs/39122697144) |
+| Package visibility | Private |
+| Package SHA-256 | `99736cbb711eb2824e52028863e0d229efbb03b4c8d664806532c7026bc038b9` |
+| Registry SRI | `sha512-iNOJxpFbEwD+uvmNH1sRB3pxzI5yugPJ7j4U832sXUk3gCChyQdgNF+9Tr4SFu0GW+dD9ds0ayilcE7+1ccOCw==` |
+
+The owning repository's
+[`1.1.0` release acceptance record](https://github.com/5010-dev/engineering-tooling/blob/main/docs/releases/golden-path-agent-1.1.0-2026-10-18.md)
+is the canonical record of its candidate, registry and host-acceptance evidence
+and remaining limits.
+
+The previous `1.0.1` package is identified by the following release evidence:
 
 | Evidence | Identity |
 | --- | --- |
@@ -135,7 +161,7 @@ The supported `1.0.1` package is identified by the following release evidence:
 | Package SHA-256 | `a52dba9f89ff32eb07d58bf89c6f6724ca4dfce234bae633877f9be41bd801f7` |
 | Registry SRI | `sha512-nrvyu5OC4k4wZN6W9Gnis3T5v4JdTx3PiRjDjvrC1gFFnasMD2PmbeJ1bG4AzQUOJKpQhwfBN6TLm079gPT6jA==` |
 
-These identities document the supported release; they are not a machine
+These identities document the published releases; they are not a machine
 locator or an automatic update instruction. Historical Go `engineering-tooling`
 releases `v0.1.0` through `v1.6.1` remain immutable audit history for the
 retired Go executable line; this package is not a version of, locator for, or
@@ -147,5 +173,5 @@ request.
 
 The implementation repository is private; source evidence links require
 authorized repository access. `.github` remains public authority. Package
-download access is separately granted, and the exact published version and
-source record above remain unchanged by the repository layout refactor.
+download access is separately granted, and the exact published `1.0.1` version
+and source record above remain unchanged by the repository layout refactor.
