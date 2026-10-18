@@ -4,7 +4,7 @@
 - Package: `@5010-dev/golden-path-agent@1.0.1`
 - Visibility: Private
 - Owner: `5010-dev/engineering-tooling` maintainers
-- Last reviewed: 2026-09-16
+- Last reviewed: 2026-10-18
 - General support: [create an Engineering issue in Linear](https://linear.new?team=ENG) for triage by the `engineering-tooling` maintainers
 - Sensitive security reports: [follow the private tooling repository security policy](https://github.com/5010-dev/engineering-tooling/blob/main/SECURITY.md)
 
@@ -84,6 +84,36 @@ and provides no automatic regeneration or upgrade pull requests.
 `check` is report-only. It does not execute or replace the repository-owned
 `just ci`; the owning repository runs that canonical gate through its normal
 local and CI paths.
+
+## IaC and deployment boundary work
+
+For an IaC or deployment-boundary change, such as an engine migration or a
+multi-program Pulumi workspace, explicitly invoke the Skill and keep the
+output of these read-only commands with the change's review evidence:
+
+```bash
+golden-path-agent info --root . --json
+golden-path-agent doctor --root .
+golden-path-agent check --root . --json
+```
+
+They record the exact authority commit, package and Skill identity, observed
+native roots and profiles, and unresolved observations. Binding each applicable
+profile document, such as the IaC profile, into these reports requires an Agent
+version later than `1.0.1`; with `1.0.1`, read the applicable profiles
+directly. The owning repository's
+[IaC check guide](https://github.com/5010-dev/engineering-tooling/blob/main/docs/guides/check-iac-workspace.md)
+covers that selection. Several roots of one
+profile remain `pending-classification` until the repository declares them, as
+shown in the [IaC stack defaults](./stack-defaults.md#infrastructure-as-code).
+Repeat the commands when central policy or the inspected configuration changes.
+
+When the change affects shared ECS services, also read the
+[ECS deployment contract](../platform/ecs-deployment-contract.md) and
+[delivery workflow standard](../platform/ecs-service-delivery-workflow-standard.md)
+at the same authority commit. The Agent does not detect ECS topology. It does
+not run preview, import, or apply, and its report does not replace the
+repository's `just ci`, stateful delivery evidence, or deployment acceptance.
 
 ## Control-plane exclusions
 

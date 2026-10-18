@@ -1,7 +1,7 @@
 # Developer Tooling contract distribution
 
 - Status: Accepted
-- Standard version: `2026.09`
+- Standard version: `2026.10`
 
 ## Normative source
 

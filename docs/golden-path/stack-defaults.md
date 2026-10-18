@@ -39,7 +39,57 @@ Read the full [Node.js/TypeScript](../standards/developer-tooling/profiles/node-
 [Python](../standards/developer-tooling/profiles/python.md), or
 [Rust](../standards/developer-tooling/profiles/rust.md) profile before claiming
 conformance. Infrastructure and documentation repositories use their
-corresponding profiles instead of adding a dummy application manifest.
+corresponding profiles instead of adding a dummy application manifest; see
+[Infrastructure as code](#infrastructure-as-code).
+
+## Infrastructure as code
+
+Use the [IaC profile](../standards/developer-tooling/profiles/infrastructure.md)
+with the host-language profile. AWS CDK v2 with TypeScript remains the starting
+default for new AWS IaC. Use Pulumi only under the profile's conditions, such as
+an accepted ADR for the IaC owner.
+
+A Pulumi with TypeScript repository keeps three concepts apart:
+
+| Concept | What it is | Native root? |
+| --- | --- | --- |
+| Program (Pulumi project) | A directory with `Pulumi.yaml` and its entry point | Yes, `infrastructure-pulumi` |
+| Stack | Configuration, state, and lock target of one program, such as `Pulumi.<stack>.yaml` | No |
+| Host dependency root | The actual host-language root, such as a pnpm workspace whose single lock covers programs that share it and their shared library | Yes, `node-typescript` |
+
+With more than one program, declare the roots explicitly. Use the actual paths;
+the program names below are illustrative:
+
+```yaml
+schemaVersion: golden-path-native-roots/v1
+roots:
+  - id: workspace
+    path: .
+    profiles:
+      - node-typescript
+  - id: program-network
+    path: programs/network
+    profiles:
+      - infrastructure-pulumi
+  - id: program-runtime
+    path: programs/runtime
+    profiles:
+      - infrastructure-pulumi
+```
+
+`just init` prepares the locked host dependencies and tools. Root `just ci`
+then runs `check` (format, lint, typecheck, and tests) and any applicable
+build or package validation, without cloud, backend, or state credentials, as
+the [command contract](../standards/developer-tooling/command-contract.md)
+defines. Preview, import,
+refresh, and apply belong to repository-owned stateful delivery for one named
+project and stack at a time. A shared code, lock, or provider change previews
+every consuming stack before an explicitly selected apply.
+
+IaC that owns shared ECS services also follows the
+[ECS deployment contract](../platform/ecs-deployment-contract.md) and the
+[service delivery workflow standard](../platform/ecs-service-delivery-workflow-standard.md).
+Other IaC does not need ECS rules.
 
 ## Polyglot and multi-root rule
 

@@ -1,7 +1,7 @@
 # ECS health and readiness profiles
 
 - Status: Accepted
-- Last updated: 2026-07-29
+- Last updated: 2026-10-18
 - Applies to: `5010-dev` services provisioned on the shared AWS ECS platform
 
 This contract defines a common vocabulary for selecting ECS container health,
@@ -44,7 +44,7 @@ it observed and MUST NOT collapse them into an unqualified "healthy" claim.
 | Application readiness                 | The application-specific prerequisites for accepting its intended work are currently satisfied        | Historical correctness, completeness, or sustained operational progress          |
 | Semantic/operational correctness      | Service-specific state effects, freshness, backlog, ownership, or other business evidence meet policy | It does not replace liveness or structural rollout evidence                      |
 
-CloudFormation completion, ECS `runningCount`, ECS container health, target-group
+IaC deployment completion, ECS `runningCount`, ECS container health, target-group
 health, and application correctness are therefore separate observations.
 
 ## Container and routing-health boundaries
@@ -54,8 +54,8 @@ It MUST NOT be copied into a real-image task definition.
 
 For every accepted released-image liveness contract:
 
-- service and CDK deployment paths MUST render the same container-health
-  command and timing policy;
+- service and Infrastructure deployment paths MUST render the same
+  container-health command and timing policy;
 - a later deployment MUST NOT regress that command to bootstrap health; and
 - application readiness or semantic correctness MUST remain separately named
   even when deployment verification observes them after liveness.

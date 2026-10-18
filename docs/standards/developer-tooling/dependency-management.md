@@ -1,7 +1,7 @@
 # Dependency management
 
 - Status: Accepted
-- Standard version: `2026.09`
+- Standard version: `2026.10`
 
 Each ecosystem's native manager owns dependency resolution. mise owns selected
 runtime and support-tool bootstrap; Just exposes stable commands. Neither
@@ -64,7 +64,7 @@ against, its native manifest and resolution record.
 | Zig | Zig build system | `build.zig` and `build.zig.zon` | ZON content hashes and exact compiler lock | tagged-compiler build/test |
 | AWS CDK | CDK and host-language manager | `cdk.json`, host manifest | host lock; conditional reviewed `cdk.context.json` | locked install and deterministic synth |
 | Terraform/OpenTofu | native CLI | `.tf` and `required_version` | `.terraform.lock.hcl` | backend-disabled, read-only-lock init and validate |
-| Pulumi | Pulumi and host-language manager | `Pulumi.yaml`, host manifest | host lock and provider pins | locked install/static checks; stateful preview belongs to delivery |
+| Pulumi | Pulumi and host-language manager | `Pulumi.yaml` per project, host manifest | one host lock per host workspace and provider pins | locked install/static checks; stateful preview belongs to delivery |
 
 ## Node.js and TypeScript
 
@@ -139,7 +139,9 @@ pseudo-lockfile is introduced.
   `.terraform.lock.hcl`, and pin modules separately because the provider lock
   does not lock modules.
 - Pulumi commits `Pulumi.yaml`, uses its host-language lock, and pins CLI, SDK,
-  and providers.
+  and providers. Several Pulumi projects MAY share one host-language workspace
+  root and lock; each project directory remains its own
+  `infrastructure-pulumi` native root, and stacks are not native roots.
 - One cloud resource MUST have one IaC engine and state write owner.
 - Moving from one IaC engine to another requires a separate architecture and
   state/resource-identity migration decision.

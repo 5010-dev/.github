@@ -1,9 +1,11 @@
 # ECS service delivery workflow standard
 
 - Status: Accepted
-- Last updated: 2026-07-29
+- Last updated: 2026-10-18
 - Applies to: `5010-dev` service repositories that release application images
-  to the shared AWS ECS platform
+  to the shared AWS ECS platform, and the repository that executes the
+  [common revision path](./ecs-deployment-contract.md#common-revision-path)
+  for them
 
 This standard defines the organization envelope for ECS service delivery
 workflows. It complements the
@@ -32,7 +34,8 @@ this standard does not establish that any service workflow conforms.
 
 This standard does not:
 
-- combine the Infrastructure CDK pipeline with service release workflows;
+- apply Infrastructure IaC state from a service release; a release requests
+  the common revision path without applying Infrastructure structure;
 - require one universal reusable workflow, composite action, or programming
   language;
 - require identical triggers, health endpoints, readiness gates, rollback
@@ -78,12 +81,19 @@ repository so one implementation change has one canonical documentation update.
 - **Structural state:** Infrastructure-owned task and service configuration,
   including roles, networking, resources, volumes, sidecars, logging, platform
   settings, and deployment topology.
-- **Release-owned state:** the application image and the explicitly documented
-  runtime and real-image liveness fields a service release is authorized to
-  update.
+- **Release-owned state:** the fields the unit mapping assigns to a release
+  slot: always its immutable image and, only where the mapping assigns
+  behavior to the release, the command, entry point, and real-image liveness
+  bound to that image, plus the explicitly documented runtime inputs a service
+  release is authorized to update. An image-only slot, such as an auxiliary
+  container image, leaves its behavior with Infrastructure.
 - **Thin workflow:** a responsibility boundary, not a line-count target. GitHub
   Actions orchestrates while non-trivial deployment behavior is testable
   outside the workflow YAML.
+- **Common revision path:** the single repository-owned implementation that
+  both service and Infrastructure entry points use to synthesize, register,
+  select, and apply task-definition revisions, as defined by the
+  [ECS deployment contract](./ecs-deployment-contract.md#common-revision-path).
 
 ## Responsibility boundary
 
@@ -96,7 +106,7 @@ locally executable deployment implementation.
 | least-privilege job permissions       | image build and publication behavior                   |
 | OIDC credential setup                 | AWS preflight and account assertions                   |
 | environment and concurrency selection | shared-state reads and writes                          |
-| invoking repository commands          | task-definition transformation and registration        |
+| invoking repository commands          | task-definition synthesis and registration             |
 | GitHub step summary                   | service update, polling, verification, and diagnostics |
 | notification integration              | deterministic transforms and test fixtures             |
 
@@ -160,7 +170,9 @@ not an organization-wide prerequisite.
 ### Concurrency and bounded execution
 
 Two runs that can mutate the same deployment unit MUST share a concurrency
-group. Independent environments or deployment units MAY use different groups.
+group. Service and Infrastructure entry points that can mutate the same runtime
+target are serialized in the repository that executes the common revision
+path. Independent environments or runtime targets MAY use different groups.
 
 - A mutating deployment SHOULD use `cancel-in-progress: false` so a newer run
   does not interrupt an older run between shared-state and ECS mutations.
@@ -222,22 +234,37 @@ vary. The repository MUST document the partial-failure behavior. A workflow
 MUST NOT claim rollback unless it verified the state restored. Automatic
 rollback is optional and repository-owned.
 
-### Task-definition mutation
+### Task-definition synthesis
 
-The default service-release strategy is:
+Service delivery requests the common revision path. It does not register,
+select, or apply task-definition revisions through another writer. The path:
 
-1. resolve the task definition currently selected by the intended ECS service;
-2. clone that revision;
-3. select each release-owned application container by stable name;
-4. apply only the authorized image, runtime, and real-image liveness changes;
-5. preserve all other container and task-level structure;
-6. remove only fields that ECS does not accept on registration;
-7. validate the transformed definition; and
-8. register a new revision.
+1. reads the applied Infrastructure structural spec for the unit's current
+   state and the current shared inputs;
+2. synthesizes the complete task definition by the explicit field ownership of
+   the unit mapping, applying each release slot's image, the command, entry
+   point, and liveness bound to that image's source only for slots whose
+   behavior the mapping assigns to the release, and the declared runtime
+   inputs;
+3. selects each application container by stable name;
+4. compares the synthesized task with the actual selected revision, and the
+   related Service settings with the actual Service, on a stable service; and
+5. acts on that comparison through one apply adapter:
+   - task and related Service settings equal: a no-op, with no registration,
+     service update, or forced deployment;
+   - task equal and only Service settings changed: reuse the exact selected
+     revision and apply only the Service delta, without registering a
+     revision; or
+   - task changed: register exactly one revision and apply that exact revision
+     together with any coupled Service delta in one update.
 
-A transformation MUST fail when the expected named container is missing,
-duplicated, or ambiguous. It MUST NOT select `containerDefinitions[0]` or infer
-the application container from array order.
+A synthesis MUST fail before registration when an expected named container is
+missing, duplicated, or ambiguous, when field ownership is unknown or
+conflicting, or when the actual revision contains a field outside the owner's
+modeled fields and verified defaults. It MUST NOT select
+`containerDefinitions[0]`, infer containers from array order, blind-merge the
+selected revision, or restore an entry its owner removed. It MUST NOT select a
+newer unapplied ACTIVE revision of the family.
 
 Unless a reviewed cross-owner change says otherwise, service delivery MUST
 preserve Infrastructure-owned fields, including:
@@ -246,21 +273,14 @@ preserve Infrastructure-owned fields, including:
   platform, and ephemeral storage;
 - sidecars, volumes, mount points, dependencies, essentiality, and container
   ordering semantics;
-- port mappings, logging, secrets references, Linux parameters, user, and
-  resource limits; and
+- port mappings, logging, secret reference bindings, Linux parameters, user,
+  and resource limits; and
 - service-level networking, load balancers, discovery, placement, capacity,
   deployment controller, and desired-count policy.
 
-Task-definition reassembly from a repository-owned template or generator MAY be
-used only with a recorded exception. Its evidence MUST prove that the generated
-revision:
-
-- is structurally equivalent to the current Infrastructure-owned revision for
-  every non-release-owned field;
-- targets application containers by name;
-- preserves unknown or newly added sidecars and structural fields;
-- applies the same immutable digest and real-image liveness contract; and
-- fails closed on an unrecognized structural difference.
+A service release MUST NOT apply a pending structural spec. When the actual
+structure no longer matches the applied spec, the release is blocked rather
+than reverting it.
 
 Service delivery MUST NOT create, repair, or broadly discover missing
 Infrastructure resources as a substitute for an Infrastructure deployment.
@@ -280,14 +300,20 @@ are complete and valid and optional inputs satisfy their policy, and is
 `Invalid` when required state is partial or otherwise violates that contract.
 ECS service absence alone does not change the classification.
 
+Failed, in-progress, and unknown deployments, explicit retry, structural
+publication recovery, and secret-version selection follow the
+[ECS deployment contract](./ecs-deployment-contract.md#failed-in-progress-and-unknown-deployments).
+A workflow MUST NOT retry a rollout in a loop within one run.
+
 ### Bootstrap-to-Released health promotion
 
 When a real image replaces an approved placeholder, the registered revision
 MUST replace bootstrap-only `CMD-SHELL exit 0` health with the exact
 service-owned real-image liveness command and timing.
 
-- Cloning the current placeholder revision does not authorize retaining its
-  bootstrap health.
+- The Released structural shape, not a clone of the placeholder revision,
+  supplies real-only structure and references; bootstrap health is never
+  retained.
 - A subsequent service or Infrastructure deployment MUST preserve the same
   released-image liveness contract.
 - Routing health, application readiness, and semantic correctness remain
@@ -307,14 +333,37 @@ Each report MUST keep these three axes separate:
   `Invalid`;
 - ECS provisioning observation: `provisioned-service` or
   `unprovisioned-service`; and
-- workflow terminal outcome: provisioned-service deployment or staged-image.
+- workflow terminal outcome: one of the successful outcomes below, or a
+  non-zero result.
 
 Each successful terminal result MUST select and report exactly one of these
 outcomes:
 
-- a provisioned-service deployment; or
+- a provisioned-service deployment;
+- a no-op on a stable provisioned service whose synthesized task and related
+  Service settings already equal the actual selection;
 - an allowed staged-image result with an explicit `unprovisioned-service`
-  observation.
+  observation; or
+- for the Infrastructure entry point only, a verified structural spec
+  publication without ECS mutation, such as a Bootstrap unit whose Released
+  shape alone changed, or recovery of a pending spec whose mutation is
+  verified as already applied.
+
+A no-op records the source and immutable identity it compared, the retained
+task-definition revision and deployment, and stable convergence. It performs
+no registration, service update, or forced deployment.
+
+A structural spec publication records the Infrastructure source identity of
+the published spec, the previously applied spec it replaces, and the actual
+selected revision, Service settings, and deployment that it verified against
+that spec. It performs no registration, service update, or forced deployment,
+and it MUST NOT claim a rollout, new convergence, or health evidence. When
+current shared inputs differ from the actual selection, it reports that
+desired is not current rather than a fully current result; any newer source is
+evaluated afterward as a separate candidate.
+
+Blocked, Invalid, superseded, and failed results are not success and exit
+non-zero; they record their reason without claiming a deployment.
 
 | Evidence                            | Provisioned-service deployment                                                                                                                                           | Allowed staged-image result                                                                                                                                                                                |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -351,7 +400,9 @@ separately whenever the routed role has non-zero desired capacity.
 This section protects the GitHub Actions execution surface. It does not require
 converting ECS task environment entries to Secrets Manager or SSM secret
 references, changing application secret schemas, or changing runtime secret
-consumption. Those are separate security-architecture decisions.
+consumption. Those are separate security-architecture decisions. Version
+selection for existing late-bound secret references follows the
+[ECS deployment contract](./ecs-deployment-contract.md#late-bound-secret-versions).
 
 Decrypted or otherwise sensitive values MAY exist in runner memory or protected
 temporary files when the current repository deployment contract requires them.
@@ -415,7 +466,7 @@ is satisfied.
 | Missing service       | fail, or stage immutable image state for later Infra creation                           | current-state classification, provisioning observation, shared-state version, skipped ECS phases, and operator-visible result |
 | Readiness             | no deploy gate, endpoint gate, internal probe, or semantic gate                         | selected health profile and exact evidence                                                                                    |
 | Zero scale or standby | accept intended `0/0`, standby, or operator-controlled state                            | applicable runtime modifiers                                                                                                  |
-| Rollback              | manual, automatic, or forward-fix                                                       | inputs, trigger, verification, and partial-failure behavior                                                                   |
+| Rollback              | republish a previous release through the normal path, or forward-fix                   | inputs, trigger, verification, and partial-failure behavior                                                                   |
 | Notification          | provider, audience, and failure policy                                                  | non-sensitive payload and job-result behavior                                                                                 |
 
 Variation does not permit weakening immutable digest identity, named-container
@@ -481,7 +532,7 @@ provisioned-service ECS block.
 - [ ] Source provenance is recorded and the published or deployed image identity uses an immutable digest.
 - [ ] Previous shared-state identity and either previous task-definition and named-container identities or an explicit `unprovisioned-service` observation are captured.
 - [ ] Deployment-unit current-state classification, ECS provisioning observation, and workflow terminal outcome are recorded separately.
-- [ ] The terminal outcome is explicitly reported as a provisioned-service deployment or an allowed staged-image result.
+- [ ] The terminal outcome is explicitly reported as exactly one successful outcome (provisioned-service deployment, no-op, allowed staged-image result, or Infrastructure-only structural spec publication) or as a non-zero result.
 - [ ] Sensitive values cannot reach logs, outputs, summaries, artifacts, diagnostics, or notifications.
 - [ ] Failure diagnostics are bounded and rollback inputs are operator-visible without secret material.
 - [ ] Non-trivial delivery behavior is locally executable and deterministically tested.
@@ -489,8 +540,9 @@ provisioned-service ECS block.
 
 ### Provisioned-service deployment
 
-- [ ] The task-definition strategy uses current-revision clone and named mutation, or links an accepted alternative-generation exception.
-- [ ] Infrastructure-owned structure, sidecars, and unknown fields are preserved.
+- [ ] The task definition is synthesized through the common revision path from the applied structural spec by explicit field ownership; unmodeled fields fail closed.
+- [ ] Infrastructure-owned structure and sidecars are preserved; removed owned entries are not restored.
+- [ ] Unchanged inputs on a stable service produce a no-op, a Service-only change reuses the selected revision, and unrelated units keep their selected revision.
 - [ ] A real image receives service-owned liveness; bootstrap `exit 0` is not retained.
 - [ ] Task revision, named-container digest, and ECS rollout convergence are verified.
 - [ ] Routing, readiness, semantic, zero-scale, and standby evidence follow the selected profile.
@@ -502,14 +554,6 @@ provisioned-service ECS block.
 - [ ] Current state is recorded separately as `Released` only when all required released image and runtime inputs are complete and valid and optional inputs satisfy policy, and as `Invalid` otherwise.
 - [ ] Task-definition registration, ECS service update, rollout, liveness, routing, readiness, and semantic verification are recorded as not performed.
 - [ ] The outcome does not claim ECS service deployment, rollout, convergence, health, readiness, or routing.
-```
-
-For a provisioned-service deployment where the current task-definition clone
-strategy is not used, also include:
-
-```markdown
-- [ ] Alternative generation has structural-equivalence and fail-closed evidence.
-- [ ] Accepted exception: <canonical link>
 ```
 
 ## Adoption and conformance
@@ -535,3 +579,4 @@ only to navigate to a canonical document maintained by its owning repository.
 - [ECS service contract ownership directory](./ecs-service-health-matrix.md)
 - [ADR-0001: Adopt a hybrid ECS deployment model](../decisions/0001-adopt-hybrid-ecs-deployment-model.md)
 - [ADR-0005: Adopt an ECS service delivery workflow envelope](../decisions/0005-adopt-ecs-service-delivery-workflow-envelope.md)
+- [ADR-0033: Adopt a common ECS task revision path](../decisions/0033-adopt-a-common-ecs-task-revision-path.md)

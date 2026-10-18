@@ -99,7 +99,9 @@ Use this file only when manifests and native workspace files do not make the
 roots unambiguous:
 
 Start from the syntax-checked
-[ambiguous native-roots example](./examples/native-roots.yml).
+[ambiguous native-roots example](./examples/native-roots.yml). For several
+Pulumi programs in one workspace, see the
+[IaC stack defaults](./stack-defaults.md#infrastructure-as-code).
 
 Validate the owned copy against the
 [native-root schema](../standards/developer-tooling/schemas/golden-path-native-roots-v1.schema.json).
