@@ -3,7 +3,7 @@
 - Status: Accepted
 - Standard version: `2026.10`
 - Contract version: `golden-path/v1`
-- Last reviewed: 2026-10-18
+- Last reviewed: 2026-10-19
 - Owner: `5010-dev/.github` maintainers
 
 This standard defines organization defaults for repository-owned developer
@@ -74,6 +74,7 @@ unused capabilities.
 | [Dependency management](./dependency-management.md) | Native managers, manifests, locks, and frozen CI |
 | [Distribution](./distribution.md) | Contract-only source, repository ownership, and retired release meaning |
 | [Build hygiene](./build-hygiene.md) | Dependency automation, vulnerability, cache, SBOM, provenance, and platform rules |
+| [CI runners](./ci-runners.md) | Standard-runner default, measured larger tiers, access, and cost responsibility |
 | [Runtime support](./runtime-support.md) | Runtime lifecycle and organization disposition |
 | [Conformance](./conformance.md) | Repository self-validation and evidence boundaries |
 | [Exceptions](./exceptions.md) | Scoped, approved, expiring deviations |
