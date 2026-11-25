@@ -36,7 +36,7 @@ implementation progress, profile assignments, or conformance status.
 | Data Collector      | [`indicator-data-collector`](https://github.com/5010-dev/indicator-data-collector) | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Deployment view](https://github.com/5010-dev/indicator-data-collector/blob/dev/docs/architecture/07-deployment-view.md)                          | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
 | Fleet API           | [`fiftyten-quant`](https://github.com/5010-dev/fiftyten-quant)                     | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Fleet API production ECS contract](https://github.com/5010-dev/fiftyten-quant/blob/dev/docs/architecture/subsystems/fleet-api/README.md#production-ecs-contract) | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
 | Service Status      | [`service-status`](https://github.com/5010-dev/service-status)                     | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Runtime deployment contract](https://github.com/5010-dev/service-status/blob/dev/docs/architecture/07-deployment-view.md)                         | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
-| RecSummary          | [`marketmon`](https://github.com/5010-dev/marketmon)                               | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Zero API release contract](https://github.com/5010-dev/marketmon/blob/HEAD/experiments/meeting-transcription-summary/ops/release/README.md)      | [ECS deployment view (RecSummary)](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md#710-recsummary-main-only-deployment) |
+| zer0 API            | [`marketmon`](https://github.com/5010-dev/marketmon)                               | [`infra`](https://github.com/5010-dev/infra)                             | [zer0 API release contract](https://github.com/5010-dev/marketmon/blob/dev/scripts/deployment/zer0/api/README.md)                               | [zer0 API deployment unit](https://github.com/5010-dev/infra/blob/HEAD/docs/architecture/08-crosscutting-concepts.md#zer0-api-deployment-unit) |
 | Hashmal Recorder    | [`hashmal`](https://github.com/5010-dev/hashmal)                                   | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Reading-tier operating contract](https://github.com/5010-dev/hashmal/blob/dev/docs/architecture/subsystems/reading/README.md#operating-contract) | [ECS deployment view (Hashmal recorder)](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md#714-hashmal-recorder-main-only-deployment) |
 | Quant Bot           | [`fiftyten-quant`](https://github.com/5010-dev/fiftyten-quant)                     | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Engine deployment contract](https://github.com/5010-dev/fiftyten-quant/blob/dev/docs/architecture/subsystems/engine/deployment.md)               | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
 | Quant Observability | [`fiftyten-quant`](https://github.com/5010-dev/fiftyten-quant)                     | [`indicator-ecs-infra`](https://github.com/5010-dev/indicator-ecs-infra) | [Observability deployment contract](https://github.com/5010-dev/fiftyten-quant/blob/dev/docs/architecture/subsystems/observability/deployment.md) | [ECS deployment view](https://github.com/5010-dev/indicator-ecs-infra/blob/HEAD/docs/architecture/07-deployment-view.md) |
@@ -44,11 +44,12 @@ implementation progress, profile assignments, or conformance status.
 Target note: the accepted [Pulumi Infrastructure
 decision](../decisions/0034-adopt-pulumi-for-the-integrated-ecs-infrastructure-repository.md)
 targets an integrated Infrastructure repository as the Infrastructure owner of
-these units. The Infrastructure plan also targets replacing the Zero API
-deployment whose release contract the RecSummary row links with separate zer0
-and Marketmon API units. This directory does not establish those repository
-or unit names, locations, or transfers. The rows above remain the current
-canonical owners and names until the owning repositories record a transfer;
+these units. `infra` is that repository; both owners of the zer0 API record it
+as that unit's Infrastructure owner. The Infrastructure plan also targets a
+Marketmon API unit separate from the zer0 API. This directory does not
+establish those repository or unit names, locations, or transfers. The other
+rows remain the current canonical owners and names until the owning
+repositories record a transfer;
 rows change here only against the actual owner and document locations.
 
 The linked repositories remain authoritative even when a linked landing document
